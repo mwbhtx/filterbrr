@@ -1,0 +1,305 @@
+
+<!DOCTYPE html>
+<html lang="en" class="html-lights-off">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer"/>
+    <title>Browse Torrents :: TorrentLeech.org</title>    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+    
+    <link rel="stylesheet" href="/common.a1816717b7ba419068e4bc928d88a16d.css">
+    
+    <link rel="stylesheet" href="/main.224afade281c2e9837ad3443fa83e2da.css">
+
+    	
+	<style>
+	.link{
+		border-bottom:1px dashed;
+		cursor:pointer;
+	}
+	
+	.div-menu-item{ 
+		display:block;
+	}
+
+    @media screen and (min-width: 600px)  {
+        .div-menu-item{ 
+			display: inline;
+		}
+    }
+	
+	.tooltip {
+	  position: relative !important;
+      font-size: 14px !important;
+	  width: 22px;
+	}
+
+	.tooltip .tooltip-contents {
+	  display: none;
+      font-size: 12px !important;
+	}
+
+	.tooltip .tooltip-title {
+	  cursor: pointer;
+	}
+	</style>
+	
+	</head>
+
+<body class="tl-lights-off">
+	<!-- PrivateVPN LINK -->
+                <div class="vpn-msg-placeholder">
+                <div class="PVPNIPAddress" data-pvpnvalue="24.9.248.199"></div>
+                <div class="PVPNCountry" data-pvpnvalue="US"></div>
+            </div>
+        
+<!-- START NAVBAR -->
+<div class="navbar navbar-default tl loggedin">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/"></a>
+        </div>
+
+        <form class="navbar-form navbar-left hidden-sm hidden-xs">
+            <div class="nav-tl-search-wrapper">
+                <input required type="text" class="nav-tl-search search-autocomplete-input" placeholder="Search" />
+                <button type="button" class="nav-tl-search-btn">
+                    <i class="fa fa-search"></i>
+                </button>
+            </div>
+        </form>
+
+        <form class="navbar-form no-margin visible-xs-block">
+            <div class="nav-tl-search-wrapper full">
+                <input required type="text" class="nav-tl-search search-autocomplete-input full" placeholder="Search" />
+            </div>
+        </form>
+
+        <!-- MENU -->
+        <div class="navbar-right navbar-collapse collapse navbar-responsive-collapse">
+            <ul class="nav navbar-nav navbar-right navbar-menu">
+                <!-- CTA -->
+                <li><a href="/user/donate" class="vip">VIP</a></li>
+                <li><a href="/torrents/top/index" class="">TOP</a></li>
+                <li><a href="/torrents/browse/index" class="text-uppercase active">Browse</a></li>
+                <li class="dropdown text-uppercase">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Media <span class="hidden-sm">Center</span><span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/torrents/movies">Movies</a></li>
+                        <li><a href="/torrents/series/popcorn">Series</a></li>
+                        <li><a href="/torrents/games">Games</a></li>
+                        <li><a href="/torrents/tvschedule" class="text-uppercase">tv schedule</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown text-uppercase">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Requests<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/user/requests">New Requests</a></li>
+                        <li><a href="/user/reseeds">Reseeds</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="/content/articles" class="text-uppercase">
+                        news
+                                            </a>
+                </li>
+                <li class='hidden-sm'>
+                    <a href="/" class="dropdown-toggle" data-toggle="dropdown">
+                        <span class="text-uppercase">help</span>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu text-uppercase">
+                        <li><a href="/chat">IRC</a></li>
+                        <li><a href="/staff/list#Uploader">Staff</a></li>
+                        <li><a href="https://wiki.torrentleech.org">Wiki</a></li>
+                    </ul>
+                </li>
+                <li class="hidden-sm"><a href="https://forums.torrentleech.org/" class="text-uppercase">Forum</a></li>
+                <li class="dropdown">
+                    <a href="/" class="dropdown-toggle" data-toggle="dropdown">
+                        <span class="text-uppercase">More</span>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu text-uppercase">
+                        <li class="visible-sm"><a href="https://forums.torrentleech.org/">Forum</a></li>
+                        <li class="visible-sm"><a href="/chat">IRC</a></li>
+                        <li class="visible-sm"><a href="/staff/list#Uploader">Staff</a></li>
+						<li class="visible-sm"><a href="http://wiki.torrentleech.org">Wiki</a></li>
+                        <li><a href="http://classic.torrentleech.org">Classic TL</a></li>
+                        <li><a href="http://v4.torrentleech.org">V4 TL</a></li>
+                        <li><a href="/profile/w4rl0rd88/marketplace">Marketplace</a></li>
+                        <li><a href="https://forums.torrentleech.org/t/topic/17734/2">Ublock TL</a></li>
+                        <li><a href="/protonvpn">Get a VPN</a></li>
+                        <li><a href="/seedit4me">Get a Seedbox</a></li>
+                        <li><a href="/user/account/logout">Logout</a></li>
+                    </ul>
+                </li>
+				<!-- Staff Panel-->
+                			
+            </ul>
+        </div>
+    </div>
+	    <div class="container-fluid sub-navbar">
+		<div class="row">
+			<div class="col-md-9 col-sm-8 centerTopBar">
+				<span class="centerTopBar">
+					<span class="link" style="margin-right: 1em;white-space: nowrap;" onclick="window.location.href='/profile/w4rl0rd88/view'">w4rl0rd88</span>
+                    
+                                            <span class="div-menu-item" onclick="window.location.href='/profile/w4rl0rd88/notifications'"><i style="color:#117070;" class="fa fa-bell"></i>
+                            <div style="display: inline-block;" class="tooltip notificatinTooltip">
+                                <div class="tooltip">
+                                    <span class="tooltip-title link">6</span>
+                                    <div class="tooltip-contents notificationTable">
+                                        <table class="table table-striped">
+                                            <tr>
+                                                <td colspan="2"><h3 style="padding:5px; margin:0;">Notifications</h3></td>
+                                            </tr>
+                                                                                            <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/w4rl0rd88/achievements">Downloaded >= 100GB</a>. Given 100 TL Points for unlocking the "Downloaded >= 100GB" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/w4rl0rd88/achievements">Downloaded 50 TV episodes</a>. Given 100 TL Points for unlocking the "Downloaded 50 TV episodes" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/w4rl0rd88/achievements">Uploaded >= 1TB</a>. Given 300 TL Points for unlocking the "Uploaded >= 1TB" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/w4rl0rd88/achievements">Completed 10 Achievements</a>. Given 1 invite(s) for unlocking the "Completed 10 Achievements" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/w4rl0rd88/achievements">Downloaded 20 boxsets</a>. Given 100 TL Points for unlocking the "Downloaded 20 boxsets" achievement. </td>
+                                                </tr>
+                                                                                                <tr>
+                                                    <td align="center" width="10%">
+                                                                                                        </td>
+                                                    <td width="90%">Unlocked! You completed the achievement: <a href="/profile/w4rl0rd88/achievements">Ratio >=10</a>. Given 1000 TL Points for unlocking the "Ratio >=10" achievement. </td>
+                                                </tr>
+                                                                                            <tr>
+                                                <td colspan="2" align="center">
+                                                    <button class="btn tl-btn btn-success" onclick="window.location.href='/profile/w4rl0rd88/notifications'">
+                                                        View All
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </span>
+                        
+                    </span>
+				</span>
+				<span class="centerTopBar">
+                    <span class="menu-info">
+                        <div title="Uploaded (Seeding)" class="div-menu-item">
+                            <i style="color:green;" class="fa fa-arrow-circle-o-up" aria-hidden="true"></i> <span class="link" onclick="window.location.href='/profile/w4rl0rd88/seeding'">1.31 TB</span> (128)
+                        </div>
+                        <div title="Downloaded (Leeching)" class="div-menu-item">
+                            <i style="color:red;" class="fa fa-arrow-circle-o-down" aria-hidden="true"></i> <span class="link" onclick="window.location.href='/profile/w4rl0rd88/leeching'">122.22 GB</span> (0)
+                        </div>
+                        <div title="Buffer" class="div-menu-item">
+                            <i style="color:green" class="fa fa-refresh" aria-hidden="true"></i> 1.19 TB                        </div>
+                        <div title="Ratio" class="div-menu-item">
+                            <i style="color:green;" class="fa fa-percent" aria-hidden="true"></i> 10.971                        </div>
+                        <div title="Hit and Run" class="div-menu-item">
+                            <span class="link" onclick="window.location.href='/profile/w4rl0rd88/hnr'"><i style="color:red" class="fa fa-ban" aria-hidden="true"></i>  0</span>
+                        </div>
+                        <div title="Achievements" class="div-menu-item">
+                            <span class="link" onclick="window.location.href='/profile/w4rl0rd88/achievements'"><i class="fa fa-trophy" aria-hidden="true" style="color: #117070;"></i> 14 <sup style="color:red;">new</sup></span>
+                        </div>
+                    </span>
+                    <span class="menu-info">
+                        <div class="div-menu-item"><span class="link" onclick="window.location.href='/profile/w4rl0rd88/marketplace'">TL Points: <span class="total-TL-points">3,066.43</span></span></div>
+                        <div class="div-menu-item">Slots: <span style="font-size:18px;">&infin;</span></div>
+                        <div class="div-menu-item"><span class="link" onclick="window.location.href='/profile/w4rl0rd88/requests'">Requests: 0</span></div>
+                                                <div class="div-menu-item"><span class="link" onclick="window.location.href='/profile/w4rl0rd88/invites'">Invites: 1</span></div>
+                    </span>
+                </span>
+			</div>
+
+            <div class="col-md-3 col-sm-4 centerTopBar">
+               <div class="">
+                  <span class="centerTopBar div-menu-item topMenuAds">
+                        <i class="fa fa-shield" aria-hidden="true"></i> <span class="link" onclick="window.location.href='/protonvpn'">Get a VPN</span>                    </span>
+                    <span class="centerTopBar div-menu-item topMenuAds">
+                        <i class="fa fa-server" aria-hidden="true"></i> <span class="link" onclick="window.location.href='/seedit4me'">Get a Seedbox</span>
+                    </span>
+                    <span class="centerTopBar div-menu-item topMenuAds">
+                        <span class="link" onclick="window.location.href='/user/account/logout'" title="logout"><i style="color:red; font-size: 16px;" class="fa fa-sign-out" aria-hidden="true"></i>
+                    </span>
+
+                    <span class="day-night div-menu-item centerTopBar">
+                        <i class="fa fa-moon-o"></i>
+                        <span class="clickable">
+                            <i class="fa fa-toggle-on active" id="on" style="display:none"></i>
+                            <i class="fa fa-toggle-on fa-rotate-180 inactive" id="off" style="display:"></i>
+                        </span>
+                        <i class="fa fa-sun-o"></i>
+                    </span>
+               </div>
+            </div>
+            		</div>
+	</div>
+</div>
+
+    <div class="message info text-center ">
+        <a href="/user/donate">
+            Support TorrentLeech: Help us with the server costs and gain awesome privileges! Learn more about it here!
+        </a>
+    </div>
+	
+    
+
+
+<!-- PAGE CONTENT -->
+<div class="mt-20 tl-content tl-lights-off has-support-msg ">
+    <script type="text/javascript">
+    var ExcludeInactiveTorrents = 0;
+    var ExcludeMusicAnd0Days = 0;
+    var SearchTitleOnly = 0;
+    var missingMediaDetails = 0;
+    var viewHiddenTorrents = 0;
+    var SelectedCategories = [];
+    var hideAdultContent = 0;
+    var categoriesVisible = false;
+    var categoriesVisible = false;
+    var canEditTorrentMedia = false;
+    var canViewHiddenTorrents = false;
+</script>
+
+
+<!-- <object data="https://pussytorrents.org/images/test" type="image/svg+xml" width="1" height="1" style="visibility:hidden;"></object> -->
+
+<!-- CYCLEJS entrypoint -->
+<div id="search-app"></div>
+</div>
+
+<div id="stop" class="hidden-xs scrollTop">
+    <span><i class="fa fa-5x fa-caret-square-o-up"></i></span>
+</div>
+
+
+<script type="text/javascript" src="/common.f55ede7bc6970e30539f.js"></script>
+
+<script type="text/javascript" src="/main.a39826aafca6f1fa8c61.js"></script>
+
+
+
+</body>
+</html>

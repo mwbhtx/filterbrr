@@ -1,0 +1,31 @@
+{
+    "name": "fl-freeleech-high-priority",
+    "version": "1.0",
+    "data": {
+        "enabled": true,
+        "min_size": "1GB",
+        "max_size": "30GB",
+        "delay": 5,
+        "priority": 4,
+        "max_downloads": 5,
+        "max_downloads_unit": "HOUR",
+        "except_releases": "*Olympics*,*Collection*,*Mega*,*Filmography*",
+        "announce_types": [
+            "NEW"
+        ],
+        "freeleech": true,
+        "resolutions": [
+            "1080p",
+            "720p"
+        ],
+        "sources": [
+            "WEB",
+            "WEB-DL",
+            "WEBRip"
+        ],
+        "match_categories": "Movies*,TV*",
+        "is_auto_updated": false,
+        "release_profile_duplicate": null,
+        "match_release_groups": "AMB3R,AMBER,BORDURE,BiQ,BiTOR,CBFM,CG,D4KiD,EDITH,EPOWORKS,FENiX,FULLBRUTALiTY,GAZER,GITA,GUACAMOLE,HDT,HEADER,HiggsBoson,InChY,KRaLiMaRKo,MeGusta,MiSERABLE,NoRBiT,PFa,PRAWN,PSA,SAUERKRAUT,SKYFiRE,SLOT,STC,SYLiX,Scene,TABULARiA,TRIPEL,TRiToN,TiPEX,UNDERTAKERS,URANiME,Unkn0wn,WATCHABLE,WAYNE,WoKE,WvF,ZAHARA,ZAX,smcgill1969"
+    }
+}

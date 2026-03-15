@@ -1,0 +1,31 @@
+{
+    "name": "fl-freeleech-opportunistic-priority",
+    "version": "1.0",
+    "data": {
+        "enabled": false,
+        "min_size": "1GB",
+        "max_size": "15GB",
+        "delay": 65,
+        "priority": 1,
+        "max_downloads": 1,
+        "max_downloads_unit": "HOUR",
+        "except_releases": "*Olympics*,*Collection*,*Mega*,*Filmography*",
+        "announce_types": [
+            "NEW"
+        ],
+        "freeleech": true,
+        "resolutions": [
+            "1080p",
+            "720p"
+        ],
+        "sources": [
+            "WEB",
+            "WEB-DL",
+            "WEBRip"
+        ],
+        "match_categories": "Movies*,TV*",
+        "is_auto_updated": false,
+        "release_profile_duplicate": null,
+        "except_release_groups": "2026,4KDVS,ATELiER,Audio,B0MBARDiERS,BAKED,BEN,BETTY,BLoz,BTN,CiNEPHiLES,DUPLEX,Dooky,FELIX,FGT,GuyZo,HD,HDH,HONE,KRATOS,MALUS,MIDDLE,MONUMENT,MTeam,MiMiR,Mixed,OFT,ORBiT,OldT,PTer,PandaMoon,PiRAMiDHEAD,RFX,SPHD,SiCFoI,TMT,TheFarm,TrollHD,VD0N,Vialle,WOU,WeWillRockU,ZoroSenpai,deef,edge2020,playWEB,seedpool"
+    }
+}
