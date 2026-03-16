@@ -14,10 +14,14 @@ def _client() -> tuple[str, dict]:
     return url, headers
 
 
-def test_connection() -> dict:
-    """Test connection to autobrr. Returns status dict."""
+def test_connection(url: str | None = None, api_key: str | None = None) -> dict:
+    """Test connection to autobrr. Uses provided credentials or falls back to saved."""
     try:
-        base_url, headers = _client()
+        if url and api_key:
+            base_url = url.rstrip("/")
+            headers = {"X-API-Token": api_key}
+        else:
+            base_url, headers = _client()
         with httpx.Client(timeout=TIMEOUT) as client:
             resp = client.get(f"{base_url}/api/filters", headers=headers)
             resp.raise_for_status()

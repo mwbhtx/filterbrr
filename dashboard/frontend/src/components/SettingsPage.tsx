@@ -34,7 +34,7 @@ export default function SettingsPage() {
     setStatus(null);
     setMessage(null);
     try {
-      const result = await api.getAutobrrStatus();
+      const result = await api.testAutobrrConnection(settings);
       setStatus(result);
     } catch (err: unknown) {
       setStatus({ connected: false, error: err instanceof Error ? err.message : "Connection failed" });

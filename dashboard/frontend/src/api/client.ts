@@ -91,6 +91,11 @@ export const api = {
 
   // Autobrr Sync
   getAutobrrStatus: () => fetchJSON<AutobrrConnectionStatus>("/autobrr/status"),
+  testAutobrrConnection: (settings: AutobrrSettings) =>
+    fetchJSON<AutobrrConnectionStatus>("/autobrr/status", {
+      method: "POST",
+      body: JSON.stringify(settings),
+    }),
   getSyncStatus: () => fetchJSON<SyncFilterEntry[]>("/autobrr/filters"),
   pullAll: () => fetchJSON<{ pulled: number }>("/autobrr/pull", { method: "POST" }),
   pullFilter: (remoteId: number) =>

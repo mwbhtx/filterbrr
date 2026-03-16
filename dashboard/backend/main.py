@@ -203,8 +203,15 @@ def api_update_settings(body: AutobrrSettings):
 
 # Autobrr Sync
 @app.get("/api/autobrr/status")
-def api_autobrr_status():
+def api_autobrr_status_saved():
+    """Test connection using saved credentials."""
     return test_connection()
+
+
+@app.post("/api/autobrr/status")
+def api_autobrr_status_test(body: AutobrrSettings):
+    """Test connection using provided credentials (from settings form)."""
+    return test_connection(url=body.autobrr_url, api_key=body.autobrr_api_key)
 
 
 @app.get("/api/autobrr/filters")
