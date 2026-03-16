@@ -1,16 +1,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../api/client";
-import type { AutobrrConnectionStatus, SyncFilterEntry } from "../types";
+import type { Filter, AutobrrConnectionStatus, SyncFilterEntry } from "../types";
 
 export default function SyncPage() {
   const [status, setStatus] = useState<AutobrrConnectionStatus | null>(null);
   const [entries, setEntries] = useState<SyncFilterEntry[]>([]);
+  const [localFilters, setLocalFilters] = useState<Filter[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasFetchedRemote, setHasFetchedRemote] = useState(false);
 
-  const loadData = useCallback(async () => {
+  // Load local filters instantly on mount
+  useEffect(() => {
+    api.getFilters().then(setLocalFilters).catch(() => {});
+  }, []);
+
+  // Fetch remote sync status (only when user triggers it)
+  const refreshRemote = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -20,6 +28,7 @@ export default function SyncPage() {
       ]);
       setStatus(statusResult);
       setEntries(syncResult);
+      setHasFetchedRemote(true);
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes("400")) {
         setStatus({ connected: false, error: "Autobrr not configured — go to Settings" });
@@ -32,9 +41,10 @@ export default function SyncPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const reloadLocal = async () => {
+    const filters = await api.getFilters();
+    setLocalFilters(filters);
+  };
 
   const toggleSelect = (key: string) => {
     setSelected((prev) => {
@@ -46,21 +56,22 @@ export default function SyncPage() {
   };
 
   const selectAll = () => {
-    if (selected.size === entries.length) {
+    const items = hasFetchedRemote ? entries : localFilters;
+    const keys = hasFetchedRemote ? entries.map((e) => e.name) : localFilters.map((f) => f.name);
+    if (selected.size === items.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(entries.map((e) => e.name)));
+      setSelected(new Set(keys));
     }
   };
-
-  const entryKey = (e: SyncFilterEntry) => e.name;
 
   const handlePullAll = async () => {
     setSyncing(true);
     setError(null);
     try {
       await api.pullAll();
-      await loadData();
+      await refreshRemote();
+      await reloadLocal();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Pull failed");
     } finally {
@@ -73,7 +84,7 @@ export default function SyncPage() {
     setError(null);
     try {
       await api.pushAll();
-      await loadData();
+      await refreshRemote();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Push failed");
     } finally {
@@ -86,7 +97,8 @@ export default function SyncPage() {
     setError(null);
     try {
       await api.pullFilter(remoteId);
-      await loadData();
+      await refreshRemote();
+      await reloadLocal();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Pull failed");
     } finally {
@@ -99,7 +111,7 @@ export default function SyncPage() {
     setError(null);
     try {
       await api.pushFilter(localId);
-      await loadData();
+      await refreshRemote();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Push failed");
     } finally {
@@ -124,6 +136,9 @@ export default function SyncPage() {
       default: return "bg-gray-800 text-gray-400 border-gray-700";
     }
   };
+
+  // Before remote fetch, show local filters; after, show full sync entries
+  const showEntries = hasFetchedRemote;
 
   return (
     <div className="space-y-6">
@@ -166,11 +181,11 @@ export default function SyncPage() {
           {syncing ? "Syncing..." : "Push All to Autobrr"}
         </button>
         <button
-          onClick={loadData}
+          onClick={refreshRemote}
           disabled={loading}
           className="rounded bg-gray-700 px-4 py-1.5 text-sm font-medium text-gray-200 hover:bg-gray-600 disabled:opacity-50"
         >
-          Refresh
+          {loading ? "Checking..." : "Check Autobrr"}
         </button>
       </div>
 
@@ -182,7 +197,7 @@ export default function SyncPage() {
               <th className="px-4 py-2">
                 <input
                   type="checkbox"
-                  checked={selected.size === entries.length && entries.length > 0}
+                  checked={selected.size === (showEntries ? entries.length : localFilters.length) && (showEntries ? entries.length : localFilters.length) > 0}
                   onChange={selectAll}
                   className="rounded"
                 />
@@ -194,22 +209,56 @@ export default function SyncPage() {
             </tr>
           </thead>
           <tbody>
-            {entries.length === 0 && !loading && (
+            {!showEntries && localFilters.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                  {status?.connected
-                    ? "No filters found. Create filters locally or in autobrr to get started."
-                    : "Connect to autobrr in Settings to see sync status."}
+                  No local filters. Create filters in the Simulator tab to get started.
                 </td>
               </tr>
             )}
-            {entries.map((entry) => (
-              <tr key={entryKey(entry)} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+            {!showEntries && localFilters.map((f) => (
+              <tr key={f._id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
                 <td className="px-4 py-2">
                   <input
                     type="checkbox"
-                    checked={selected.has(entryKey(entry))}
-                    onChange={() => toggleSelect(entryKey(entry))}
+                    checked={selected.has(f.name)}
+                    onChange={() => toggleSelect(f.name)}
+                    className="rounded"
+                  />
+                </td>
+                <td className="px-4 py-2 font-medium text-gray-200">{f.name}</td>
+                <td className="px-4 py-2">
+                  <span className={`text-xs px-2 py-0.5 rounded border ${sourceBadgeClass("local_only")}`}>
+                    Local
+                  </span>
+                </td>
+                <td className="px-4 py-2 text-gray-500">—</td>
+                <td className="px-4 py-2 text-right">
+                  <button
+                    onClick={() => handlePushOne(f._id)}
+                    disabled={syncing || !status?.connected}
+                    className="text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50"
+                    title="Push to autobrr"
+                  >
+                    Push
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {showEntries && entries.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  No filters found locally or in autobrr.
+                </td>
+              </tr>
+            )}
+            {showEntries && entries.map((entry) => (
+              <tr key={entry.name} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                <td className="px-4 py-2">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(entry.name)}
+                    onChange={() => toggleSelect(entry.name)}
                     className="rounded"
                   />
                 </td>
