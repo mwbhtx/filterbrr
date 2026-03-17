@@ -11,9 +11,4 @@ export class CognitoAuthGuard extends AuthGuard('jwt') {
     }
     return super.canActivate(context);
   }
-
-  handleRequest(err: any, user: any) {
-    if (err || !user) throw err;
-    return user;
-  }
 }
