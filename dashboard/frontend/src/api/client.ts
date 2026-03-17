@@ -21,7 +21,7 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE}${url}`, { headers, ...init });
+  const res = await fetch(`${BASE}${url}`, { ...init, headers });
 
   if (res.status === 401) {
     try {
@@ -29,10 +29,15 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
       const retryToken = getIdToken();
       const retryHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
       if (retryToken) retryHeaders['Authorization'] = `Bearer ${retryToken}`;
-      const retry = await fetch(`${BASE}${url}`, { headers: retryHeaders, ...init });
-      if (!retry.ok) { logout(); window.location.href = '/login'; throw new Error('Session expired'); }
+      const retry = await fetch(`${BASE}${url}`, { ...init, headers: retryHeaders });
+      if (!retry.ok) {
+        logout();
+        window.location.href = '/login';
+        throw new Error('Session expired');
+      }
       return retry.json();
-    } catch {
+    } catch (err) {
+      if ((err as Error).message === 'Session expired') throw err;
       logout();
       window.location.href = '/login';
       throw new Error('Session expired');
