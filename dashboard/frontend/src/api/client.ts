@@ -12,14 +12,33 @@ import type {
   SyncFilterEntry,
   AnalysisResults,
 } from "../types";
+import { getIdToken, refreshSession, logout } from '../auth/auth';
 
 const BASE = "/api";
 
 async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${url}`, {
-    headers: { "Content-Type": "application/json" },
-    ...init,
-  });
+  const token = getIdToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE}${url}`, { headers, ...init });
+
+  if (res.status === 401) {
+    try {
+      await refreshSession();
+      const retryToken = getIdToken();
+      const retryHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (retryToken) retryHeaders['Authorization'] = `Bearer ${retryToken}`;
+      const retry = await fetch(`${BASE}${url}`, { headers: retryHeaders, ...init });
+      if (!retry.ok) { logout(); window.location.href = '/login'; throw new Error('Session expired'); }
+      return retry.json();
+    } catch {
+      logout();
+      window.location.href = '/login';
+      throw new Error('Session expired');
+    }
+  }
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`API error ${res.status}: ${text}`);
