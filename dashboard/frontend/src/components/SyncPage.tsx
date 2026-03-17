@@ -12,7 +12,7 @@ export default function SyncPage() {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasFetchedRemote, setHasFetchedRemote] = useState(false);
-  const statusTimer = useRef<ReturnType<typeof setTimeout>>();
+  const statusTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const showStatus = (s: AutobrrConnectionStatus) => {
     setStatus(s);

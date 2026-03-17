@@ -71,7 +71,7 @@ function App() {
   const [syncEntries, setSyncEntries] = useState<SyncFilterEntry[]>([]);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [syncToast, setSyncToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const syncToastTimer = useRef<ReturnType<typeof setTimeout>>();
+  const syncToastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [dirtyFilterIds, setDirtyFilterIds] = useState<Set<string>>(new Set());
 
   // --- Analysis state ---
@@ -187,20 +187,6 @@ function App() {
     }
   };
 
-  const handleDuplicate = () => {
-    const source = selectedFilter;
-    if (!source) return;
-    setDraftFilter({
-      name: source.name + "-copy",
-      version: source.version,
-      data: { ...source.data },
-      _id: "",
-      _source: "saved",
-    });
-    setSelectedId(null);
-    setIsCreateMode(true);
-    setError(null);
-  };
 
   const handlePromote = async () => {
     if (!selectedId) return;

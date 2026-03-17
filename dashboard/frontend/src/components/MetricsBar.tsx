@@ -59,7 +59,7 @@ function missedHint(result: SimulationResult): string {
   const { skip_reasons } = result;
   const rateLimited = skip_reasons["rate_limited"] ?? 0;
   const storageFull = skip_reasons["storage_full"] ?? 0;
-  const noMatch = skip_reasons["no_match"] ?? 0;
+  void (skip_reasons["no_match"] ?? 0);
   const total = rateLimited + storageFull;
   if (total === 0) return "No matched torrents were missed. Filters are well-tuned.";
   const topReason =

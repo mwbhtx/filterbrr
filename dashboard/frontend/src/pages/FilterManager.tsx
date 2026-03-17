@@ -94,20 +94,6 @@ export default function FilterManager() {
     }
   };
 
-  const handleDuplicate = () => {
-    const source = selectedFilter;
-    if (!source) return;
-    setDraftFilter({
-      name: source.name + "-copy",
-      version: source.version,
-      data: { ...source.data },
-      _id: "",
-      _source: "saved",
-    });
-    setSelectedId(null);
-    setIsCreateMode(true);
-    setError(null);
-  };
 
   const currentFilter: Filter | null = isCreateMode
     ? draftFilter
@@ -149,7 +135,6 @@ export default function FilterManager() {
             readOnly={readOnly}
             onSave={handleSave}
             onDelete={!isCreateMode && selectedId ? handleDelete : undefined}
-            onDuplicate={!isCreateMode && selectedFilter ? handleDuplicate : undefined}
           />
         ) : (
           <p className="text-gray-500">Select a filter or create a new one.</p>

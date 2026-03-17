@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../api/client";
-import type { Filter, Dataset, AppConfig, SimulationResult } from "../types";
+import type { Filter, Dataset, SimulationResult } from "../types";
 import MetricsBar from "../components/MetricsBar";
 import FilterBreakdown from "../components/FilterBreakdown";
 import {
@@ -12,7 +12,7 @@ import {
 export default function SimulationRunner() {
   const [filters, setFilters] = useState<Filter[]>([]);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [config, setConfig] = useState<AppConfig | null>(null);
+  const [storageTbDefault, setStorageTbDefault] = useState<number>(4);
 
   const [selectedDataset, setSelectedDataset] = useState<string>("");
   const [storageTb, setStorageTb] = useState<number>(0);
@@ -25,24 +25,26 @@ export default function SimulationRunner() {
 
   const loadData = useCallback(async () => {
     try {
-      const [filtersData, datasetsData, configData] = await Promise.all([
+      const [filtersData, datasetsData, settingsData] = await Promise.all([
         api.getFilters(),
         api.getDatasets(),
-        api.getConfig(),
+        api.getSettings(),
       ]);
       setFilters(filtersData);
       setDatasets(datasetsData);
-      setConfig(configData);
 
       if (datasetsData.length > 0) {
         setSelectedDataset(datasetsData[0].path);
       }
-      setStorageTb(configData.storage_tb);
-      setMaxSeedDays(configData.max_seed_days);
+      const defaultSeedbox = settingsData.seedboxes[0];
+      if (defaultSeedbox) {
+        setStorageTbDefault(defaultSeedbox.storage_tb);
+        setStorageTb(defaultSeedbox.storage_tb);
+      }
 
       // Pre-select enabled filters
-      const enabled = new Set(
-        filtersData.filter((f) => f.data.enabled).map((f) => f._id)
+      const enabled = new Set<string>(
+        filtersData.filter((f: Filter) => f.data.enabled).map((f: Filter) => f._id)
       );
       setEnabledFilterIds(enabled);
     } catch (err: unknown) {
@@ -77,6 +79,7 @@ export default function SimulationRunner() {
         filter_ids: Array.from(enabledFilterIds),
         storage_tb: storageTb,
         max_seed_days: maxSeedDays,
+        avg_ratio: 1.0,
       });
       setResult(res);
     } catch (err: unknown) {
@@ -86,7 +89,8 @@ export default function SimulationRunner() {
     }
   };
 
-  const targetPct = config?.target_utilization_pct ?? 80;
+  const targetPct = 80;
+  void storageTbDefault;
 
   return (
     <div className="space-y-6">
@@ -198,7 +202,7 @@ export default function SimulationRunner() {
       {/* Results section */}
       {result && (
         <div className="space-y-6">
-          <MetricsBar result={result} targetUtilization={targetPct} />
+          <MetricsBar result={result} />
           <FilterBreakdown result={result} />
           <UtilizationChart
             dailyStats={result.daily_stats}
