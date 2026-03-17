@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthModule } from './auth/auth.module';
+import { CognitoAuthGuard } from './auth/cognito-auth.guard';
 import { HealthModule } from './health/health.module';
 import { DynamoModule } from './dynamo/dynamo.module';
 import { SettingsModule } from './settings/settings.module';
@@ -11,6 +14,7 @@ import { AutobrrModule } from './autobrr/autobrr.module';
 import { SyncModule } from './sync/sync.module';
 
 @Module({
-  imports: [DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, SimulationModule, AutobrrModule, SyncModule],
+  imports: [AuthModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, SimulationModule, AutobrrModule, SyncModule],
+  providers: [{ provide: APP_GUARD, useClass: CognitoAuthGuard }],
 })
 export class AppModule {}

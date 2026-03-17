@@ -7,6 +7,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.enableCors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173' });
+  app.use((req: any, _res: any, next: any) => {
+    if (req.user?.userId) req.userId = req.user.userId;
+    next();
+  });
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap().catch((err) => {
