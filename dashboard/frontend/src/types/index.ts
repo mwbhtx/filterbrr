@@ -31,6 +31,11 @@ export interface Dataset {
   filename: string;
   path: string;
   size_mb: number;
+  category: string;
+  scraped_at: string | null;
+  torrent_count: number;
+  min_date: string | null;
+  max_date: string | null;
 }
 
 export interface AppConfig {
@@ -89,6 +94,23 @@ export interface SimulationResult {
   total_upload_gb: number;
   steady_state_daily_upload_gb: number;
   avg_ratio: number;
+  grabbed_torrents: GrabbedTorrent[];
+  skipped_torrents: SkippedTorrent[];
+}
+
+export interface GrabbedTorrent {
+  name: string;
+  size_gb: number;
+  filter: string;
+  date: string;
+}
+
+export interface SkippedTorrent {
+  name: string;
+  size_gb: number;
+  date: string;
+  reason: string;
+  suggestion: string;
 }
 
 export interface ScrapeRequest {
@@ -105,6 +127,7 @@ export interface ParseRequest {
 export interface AnalyzeRequest {
   source: string;
   storage_tb?: number;
+  dataset_path?: string;
 }
 
 export interface JobStatus {
@@ -134,4 +157,19 @@ export interface SyncFilterEntry {
   last_synced: string | null;
   local_filter: Omit<Filter, "_id" | "_source"> | null;
   remote_filter: Omit<Filter, "_id" | "_source"> | null;
+}
+
+export interface ReleaseGroupRanking {
+  name: string;
+  score: number;
+  score_per_gb: number;
+  count: number;
+  daily_gb: number;
+  tier: string;
+}
+
+export interface AnalysisResults {
+  source: string;
+  generated_at: string;
+  release_groups: ReleaseGroupRanking[];
 }

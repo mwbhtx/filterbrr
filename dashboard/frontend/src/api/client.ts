@@ -11,6 +11,7 @@ import type {
   AutobrrSettings,
   AutobrrConnectionStatus,
   SyncFilterEntry,
+  AnalysisResults,
 } from "../types";
 
 const BASE = "/api";
@@ -50,6 +51,10 @@ export const api = {
     fetchJSON<{ saved: number }>("/pipeline/save-all-temp", { method: "POST" }),
 
   getDatasets: () => fetchJSON<Dataset[]>("/datasets"),
+  deleteDataset: (filename: string) =>
+    fetchJSON<{ deleted: string }>(`/datasets/${encodeURIComponent(filename)}`, {
+      method: "DELETE",
+    }),
   getConfig: () => fetchJSON<AppConfig>("/config"),
 
   runSimulation: (req: SimulationRequest) =>
@@ -103,4 +108,8 @@ export const api = {
   pushAll: () => fetchJSON<{ pushed: number }>("/autobrr/push", { method: "POST" }),
   pushFilter: (localId: string) =>
     fetchJSON<unknown>(`/autobrr/push/${localId}`, { method: "POST" }),
+
+  // Analysis
+  getAnalysisResults: (source: string) =>
+    fetchJSON<AnalysisResults>(`/analysis/${source}`),
 };

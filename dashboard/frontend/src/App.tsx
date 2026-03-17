@@ -1,19 +1,20 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { api } from "./api/client";
-import type { Filter, FilterData, Dataset, AppConfig, SimulationResult } from "./types";
+import type { Filter, FilterData, Dataset, AppConfig, SimulationResult, SyncFilterEntry, AnalysisResults } from "./types";
 import FilterList from "./components/FilterList";
 import FilterForm from "./components/FilterForm";
 import MetricsBar from "./components/MetricsBar";
 import FilterBreakdown from "./components/FilterBreakdown";
-import PipelinePanel from "./components/PipelinePanel";
+import SimulatorToolbar from "./components/PipelinePanel";
 import SettingsPage from "./components/SettingsPage";
-import SyncPage from "./components/SyncPage";
+import DatasetsPage from "./components/DatasetsPage";
 import {
   UtilizationChart,
   DailyGrabsChart,
   GBFlowChart,
   UploadChart,
 } from "./components/TimeSeriesChart";
+import { GrabbedList, SkippedList } from "./components/TorrentList";
 
 const emptyFilterData: FilterData = {
   enabled: true,
@@ -46,6 +47,7 @@ function App() {
   const [draftFilter, setDraftFilter] = useState<Filter | null>(null);
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [showFilterForm, setShowFilterForm] = useState(false);
+  const [originalFilter, setOriginalFilter] = useState<Filter | null>(null);
 
   // --- Simulation state ---
   const [datasets, setDatasets] = useState<Dataset[]>([]);
@@ -59,7 +61,17 @@ function App() {
   const [result, setResult] = useState<SimulationResult | null>(null);
 
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"simulator" | "sync" | "settings">("simulator");
+  const [activeTab, setActiveTab] = useState<"simulator" | "datasets" | "settings">("simulator");
+
+  // --- Sync state ---
+  const [syncEntries, setSyncEntries] = useState<SyncFilterEntry[]>([]);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [syncToast, setSyncToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const syncToastTimer = useRef<ReturnType<typeof setTimeout>>();
+  const [dirtyFilterIds, setDirtyFilterIds] = useState<Set<string>>(new Set());
+
+  // --- Analysis state ---
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
 
   // --- Load all data ---
   const loadData = useCallback(async () => {
@@ -77,6 +89,14 @@ function App() {
       }
       setStorageTb(configData.storage_tb);
       setMaxSeedDays(configData.max_seed_days);
+      // Re-fetch analysis results for current dataset
+      const currentDs = selectedDataset || (datasetsData.length > 0 ? datasetsData[0].path : "");
+      const ds = datasetsData.find(d => d.path === currentDs);
+      if (ds?.category) {
+        api.getAnalysisResults(ds.category)
+          .then(setAnalysisResults)
+          .catch(() => setAnalysisResults(null));
+      }
       // Pre-select enabled filters
       setEnabledFilterIds((prev) => {
         if (prev.size > 0) return prev;
@@ -89,13 +109,25 @@ function App() {
 
   useEffect(() => {
     loadData();
+    refreshSyncStatus();
   }, [loadData]);
+
+  // Fetch analysis results when dataset changes
+  useEffect(() => {
+    const ds = datasets.find(d => d.path === selectedDataset);
+    if (ds?.category) {
+      api.getAnalysisResults(ds.category)
+        .then(setAnalysisResults)
+        .catch(() => setAnalysisResults(null));
+    }
+  }, [selectedDataset, datasets]);
 
   // --- Filter handlers ---
   const selectedFilter = filters.find((f) => f._id === selectedId) ?? null;
 
   const handleSelectFilter = (filter: Filter) => {
     setSelectedId(filter._id);
+    setOriginalFilter(JSON.parse(JSON.stringify(filter)));
     setDraftFilter(null);
     setIsCreateMode(false);
     setShowFilterForm(true);
@@ -121,8 +153,10 @@ function App() {
         setEnabledFilterIds((prev) => new Set([...prev, created._id]));
       } else if (selectedId) {
         await api.updateFilter(selectedId, filter);
+        setDirtyFilterIds((prev) => { const next = new Set(prev); next.delete(selectedId); return next; });
       }
       await loadData();
+      setOriginalFilter(null);
       setError(null);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to save filter");
@@ -201,6 +235,80 @@ function App() {
     }
   };
 
+  // --- Sync helpers ---
+  const showSyncToast = (type: "success" | "error", text: string) => {
+    setSyncToast({ type, text });
+    clearTimeout(syncToastTimer.current);
+    syncToastTimer.current = setTimeout(() => setSyncToast(null), 4000);
+  };
+
+  const refreshSyncStatus = async () => {
+    try {
+      const entries = await api.getSyncStatus();
+      setSyncEntries(entries);
+    } catch {
+      // Autobrr not configured — silently ignore
+      setSyncEntries([]);
+    }
+  };
+
+  const handlePushFilter = async (filterId: string) => {
+    setSyncingId(filterId);
+    try {
+      await api.pushFilter(filterId);
+      await refreshSyncStatus();
+      setDirtyFilterIds((prev) => { const next = new Set(prev); next.delete(filterId); return next; });
+      showSyncToast("success", "Pushed to autobrr");
+    } catch (err: unknown) {
+      showSyncToast("error", err instanceof Error ? err.message : "Push failed");
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
+  const handlePullFilter = async (remoteId: number) => {
+    setSyncingId(String(remoteId));
+    try {
+      await api.pullFilter(remoteId);
+      await Promise.all([loadData(), refreshSyncStatus()]);
+      showSyncToast("success", "Pulled from autobrr");
+    } catch (err: unknown) {
+      showSyncToast("error", err instanceof Error ? err.message : "Pull failed");
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
+  const handlePushAll = async () => {
+    setSyncingId("all");
+    try {
+      await api.pushAll();
+      await refreshSyncStatus();
+      setDirtyFilterIds(new Set());
+      showSyncToast("success", "All filters pushed to autobrr");
+    } catch (err: unknown) {
+      showSyncToast("error", err instanceof Error ? err.message : "Push all failed");
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
+  const handlePullAll = async () => {
+    setSyncingId("all");
+    try {
+      await api.pullAll();
+      await Promise.all([loadData(), refreshSyncStatus()]);
+      showSyncToast("success", "All filters pulled from autobrr");
+    } catch (err: unknown) {
+      showSyncToast("error", err instanceof Error ? err.message : "Pull all failed");
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
+  // Build sync lookup: filter name -> sync entry
+  const syncByName = new Map(syncEntries.map((e) => [e.name, e]));
+
   const currentFilter: Filter | null = isCreateMode
     ? draftFilter
     : selectedFilter;
@@ -245,11 +353,11 @@ function App() {
   const targetPct = config?.target_utilization_pct ?? 85;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <div className="h-screen bg-gray-950 text-gray-100 flex flex-col overflow-hidden">
       <header className="border-b border-gray-800 px-6 py-3 flex items-center gap-8 flex-shrink-0">
         <h1 className="text-lg font-semibold">Torrent Filter Simulator</h1>
         <nav className="flex gap-1">
-          {(["simulator", "sync", "settings"] as const).map((tab) => (
+          {(["simulator", "datasets", "settings"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -283,6 +391,13 @@ function App() {
                   await loadData();
                 } catch {}
               }}
+              syncByName={syncByName}
+              dirtyIds={dirtyFilterIds}
+              syncingId={syncingId}
+              onPush={handlePushFilter}
+              onPull={handlePullFilter}
+              onPushAll={handlePushAll}
+              onPullAll={handlePullAll}
             />
           </div>
 
@@ -296,14 +411,22 @@ function App() {
                   </h2>
                   <button
                     onClick={() => {
+                      // Restore original filter state if we were editing
+                      if (originalFilter && selectedId) {
+                        setFilters((prev) =>
+                          prev.map((f) => (f._id === originalFilter._id ? originalFilter : f))
+                        );
+                        setDirtyFilterIds((prev) => { const next = new Set(prev); next.delete(selectedId); return next; });
+                      }
                       setShowFilterForm(false);
                       setSelectedId(null);
                       setDraftFilter(null);
                       setIsCreateMode(false);
+                      setOriginalFilter(null);
                     }}
                     className="text-gray-500 hover:text-gray-300 text-sm"
                   >
-                    Close
+                    Cancel
                   </button>
                 </div>
 
@@ -319,14 +442,30 @@ function App() {
                 {currentFilter && (
                   <FilterForm
                     filter={currentFilter}
+                    analysisResults={analysisResults}
                     readOnly={readOnly ?? false}
                     onSave={handleSave}
                     onDelete={!isCreateMode && selectedId ? handleDelete : undefined}
                     onPromote={!isCreateMode && selectedFilter?._source === "temp" ? handlePromote : undefined}
+                    onPush={!isCreateMode && selectedId ? handlePushFilter : undefined}
+                    pushing={syncingId === selectedId}
+                    onCancel={!isCreateMode && selectedId ? () => {
+                      if (originalFilter) {
+                        setFilters((prev) =>
+                          prev.map((f) => (f._id === originalFilter._id ? originalFilter : f))
+                        );
+                        setDirtyFilterIds((prev) => { const next = new Set(prev); next.delete(selectedId); return next; });
+                        setOriginalFilter(JSON.parse(JSON.stringify(originalFilter)));
+                      }
+                    } : undefined}
+                    isDirty={selectedId ? dirtyFilterIds.has(selectedId) : false}
                     onChange={(updated) => {
                       setFilters((prev) =>
                         prev.map((f) => (f._id === updated._id ? updated : f))
                       );
+                      if (updated._id) {
+                        setDirtyFilterIds((prev) => new Set([...prev, updated._id]));
+                      }
                     }}
                   />
                 )}
@@ -344,29 +483,21 @@ function App() {
             )}
 
             {/* Data Pipeline */}
-            <PipelinePanel storageTb={storageTb} onDataChanged={loadData} />
+            <SimulatorToolbar
+              datasets={datasets}
+              selectedDataset={selectedDataset}
+              onDatasetChange={setSelectedDataset}
+              storageTb={storageTb}
+              onDataChanged={loadData}
+            />
 
             {/* Simulation setup */}
             <div className="rounded-lg bg-gray-900 border border-gray-800 p-5 space-y-4 mb-6">
               <h2 className="text-base font-semibold">Simulation Setup</h2>
 
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Dataset</label>
-                  <select
-                    value={selectedDataset}
-                    onChange={(e) => setSelectedDataset(e.target.value)}
-                    className="w-full rounded bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-100"
-                  >
-                    {datasets.map((ds) => (
-                      <option key={ds.path} value={ds.path}>
-                        {ds.filename} ({ds.size_mb} MB)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Storage (TB)</label>
+                  <label className="block text-xs text-gray-400 mb-1">Max Storage (TB)</label>
                   <input
                     type="number"
                     value={storageTb}
@@ -377,7 +508,7 @@ function App() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Max Seed Days</label>
+                  <label className="block text-xs text-gray-400 mb-1">Avg. Seed Days</label>
                   <input
                     type="number"
                     value={maxSeedDays}
@@ -444,21 +575,39 @@ function App() {
                 {result.avg_ratio > 0 && (
                   <UploadChart dailyStats={result.daily_stats} />
                 )}
+                <GrabbedList torrents={result.grabbed_torrents} />
+                <SkippedList torrents={result.skipped_torrents} />
               </div>
             )}
           </div>
         </div>
       )}
 
-      {activeTab === "sync" && (
+      {activeTab === "datasets" && (
         <div className="flex-1 overflow-y-auto p-6">
-          <SyncPage />
+          <DatasetsPage
+            onSelectDataset={(path) => {
+              setSelectedDataset(path);
+              setActiveTab("simulator");
+            }}
+          />
         </div>
       )}
 
       {activeTab === "settings" && (
         <div className="flex-1 overflow-y-auto p-6">
           <SettingsPage />
+        </div>
+      )}
+
+      {/* Sync toast */}
+      {syncToast && (
+        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded text-sm shadow-lg transition-opacity ${
+          syncToast.type === "success"
+            ? "bg-green-900/90 border border-green-700 text-green-200"
+            : "bg-red-900/90 border border-red-700 text-red-200"
+        }`}>
+          {syncToast.text}
         </div>
       )}
     </div>
