@@ -82,16 +82,7 @@ export default function DatasetsPage({ trackers, onSelectDataset }: DatasetsPage
 
   return (
     <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold">Datasets</h2>
-        <button
-          onClick={load}
-          disabled={loading}
-          className="text-xs text-gray-400 hover:text-gray-200 disabled:opacity-50"
-        >
-          {loading ? "Loading..." : "Refresh"}
-        </button>
-      </div>
+      <h2 className="text-base font-semibold">Datasets</h2>
 
       {/* New Scrape — collapsible */}
       <div className="rounded-lg bg-gray-900 border border-gray-800 overflow-hidden">

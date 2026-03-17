@@ -55,16 +55,18 @@ function utilizationHint(result: SimulationResult): string {
   return "Balanced. Fine-tune seed days or storage to shift utilization.";
 }
 
-function blackoutHint(result: SimulationResult): string {
-  if (result.blackout_days === 0) return "No blackout days. Filters are consistently active.";
+function missedHint(result: SimulationResult): string {
   const { skip_reasons } = result;
   const rateLimited = skip_reasons["rate_limited"] ?? 0;
   const storageFull = skip_reasons["storage_full"] ?? 0;
-  if (storageFull > rateLimited)
-    return "Blackouts from full storage. Shorten seed days or increase storage.";
-  if (rateLimited > 0)
-    return "Blackouts from rate limits. Raise max downloads or split across filters.";
-  return "Blackouts from no matches. Broaden categories, resolutions, or sources.";
+  const noMatch = skip_reasons["no_match"] ?? 0;
+  const total = rateLimited + storageFull;
+  if (total === 0) return "No matched torrents were missed. Filters are well-tuned.";
+  const topReason =
+    storageFull >= rateLimited ? "storage" : "rate_limit";
+  if (topReason === "storage")
+    return "Most misses from full storage. Shorten seed days or increase storage.";
+  return "Most misses from rate limits. Raise max downloads or widen the window.";
 }
 
 function uploadHint(result: SimulationResult): string {
@@ -75,10 +77,6 @@ function uploadHint(result: SimulationResult): string {
 }
 
 export default function MetricsBar({ result }: MetricsBarProps) {
-  const skipParts = Object.entries(result.skip_reasons)
-    .map(([reason, count]) => `${reason}: ${count}`)
-    .join(", ");
-
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       {/* Grabbed */}
@@ -123,21 +121,37 @@ export default function MetricsBar({ result }: MetricsBarProps) {
         <TuningHint text={utilizationHint(result)} />
       </div>
 
-      {/* Blackout Days */}
-      <div className={`rounded-lg p-4 ${
-        result.blackout_days > 0
-          ? "bg-red-900/40 border border-red-700"
-          : "bg-gray-900 border border-gray-800"
-      }`}>
-        <p className="text-sm text-gray-400">Blackout Days</p>
-        <p className={`text-2xl font-bold ${
-          result.blackout_days > 0 ? "text-red-300" : "text-white"
-        }`}>{result.blackout_days}</p>
-        <p className="text-sm text-gray-500 truncate" title={skipParts}>
-          {skipParts || "No skips"}
-        </p>
-        <TuningHint text={blackoutHint(result)} />
-      </div>
+      {/* Missed Torrents */}
+      {(() => {
+        const rateLimited = result.skip_reasons["rate_limited"] ?? 0;
+        const storageFull = result.skip_reasons["storage_full"] ?? 0;
+        const missed = rateLimited + storageFull;
+        const hasMissed = missed > 0;
+        return (
+          <div className={`rounded-lg p-4 ${
+            hasMissed
+              ? "bg-red-900/40 border border-red-700"
+              : "bg-gray-900 border border-gray-800"
+          }`}>
+            <p className="text-sm text-gray-400">Missed Torrents</p>
+            <p className={`text-2xl font-bold ${
+              hasMissed ? "text-red-300" : "text-white"
+            }`}>{missed.toLocaleString()}</p>
+            <p className="text-sm text-gray-500">
+              {storageFull > 0 && `${storageFull.toLocaleString()} storage`}
+              {storageFull > 0 && rateLimited > 0 && " · "}
+              {rateLimited > 0 && `${rateLimited.toLocaleString()} rate limited`}
+              {missed === 0 && "No matched torrents missed"}
+            </p>
+            {result.blackout_days > 0 && (
+              <p className="text-xs text-red-400/70 mt-1">
+                {result.blackout_days} blackout day{result.blackout_days !== 1 ? "s" : ""}
+              </p>
+            )}
+            <TuningHint text={missedHint(result)} />
+          </div>
+        );
+      })()}
 
       {/* Estimated Monthly Upload */}
       {result.avg_ratio > 0 && (

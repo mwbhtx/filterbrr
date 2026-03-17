@@ -491,22 +491,41 @@ function App() {
             {/* Data Pipeline */}
             <SimulatorToolbar
               datasets={datasets}
+              trackers={trackers}
               selectedDataset={selectedDataset}
               onDatasetChange={setSelectedDataset}
               seedboxes={seedboxes}
               selectedSeedboxId={selectedSeedboxId}
               onSeedboxChange={setSelectedSeedboxId}
               onDataChanged={loadData}
+              onGoToSettings={() => setActiveTab("settings")}
               avgSeedDays={avgSeedDays}
             />
 
             {/* Simulation setup */}
             <div className="rounded-lg bg-gray-900 border border-gray-800 p-5 space-y-4 mb-6">
               <h2 className="text-base font-semibold">Simulation Setup</h2>
+              {(trackers.length === 0 || seedboxes.length === 0) && (
+                <p className="text-sm text-gray-500 italic">
+                  Simulation requires a tracker and seedbox — configure them in Settings.
+                </p>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Avg. Seed Days</label>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="text-xs text-gray-400">Avg. Seed Days</label>
+                    <div className="relative group">
+                      <svg className="w-3.5 h-3.5 text-gray-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 hidden group-hover:block z-10 pointer-events-none">
+                        <div className="bg-gray-800 border border-gray-700 rounded p-2.5 text-xs text-gray-300 shadow-lg">
+                          How long torrents typically occupy disk space before your client removes them. Some torrents get deleted in hours after hitting ratio; others sit the full minimum seed time. Use your real average — this directly determines how much storage the simulation budgets per torrent.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <input
                     type="number"
                     value={avgSeedDays}
@@ -517,7 +536,19 @@ function App() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Avg Ratio</label>
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="text-xs text-gray-400">Avg Ratio</label>
+                    <div className="relative group">
+                      <svg className="w-3.5 h-3.5 text-gray-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 hidden group-hover:block z-10 pointer-events-none">
+                        <div className="bg-gray-800 border border-gray-700 rounded p-2.5 text-xs text-gray-300 shadow-lg">
+                          Your typical upload-to-download ratio per torrent. A ratio of 1.0 means you upload as much as you download; 2.0 means you upload twice as much. The simulation uses this to estimate total upload across all grabbed torrents — check your client stats for a realistic value.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <input
                     type="number"
                     value={avgRatio}
@@ -553,7 +584,7 @@ function App() {
 
               <button
                 onClick={handleRun}
-                disabled={running || enabledFilterIds.size === 0}
+                disabled={running || enabledFilterIds.size === 0 || trackers.length === 0 || seedboxes.length === 0 || !selectedDataset}
                 className="rounded bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {running ? "Running..." : "Run Simulation"}

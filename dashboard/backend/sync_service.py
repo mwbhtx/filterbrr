@@ -153,7 +153,8 @@ def pull_all() -> list[dict]:
 def push_filter(local_filter_id: str) -> dict:
     """Push a local filter to autobrr.
 
-    If a sync mapping exists (we know the remote ID), update it.
+    If a sync mapping exists (we know the remote ID), try to update it.
+    If the remote ID is stale, fall through to name match or create.
     If a remote filter with matching [AUTO] name exists, update it.
     Otherwise, create a new filter in autobrr.
     Returns the remote filter response.
@@ -165,21 +166,30 @@ def push_filter(local_filter_id: str) -> dict:
     remote_data = local_to_remote(local)
     expected_name = remote_data["name"]
 
+    def _preserve_and_update(remote_id: int) -> dict:
+        """Update a remote filter, preserving its indexers and actions."""
+        existing_remote = get_remote_filter(remote_id)
+        remote_data["indexers"] = existing_remote.get("indexers", [])
+        remote_data["actions"] = existing_remote.get("actions", [])
+        result = update_remote_filter(remote_id, remote_data)
+        _set_sync_mapping(local_filter_id, remote_id)
+        return result
+
     # Check sync state for known remote ID
     mapping = _get_sync_mapping(local_filter_id)
     if mapping:
-        result = update_remote_filter(mapping["remote_id"], remote_data)
-        _set_sync_mapping(local_filter_id, mapping["remote_id"])
-        return result
+        try:
+            return _preserve_and_update(mapping["remote_id"])
+        except ValueError:
+            # Remote filter no longer exists — clear stale mapping, fall through
+            pass
 
     # Check if remote filter with same [AUTO] name exists
     remote_filters = list_remote_filters()
     existing = next((rf for rf in remote_filters if rf.get("name") == expected_name), None)
 
     if existing:
-        result = update_remote_filter(existing["id"], remote_data)
-        _set_sync_mapping(local_filter_id, existing["id"])
-        return result
+        return _preserve_and_update(existing["id"])
     else:
         result = create_remote_filter(remote_data)
         _set_sync_mapping(local_filter_id, result["id"])

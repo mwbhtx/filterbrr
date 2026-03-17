@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "../api/client";
 import type { Filter, AutobrrConnectionStatus, SyncFilterEntry } from "../types";
 
 export default function SyncPage() {
   const [status, setStatus] = useState<AutobrrConnectionStatus | null>(null);
+  const [statusVisible, setStatusVisible] = useState(false);
   const [entries, setEntries] = useState<SyncFilterEntry[]>([]);
   const [localFilters, setLocalFilters] = useState<Filter[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -11,6 +12,14 @@ export default function SyncPage() {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasFetchedRemote, setHasFetchedRemote] = useState(false);
+  const statusTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const showStatus = (s: AutobrrConnectionStatus) => {
+    setStatus(s);
+    setStatusVisible(true);
+    clearTimeout(statusTimer.current);
+    statusTimer.current = setTimeout(() => setStatusVisible(false), 4000);
+  };
 
   // Load local filters instantly on mount
   useEffect(() => {
@@ -26,12 +35,12 @@ export default function SyncPage() {
         api.getAutobrrStatus(),
         api.getSyncStatus(),
       ]);
-      setStatus(statusResult);
+      showStatus(statusResult);
       setEntries(syncResult);
       setHasFetchedRemote(true);
     } catch (err: unknown) {
       if (err instanceof Error && err.message.includes("400")) {
-        setStatus({ connected: false, error: "Autobrr not configured — go to Settings" });
+        showStatus({ connected: false, error: "Autobrr not configured — go to Settings" });
         setEntries([]);
       } else {
         setError(err instanceof Error ? err.message : "Failed to load sync status");
@@ -142,21 +151,6 @@ export default function SyncPage() {
 
   return (
     <div className="space-y-6">
-      {/* Connection status banner */}
-      {status && (
-        <div
-          className={`px-4 py-2 rounded text-sm ${
-            status.connected
-              ? "bg-green-900/30 border border-green-800 text-green-300"
-              : "bg-red-900/30 border border-red-800 text-red-300"
-          }`}
-        >
-          {status.connected
-            ? `Connected to autobrr — ${status.filter_count} filters`
-            : `Not connected: ${status.error}`}
-        </div>
-      )}
-
       {error && (
         <div className="px-4 py-2 rounded bg-red-900/50 border border-red-700 text-red-200 text-sm flex items-center justify-between">
           <span>{error}</span>
@@ -300,6 +294,23 @@ export default function SyncPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Connection status toast */}
+      {status && (
+        <div
+          className={`px-4 py-2 rounded text-sm transition-opacity duration-500 ${
+            statusVisible ? "opacity-100" : "opacity-0"
+          } ${
+            status.connected
+              ? "bg-green-900/30 border border-green-800 text-green-300"
+              : "bg-red-900/30 border border-red-800 text-red-300"
+          }`}
+        >
+          {status.connected
+            ? `Connected to autobrr — ${status.filter_count} filters`
+            : `Not connected: ${status.error}`}
+        </div>
+      )}
     </div>
   );
 }

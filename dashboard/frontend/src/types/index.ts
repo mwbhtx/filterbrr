@@ -32,6 +32,7 @@ export interface Dataset {
   path: string;
   size_mb: number;
   category: string;
+  tracker_type: string;
   scraped_at: string | null;
   torrent_count: number;
   min_date: string | null;

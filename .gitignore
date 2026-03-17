@@ -1,3 +1,63 @@
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Local state (migrating to DynamoDB)
 .settings.json
 .sync_state.json
+
+# Generated analysis output (stored in S3)
+analysis_report_*.md
+torrents_data_*.csv
+
+# Raw scrape output (stored in S3)
+torrent-html/
+
+# Node
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# NestJS
+/dashboard/backend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/*.tfvars
+infra/.terraform.lock.hcl
+infra/override.tf
+infra/override.tf.json
+
+# AWS
+.aws-sam/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

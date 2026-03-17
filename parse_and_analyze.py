@@ -5,6 +5,7 @@ import re
 import sys
 import json
 import csv
+from datetime import datetime
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
@@ -232,15 +233,15 @@ def analyze(torrents, csv_filename="torrents_data.csv"):
 SOURCES = {
     "freeleech": {
         "subdirs": ["freeleech"],
-        "csv": "torrents_data_freeleech.csv",
+        "csv_prefix": "torrents_data_freeleech",
     },
     "movies": {
         "subdirs": ["movies"],
-        "csv": "torrents_data_movies.csv",
+        "csv_prefix": "torrents_data_movies",
     },
     "tv": {
         "subdirs": ["tv"],
-        "csv": "torrents_data_tv.csv",
+        "csv_prefix": "torrents_data_tv",
     },
 }
 
@@ -266,4 +267,6 @@ if __name__ == "__main__":
     if not torrents:
         print("No torrent data found. Run: python3 scraper.py %s" % args.source)
     else:
-        analyze(torrents, csv_filename=cfg["csv"])
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H%M")
+        csv_filename = f"{cfg['csv_prefix']}_{timestamp}.csv"
+        analyze(torrents, csv_filename=csv_filename)
