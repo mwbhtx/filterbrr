@@ -1,16 +1,23 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
+from pydantic import BaseModel
 
 from filters import list_filters, get_filter, save_filter, update_filter, delete_filter, promote_filter, promote_all_temp_filters, clear_temp_filters, delete_temp_filter
-from datasets import list_datasets
+from datasets import list_datasets, delete_dataset
 from models import SimulationRequest, ScrapeRequest, AnalyzeRequest
 from simulation import load_csv, score_torrents, run_simulation
 from pipeline import start_scrape, start_analyze, start_report_only, get_job
-from settings_service import AutobrrSettings, get_settings, update_settings
+from settings_service import Settings, get_settings, update_settings
 import httpx
 from autobrr_service import test_connection
 from sync_service import get_sync_status, pull_filter, pull_all, push_filter, push_all
+from analysis_service import get_analysis_results
+
+
+class AutobrrTestRequest(BaseModel):
+    autobrr_url: str
+    autobrr_api_key: str
 
 app = FastAPI(title="Torrent Filter Simulator")
 
@@ -23,24 +30,6 @@ app.add_middleware(
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-
-def _load_env_config() -> dict:
-    """Read .env config values."""
-    env_path = PROJECT_ROOT / ".env"
-    config = {}
-    if env_path.exists():
-        with open(env_path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, _, value = line.partition("=")
-                key = key.strip()
-                value = value.strip().strip('"').strip("'")
-                if "#" in value:
-                    value = value[:value.index("#")].strip()
-                config[key] = value
-    return config
 
 
 # Health
@@ -109,17 +98,12 @@ def api_list_datasets():
     return list_datasets()
 
 
-# Config
-@app.get("/api/config")
-def api_get_config():
-    env = _load_env_config()
-    return {
-        "storage_tb": float(env.get("STORAGE_TB", "4")),
-        "max_seed_days": int(env.get("MAX_SEED_DAYS", "10")),
-        "min_torrent_age_days": int(env.get("MIN_TORRENT_AGE_DAYS", "3")),
-        "burst_factor": int(env.get("BURST_FACTOR", "8")),
-        "target_utilization_pct": float(env.get("TARGET_UTILIZATION_PCT", "85")),
-    }
+@app.delete("/api/datasets/{filename}")
+def api_delete_dataset(filename: str):
+    if not delete_dataset(filename):
+        raise HTTPException(404, "Dataset not found")
+    return {"deleted": filename}
+
 
 
 # Simulation
@@ -146,21 +130,22 @@ def api_run_simulation(req: SimulationRequest):
 # Pipeline - Scrape + Parse (chained: scraper.py then parse_and_analyze.py)
 @app.post("/api/pipeline/scrape")
 def api_scrape(req: ScrapeRequest):
-    job = start_scrape(req.category, req.days, req.start_page, req.delay)
+    job = start_scrape(req.category, req.days, req.start_page, req.delay,
+                       tracker_id=req.tracker_id)
     return {"job_id": job.id}
 
 
 # Pipeline - Analyze & Generate Filters
 @app.post("/api/pipeline/analyze")
 def api_analyze(req: AnalyzeRequest):
-    job = start_analyze(req.source, req.storage_tb)
+    job = start_analyze(req.source, req.storage_tb, req.dataset_path)
     return {"job_id": job.id}
 
 
 # Pipeline - Regenerate Report Only (uses existing filters)
 @app.post("/api/pipeline/report-only")
 def api_report_only(req: AnalyzeRequest):
-    job = start_report_only(req.source, req.storage_tb)
+    job = start_report_only(req.source, req.storage_tb, req.dataset_path)
     return {"job_id": job.id}
 
 
@@ -180,11 +165,15 @@ def api_job_status(job_id: str):
 
 
 # Settings
-def _mask_settings(s: AutobrrSettings) -> dict:
+def _mask_settings(s: Settings) -> dict:
     masked = s.model_dump()
     if masked["autobrr_api_key"]:
         key = masked["autobrr_api_key"]
         masked["autobrr_api_key"] = key[:4] + "****" + key[-4:] if len(key) > 8 else "****"
+    for tracker in masked.get("trackers", []):
+        if tracker.get("password"):
+            pw = tracker["password"]
+            tracker["password"] = pw[:2] + "****" + pw[-2:] if len(pw) > 6 else "****"
     return masked
 
 
@@ -194,10 +183,16 @@ def api_get_settings():
 
 
 @app.put("/api/settings")
-def api_update_settings(body: AutobrrSettings):
+def api_update_settings(body: Settings):
+    old = get_settings()
     if "****" in body.autobrr_api_key:
-        old = get_settings()
         body.autobrr_api_key = old.autobrr_api_key
+    old_trackers = {t.id: t for t in old.trackers}
+    for tracker in body.trackers:
+        if "****" in tracker.password:
+            old_t = old_trackers.get(tracker.id)
+            if old_t:
+                tracker.password = old_t.password
     return _mask_settings(update_settings(body))
 
 
@@ -209,9 +204,13 @@ def api_autobrr_status_saved():
 
 
 @app.post("/api/autobrr/status")
-def api_autobrr_status_test(body: AutobrrSettings):
+def api_autobrr_status_test(body: AutobrrTestRequest):
     """Test connection using provided credentials (from settings form)."""
-    return test_connection(url=body.autobrr_url, api_key=body.autobrr_api_key)
+    api_key = body.autobrr_api_key
+    if "****" in api_key:
+        saved = get_settings()
+        api_key = saved.autobrr_api_key
+    return test_connection(url=body.autobrr_url, api_key=api_key)
 
 
 @app.get("/api/autobrr/filters")
@@ -256,3 +255,12 @@ def api_autobrr_push_one(filter_id: str):
         return result
     except (ValueError, httpx.HTTPError) as e:
         raise HTTPException(400, str(e))
+
+
+# Analysis Results
+@app.get("/api/analysis/{source}")
+def api_get_analysis(source: str):
+    result = get_analysis_results(source)
+    if result is None:
+        raise HTTPException(404, "No analysis results found. Run Generate Filters first.")
+    return result
