@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { HealthModule } from './health/health.module';
+import { DynamoModule } from './dynamo/dynamo.module';
 
 @Module({
-  imports: [HealthModule],
+  imports: [DynamoModule, HealthModule],
 })
 export class AppModule {}
