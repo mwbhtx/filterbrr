@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { api } from "./api/client";
-import type { Filter, FilterData, Dataset, AppConfig, SimulationResult, SyncFilterEntry, AnalysisResults } from "./types";
+import type { Filter, FilterData, Dataset, Seedbox, Tracker, SimulationResult, SyncFilterEntry, AnalysisResults } from "./types";
 import FilterList from "./components/FilterList";
 import FilterForm from "./components/FilterForm";
 import MetricsBar from "./components/MetricsBar";
@@ -51,11 +51,15 @@ function App() {
 
   // --- Simulation state ---
   const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [config, setConfig] = useState<AppConfig | null>(null);
   const [selectedDataset, setSelectedDataset] = useState<string>("");
-  const [storageTb, setStorageTb] = useState<number>(4);
-  const [maxSeedDays, setMaxSeedDays] = useState<number>(10);
+  const [seedboxes, setSeedboxes] = useState<Seedbox[]>([]);
+  const [selectedSeedboxId, setSelectedSeedboxId] = useState<string>("");
+  const [trackers, setTrackers] = useState<Tracker[]>([]);
+  const [avgSeedDays, setAvgSeedDays] = useState<number>(10);
   const [avgRatio, setAvgRatio] = useState<number>(1.0);
+
+  const selectedSeedbox = seedboxes.find(sb => sb.id === selectedSeedboxId);
+  const storageTb = selectedSeedbox?.storage_tb ?? 4;
   const [enabledFilterIds, setEnabledFilterIds] = useState<Set<string>>(new Set());
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<SimulationResult | null>(null);
@@ -76,19 +80,21 @@ function App() {
   // --- Load all data ---
   const loadData = useCallback(async () => {
     try {
-      const [filtersData, datasetsData, configData] = await Promise.all([
+      const [filtersData, datasetsData, settingsData] = await Promise.all([
         api.getFilters(),
         api.getDatasets(),
-        api.getConfig(),
+        api.getSettings(),
       ]);
       setFilters(filtersData);
       setDatasets(datasetsData);
-      setConfig(configData);
+      setSeedboxes(settingsData.seedboxes);
+      setTrackers(settingsData.trackers);
+      if (settingsData.seedboxes.length > 0 && !selectedSeedboxId) {
+        setSelectedSeedboxId(settingsData.seedboxes[0].id);
+      }
       if (datasetsData.length > 0 && !selectedDataset) {
         setSelectedDataset(datasetsData[0].path);
       }
-      setStorageTb(configData.storage_tb);
-      setMaxSeedDays(configData.max_seed_days);
       // Re-fetch analysis results for current dataset
       const currentDs = selectedDataset || (datasetsData.length > 0 ? datasetsData[0].path : "");
       const ds = datasetsData.find(d => d.path === currentDs);
@@ -339,7 +345,7 @@ function App() {
         dataset_path: selectedDataset,
         filters_inline: enabledFilters,
         storage_tb: storageTb,
-        max_seed_days: maxSeedDays,
+        max_seed_days: avgSeedDays,
         avg_ratio: avgRatio,
       });
       setResult(res);
@@ -350,7 +356,7 @@ function App() {
     }
   };
 
-  const targetPct = config?.target_utilization_pct ?? 85;
+  const targetPct = 85;
 
   return (
     <div className="h-screen bg-gray-950 text-gray-100 flex flex-col overflow-hidden">
@@ -487,7 +493,9 @@ function App() {
               datasets={datasets}
               selectedDataset={selectedDataset}
               onDatasetChange={setSelectedDataset}
-              storageTb={storageTb}
+              seedboxes={seedboxes}
+              selectedSeedboxId={selectedSeedboxId}
+              onSeedboxChange={setSelectedSeedboxId}
               onDataChanged={loadData}
             />
 
@@ -495,24 +503,13 @@ function App() {
             <div className="rounded-lg bg-gray-900 border border-gray-800 p-5 space-y-4 mb-6">
               <h2 className="text-base font-semibold">Simulation Setup</h2>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Max Storage (TB)</label>
-                  <input
-                    type="number"
-                    value={storageTb}
-                    onChange={(e) => setStorageTb(Number(e.target.value))}
-                    min={0}
-                    step={0.5}
-                    className="w-full rounded bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-100"
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-gray-400 mb-1">Avg. Seed Days</label>
                   <input
                     type="number"
-                    value={maxSeedDays}
-                    onChange={(e) => setMaxSeedDays(Number(e.target.value))}
+                    value={avgSeedDays}
+                    onChange={(e) => setAvgSeedDays(Number(e.target.value))}
                     min={1}
                     step={1}
                     className="w-full rounded bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-100"
@@ -586,6 +583,7 @@ function App() {
       {activeTab === "datasets" && (
         <div className="flex-1 overflow-y-auto p-6">
           <DatasetsPage
+            trackers={trackers}
             onSelectDataset={(path) => {
               setSelectedDataset(path);
               setActiveTab("simulator");
