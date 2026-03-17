@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: filterbrr-dynamodb
+    ports:
+      - '8000:8000'
+    command: '-jar DynamoDBLocal.jar -sharedDb -dbPath /data'
+    volumes:
+      - dynamodb-data:/data
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: filterbrr-localstack
+    ports:
+      - '4566:4566'
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=ap-southeast-2
+    volumes:
+      - localstack-data:/var/lib/localstack
+
+volumes:
+  dynamodb-data:
+  localstack-data:
