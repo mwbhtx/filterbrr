@@ -5,81 +5,69 @@ import argparse
 import csv
 import json
 import math
-import os
 import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from statistics import median, mean, quantiles
+from typing import Optional
 
 # ---------------------------------------------------------------------------
-# Configuration — defaults can be overridden via .env file
+# Configuration
 # ---------------------------------------------------------------------------
 
 BASE_DIR = Path(__file__).resolve().parent
 
-
-def _load_env():
-    """Load .env file into os.environ (simple key=value parser)."""
-    env_path = BASE_DIR / ".env"
-    if not env_path.exists():
-        return
-    with open(env_path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            if "=" not in line:
-                continue
-            key, _, value = line.partition("=")
-            key = key.strip()
-            value = value.strip().strip('"').strip("'")
-            # Strip inline comments (but not inside quoted values)
-            if "#" in value and not (value.startswith('"') or value.startswith("'")):
-                value = value[:value.index("#")].strip()
-            # Only set if not already in environment (env vars take precedence)
-            if key not in os.environ:
-                os.environ[key] = value
-
-
-_load_env()
-
-STORAGE_TB = float(os.environ.get("STORAGE_TB", "4"))
-MIN_TORRENT_AGE_DAYS = int(os.environ.get("MIN_TORRENT_AGE_DAYS", "3"))
-MAX_SEED_DAYS = int(os.environ.get("MAX_SEED_DAYS", "10"))
-BURST_FACTOR = int(os.environ.get("BURST_FACTOR", "8"))
-TARGET_UTILIZATION_PCT = float(os.environ.get("TARGET_UTILIZATION_PCT", "85"))
+STORAGE_TB = 4.0
+MAX_SEED_DAYS = 10
+BURST_FACTOR = 8
+TARGET_UTILIZATION_PCT = 85.0
 TIER_LABELS = ("high", "medium", "low", "opportunistic")
 
 # Per-tier filter parameters (indexed 0=high, 1=medium, 2=low, 3=opportunistic)
 PRIORITY_MAP = {0: 4, 1: 3, 2: 2, 3: 1}
-DELAY_MAP = {0: 5, 1: 30, 2: 60, 3: 65}
+DELAY_MAP = {0: 5, 1: 5, 2: 5, 3: 5}
 SIZE_MAP = {0: ("1GB", "30GB"), 1: ("1GB", "30GB"), 2: ("1GB", "30GB"), 3: ("1GB", "15GB")}
 
 EXCEPT_RELEASES = (
     "*Olympics*,*Collection*,*Mega*,*Filmography*"
 )
 
-SOURCES = {
-    "freeleech": "torrents_data_freeleech.csv",
-    "movies": "torrents_data_movies.csv",
-    "tv": "torrents_data_tv.csv",
-}
+SOURCES = ["freeleech", "movies", "tv"]
 
-NOW = datetime(2026, 3, 15)  # current date per instructions
+NOW = datetime.utcnow()
+
+
+def _find_latest_csv(source_key: str) -> Optional[str]:
+    """Find the most recent CSV for a source category (timestamped or legacy)."""
+    # Timestamped files sort lexicographically by date
+    timestamped = sorted(BASE_DIR.glob(f"torrents_data_{source_key}_*.csv"), reverse=True)
+    if timestamped:
+        return timestamped[0].name
+    # Fall back to legacy name
+    legacy = BASE_DIR / f"torrents_data_{source_key}.csv"
+    if legacy.exists():
+        return legacy.name
+    return None
+
 
 # ---------------------------------------------------------------------------
 # Task 1: CSV loading
 # ---------------------------------------------------------------------------
 
-def load_csv(source_key: str) -> list[dict]:
+def load_csv(source_key: str, dataset_path: Optional[str] = None) -> list[dict]:
     """Load and parse a torrent CSV, computing derived fields."""
-    filename = SOURCES.get(source_key)
-    if filename is None:
-        print(f"Error: unknown source '{source_key}'. Choose from: {', '.join(SOURCES)}")
-        sys.exit(1)
-
-    path = BASE_DIR / filename
+    if dataset_path:
+        path = Path(dataset_path)
+    else:
+        if source_key not in SOURCES:
+            print(f"Error: unknown source '{source_key}'. Choose from: {', '.join(SOURCES)}")
+            sys.exit(1)
+        filename = _find_latest_csv(source_key)
+        if filename is None:
+            print(f"Error: no CSV found for source '{source_key}'. Run scraper first.")
+            sys.exit(1)
+        path = BASE_DIR / filename
     if not path.exists():
         print(f"Error: file not found: {path}")
         sys.exit(1)
@@ -657,6 +645,38 @@ def generate_filter(
     }
 
 
+def write_analysis_results(source: str, all_results: dict, tier_map: dict):
+    """Write analysis results JSON for UI consumption."""
+    output_dir = BASE_DIR / "autobrr-filters" / "generated" / source
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    rg_results = all_results.get("release_group", [])
+    rg_tiers = tier_map.get("release_group", {})
+
+    release_groups = []
+    for entry in rg_results:
+        value = entry["value"]
+        release_groups.append({
+            "name": value,
+            "score": round(entry["median"], 2),
+            "score_per_gb": round(entry["median_spg"], 2),
+            "count": entry["count"],
+            "daily_gb": round(entry["daily_gb"], 1),
+            "tier": rg_tiers.get(value, "unqualified"),
+        })
+
+    data = {
+        "source": source,
+        "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
+        "release_groups": release_groups,
+    }
+
+    path = output_dir / "analysis_results.json"
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    print(f"  Wrote: {path}")
+
+
 def write_filters(
     tiers: dict[str, dict[str, str]],
     rate_limits: dict,
@@ -716,7 +736,7 @@ def generate_report(
     add(f"# Torrent Performance Analysis: {source_name}")
     add()
     add(f"- **Generated:** {NOW.strftime('%Y-%m-%d')}")
-    add(f"- **Dataset:** {len(torrents)} torrents from `{SOURCES[source_name]}`")
+    add(f"- **Dataset:** {len(torrents)} torrents from `{_find_latest_csv(source_name)}`")
     add(f"- **Storage budget:** {storage_tb} TB")
     add()
 
@@ -746,9 +766,6 @@ def generate_report(
         "of grabbing a torrent is storage space and time.")
     add()
     add("### Data Maturity")
-    add()
-    add(f"Torrents younger than **{MIN_TORRENT_AGE_DAYS} days** are excluded from the analysis "
-        "to ensure each torrent has had enough time to accumulate a representative snatch count.")
     add()
     add("**Important:** The `snatched` field in our data is a lifetime total — we see "
         "*how many* people downloaded a torrent, but not *when* they downloaded it. "
@@ -1414,7 +1431,6 @@ def generate_report(
     add("| Variable | Current Value | Description |")
     add("|----------|--------------|-------------|")
     add(f"| `STORAGE_TB` | {STORAGE_TB} | Seedbox storage capacity in TB. Changing this scales all rate limits. |")
-    add(f"| `MIN_TORRENT_AGE_DAYS` | {MIN_TORRENT_AGE_DAYS} | Exclude torrents younger than this from analysis (still accumulating snatches). |")
     add(f"| `MAX_SEED_DAYS` | {MAX_SEED_DAYS} | Hard delete after this many days. Used for storage budget calculation. |")
     add(f"| `BURST_FACTOR` | {BURST_FACTOR} | Multiplier for hourly rate limits. Higher = more burst capacity during peak hours. |")
     add(f"| `TARGET_UTILIZATION_PCT` | {TARGET_UTILIZATION_PCT} | Target disk utilization %. Simulation verdict uses this as the PASS threshold. |")
@@ -1547,6 +1563,17 @@ def run_simulation(
 
     # Sort torrents chronologically
     sorted_torrents = sorted(torrents, key=lambda t: t["date"])
+
+    if not sorted_torrents:
+        return {
+            "total_seen": 0, "total_grabbed": 0, "total_grabbed_gb": 0,
+            "grab_rate_pct": 0, "total_days": 0, "skip_reasons": {},
+            "daily_stats": [], "per_filter_stats": {},
+            "steady_state_avg_utilization": 0, "steady_state_avg_disk_gb": 0,
+            "max_storage_gb": max_storage_gb, "filters_used": [f["name"] for f in filters],
+            "blackout_days": 0, "total_upload_gb": 0,
+            "steady_state_daily_upload_gb": 0, "avg_ratio": 0,
+        }
 
     # Determine date range
     first_date = sorted_torrents[0]["date"]
@@ -1744,7 +1771,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "source",
-        choices=list(SOURCES.keys()),
+        choices=SOURCES,
         help="Data source to analyze",
     )
     parser.add_argument(
@@ -1752,6 +1779,21 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=STORAGE_TB,
         help=f"Available storage in TB (default: {STORAGE_TB})",
+    )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default=None,
+        help="Path to a specific dataset CSV (overrides auto-detection of latest)",
+    )
+    parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="Skip filter generation/calibration. Load existing filters and regenerate the report.",
+    )
+    parser.add_argument(
+        "--seed-days", type=int, default=None,
+        help="Average seed days for storage budget calculation",
     )
     return parser.parse_args()
 
@@ -1835,14 +1877,17 @@ def _calibrate_low_tier(
 def main() -> None:
     args = parse_args()
 
+    global MAX_SEED_DAYS
+    if args.seed_days is not None:
+        MAX_SEED_DAYS = args.seed_days
+
     # Load CSV
-    torrents = load_csv(args.source)
-    print(f"Loaded {len(torrents)} torrents from {SOURCES[args.source]}")
+    torrents = load_csv(args.source, dataset_path=args.dataset)
+    dataset_label = args.dataset if args.dataset else _find_latest_csv(args.source)
+    print(f"Loaded {len(torrents)} torrents from {dataset_label}")
     print(f"Storage budget: {args.storage} TB")
 
-    # Filter to mature torrents (exclude very recent with incomplete data)
-    mature = [t for t in torrents if t["age_days"] >= MIN_TORRENT_AGE_DAYS]
-    print(f"Mature torrents (>= {MIN_TORRENT_AGE_DAYS} days old): {len(mature)}")
+    mature = torrents
 
     # Pre-filter: exclude torrents that would be blocked by except_releases patterns
     # so that rankings reflect only torrents the filters can actually grab.
@@ -1857,6 +1902,7 @@ def main() -> None:
 
     # Task 4: Tier assignment (based on filterable data only)
     tier_map = assign_tiers(all_results, filterable)
+    write_analysis_results(args.source, all_results, tier_map)
     print_tiers(tier_map, ["category", "subcategory", "resolution", "source", "size_bucket", "release_group"])
 
     # Task 5: Storage budget and rate limits (based on filterable data)
@@ -1864,93 +1910,131 @@ def main() -> None:
     rate_limits = calculate_rate_limits(daily_volume, median_sizes, args.storage)
     print_storage_budget(rate_limits, median_sizes)
 
-    # Task 6: Generate autobrr filter JSON files
-    print(f"\n{'='*60}")
-    print("  GENERATING AUTOBRR FILTERS")
-    print(f"{'='*60}")
-    filter_paths = write_filters(tier_map, rate_limits, args.source, all_results)
-
     # Score the full mature set for simulation
     mature = score_torrents(mature)
 
-    # Load the generated filter JSON files
-    filter_dir = BASE_DIR / "autobrr-filters" / "generated" / args.source
-    filter_jsons = []
-    for fpath in sorted(filter_dir.glob("tier-*.json")):
-        with open(fpath, encoding="utf-8") as f:
-            filter_jsons.append(json.load(f))
+    if args.report_only:
+        # --report-only: load existing filters from all directories, skip generation
+        print(f"\n{'='*60}")
+        print("  REPORT-ONLY MODE: Loading existing filters")
+        print(f"{'='*60}")
 
-    # ---------------------------------------------------------------
-    # Staged simulation: measure each tier's real contribution
-    # ---------------------------------------------------------------
-    print(f"\n{'='*60}")
-    print("  STAGED SIMULATION: MEASURING PER-TIER CONTRIBUTION")
-    print(f"{'='*60}")
+        filter_jsons = []
+        for search_dir in [
+            BASE_DIR / "autobrr-filters" / "saved",
+            BASE_DIR / "autobrr-filters" / "generated" / args.source,
+        ]:
+            if not search_dir.exists():
+                continue
+            for fpath in sorted(search_dir.glob("*.json")):
+                with open(fpath, encoding="utf-8") as f:
+                    fj = json.load(f)
+                print(f"  Loaded: {fpath.name} (enabled={fj.get('data', {}).get('enabled', '?')})")
+                filter_jsons.append(fj)
 
-    # Stage 1: High tier only
-    high_only = [fj for fj in filter_jsons if "high" in fj["name"]]
-    sim_high = _run_sim_for_filters(high_only, mature, args.storage)
-    high_util = sim_high["steady_state_avg_utilization"]
-    high_gb = sim_high["steady_state_avg_disk_gb"]
-    print(f"\n  HIGH only: {high_util:.1f}% utilization "
-          f"({high_gb:.0f} GB avg disk)")
+        if not filter_jsons:
+            print("  ERROR: No filter files found. Run without --report-only first.")
+            sys.exit(1)
 
-    # Stage 2: High + Medium
-    high_med = [fj for fj in filter_jsons if "high" in fj["name"] or "medium" in fj["name"]]
-    sim_high_med = _run_sim_for_filters(high_med, mature, args.storage)
-    hm_util = sim_high_med["steady_state_avg_utilization"]
-    hm_gb = sim_high_med["steady_state_avg_disk_gb"]
-    med_contribution_gb = hm_gb - high_gb
-    print(f"  HIGH+MED:  {hm_util:.1f}% utilization "
-          f"({hm_gb:.0f} GB avg disk, medium adds ~{med_contribution_gb:.0f} GB)")
+        # Run simulation with loaded filters as-is (no calibration)
+        sim_results = _run_sim_for_filters(filter_jsons, mature, args.storage)
 
-    # Stage 3: Remaining budget for low tier
-    max_storage_gb = args.storage * 1024
-    remaining_pct = TARGET_UTILIZATION_PCT - hm_util
-    remaining_gb = max_storage_gb * (remaining_pct / 100) if remaining_pct > 0 else 0
-    print(f"\n  Target utilization: {TARGET_UTILIZATION_PCT:.0f}%")
-    print(f"  High+Medium covers: {hm_util:.1f}%")
-    print(f"  Remaining for low:  {remaining_pct:.1f}% (~{remaining_gb:.0f} GB)")
-
-    # Stage 4: Calibrate low-tier settings to fill the remainder
-    if remaining_pct > 0:
-        print(f"\n  Calibrating low-tier filter (rate + size cap)...")
-        best_settings, sim_results = _calibrate_low_tier(
-            filter_jsons, mature, args.storage, TARGET_UTILIZATION_PCT,
-        )
-        print(f"\n  Best low-tier settings: rate={best_settings['rate']}/hr, "
-              f"max_size={best_settings['max_size']} → "
-              f"{sim_results['steady_state_avg_utilization']:.1f}% utilization, "
-              f"{sim_results['blackout_days']} blackout days")
-
-        # Update the low filter JSON with calibrated settings and enable it
+        # Build rate_limits from loaded filter data for the report
         for fj in filter_jsons:
-            if "low" in fj["name"]:
-                fj["data"]["max_downloads"] = best_settings["rate"]
-                fj["data"]["max_size"] = best_settings["max_size"]
-                fj["data"]["enabled"] = True
-                fpath = filter_dir / "tier-2-low.json"
-                with open(fpath, "w", encoding="utf-8") as f:
-                    json.dump(fj, f, indent=4)
-                print(f"  Updated {fpath} with rate={best_settings['rate']}, "
-                      f"max_size={best_settings['max_size']}, enabled=true")
+            d = fj.get("data", {})
+            name = fj.get("name", "")
+            for tier_label in TIER_LABELS:
+                if tier_label in name:
+                    rate_limits[tier_label]["enabled"] = d.get("enabled", False)
+                    rate_limits[tier_label]["max_downloads_per_hour"] = d.get("max_downloads", 0)
+                    break
 
-        # Also update rate_limits dict for report
-        rate_limits["low"]["enabled"] = True
-        rate_limits["low"]["max_downloads_per_hour"] = best_settings["rate"]
+        print_simulation_summary(sim_results)
     else:
-        print(f"\n  High+Medium already exceeds target — low tier not needed")
-        sim_results = sim_high_med
-        # Disable low filter
-        for fj in filter_jsons:
-            if "low" in fj["name"]:
-                fj["data"]["enabled"] = False
-                fpath = filter_dir / "tier-2-low.json"
-                with open(fpath, "w", encoding="utf-8") as f:
-                    json.dump(fj, f, indent=4)
-        rate_limits["low"]["enabled"] = False
+        # Task 6: Generate autobrr filter JSON files
+        print(f"\n{'='*60}")
+        print("  GENERATING AUTOBRR FILTERS")
+        print(f"{'='*60}")
+        filter_paths = write_filters(tier_map, rate_limits, args.source, all_results)
 
-    print_simulation_summary(sim_results)
+        # Load the generated filter JSON files
+        filter_dir = BASE_DIR / "autobrr-filters" / "generated" / args.source
+        filter_jsons = []
+        for fpath in sorted(filter_dir.glob("tier-*.json")):
+            with open(fpath, encoding="utf-8") as f:
+                filter_jsons.append(json.load(f))
+
+        # ---------------------------------------------------------------
+        # Staged simulation: measure each tier's real contribution
+        # ---------------------------------------------------------------
+        print(f"\n{'='*60}")
+        print("  STAGED SIMULATION: MEASURING PER-TIER CONTRIBUTION")
+        print(f"{'='*60}")
+
+        # Stage 1: High tier only
+        high_only = [fj for fj in filter_jsons if "high" in fj["name"]]
+        sim_high = _run_sim_for_filters(high_only, mature, args.storage)
+        high_util = sim_high["steady_state_avg_utilization"]
+        high_gb = sim_high["steady_state_avg_disk_gb"]
+        print(f"\n  HIGH only: {high_util:.1f}% utilization "
+              f"({high_gb:.0f} GB avg disk)")
+
+        # Stage 2: High + Medium
+        high_med = [fj for fj in filter_jsons if "high" in fj["name"] or "medium" in fj["name"]]
+        sim_high_med = _run_sim_for_filters(high_med, mature, args.storage)
+        hm_util = sim_high_med["steady_state_avg_utilization"]
+        hm_gb = sim_high_med["steady_state_avg_disk_gb"]
+        med_contribution_gb = hm_gb - high_gb
+        print(f"  HIGH+MED:  {hm_util:.1f}% utilization "
+              f"({hm_gb:.0f} GB avg disk, medium adds ~{med_contribution_gb:.0f} GB)")
+
+        # Stage 3: Remaining budget for low tier
+        max_storage_gb = args.storage * 1024
+        remaining_pct = TARGET_UTILIZATION_PCT - hm_util
+        remaining_gb = max_storage_gb * (remaining_pct / 100) if remaining_pct > 0 else 0
+        print(f"\n  Target utilization: {TARGET_UTILIZATION_PCT:.0f}%")
+        print(f"  High+Medium covers: {hm_util:.1f}%")
+        print(f"  Remaining for low:  {remaining_pct:.1f}% (~{remaining_gb:.0f} GB)")
+
+        # Stage 4: Calibrate low-tier settings to fill the remainder
+        if remaining_pct > 0:
+            print(f"\n  Calibrating low-tier filter (rate + size cap)...")
+            best_settings, sim_results = _calibrate_low_tier(
+                filter_jsons, mature, args.storage, TARGET_UTILIZATION_PCT,
+            )
+            print(f"\n  Best low-tier settings: rate={best_settings['rate']}/hr, "
+                  f"max_size={best_settings['max_size']} → "
+                  f"{sim_results['steady_state_avg_utilization']:.1f}% utilization, "
+                  f"{sim_results['blackout_days']} blackout days")
+
+            # Update the low filter JSON with calibrated settings and enable it
+            for fj in filter_jsons:
+                if "low" in fj["name"]:
+                    fj["data"]["max_downloads"] = best_settings["rate"]
+                    fj["data"]["max_size"] = best_settings["max_size"]
+                    fj["data"]["enabled"] = True
+                    fpath = filter_dir / "tier-2-low.json"
+                    with open(fpath, "w", encoding="utf-8") as f:
+                        json.dump(fj, f, indent=4)
+                    print(f"  Updated {fpath} with rate={best_settings['rate']}, "
+                          f"max_size={best_settings['max_size']}, enabled=true")
+
+            # Also update rate_limits dict for report
+            rate_limits["low"]["enabled"] = True
+            rate_limits["low"]["max_downloads_per_hour"] = best_settings["rate"]
+        else:
+            print(f"\n  High+Medium already exceeds target — low tier not needed")
+            sim_results = sim_high_med
+            # Disable low filter
+            for fj in filter_jsons:
+                if "low" in fj["name"]:
+                    fj["data"]["enabled"] = False
+                    fpath = filter_dir / "tier-2-low.json"
+                    with open(fpath, "w", encoding="utf-8") as f:
+                        json.dump(fj, f, indent=4)
+            rate_limits["low"]["enabled"] = False
+
+        print_simulation_summary(sim_results)
 
     # Task 7: Generate markdown report (use filterable for analysis data)
     report = generate_report(

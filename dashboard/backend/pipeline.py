@@ -135,25 +135,33 @@ def _run_analyze_job(job: Job, cmd: list[str], source: str):
             job.output_lines.append(f"  Copied to temp: {dest.name}")
 
 
-def start_analyze(source: str, storage_tb: Optional[float] = None, dataset_path: Optional[str] = None) -> Job:
+def start_analyze(source: str, storage_tb: Optional[float] = None,
+                  dataset_path: Optional[str] = None,
+                  seed_days: Optional[int] = None) -> Job:
     cmd = [sys.executable, "-u", "analyze_and_generate_filters.py", source]
     if storage_tb is not None:
         cmd.extend(["--storage", str(storage_tb)])
     if dataset_path:
         cmd.extend(["--dataset", dataset_path])
+    if seed_days is not None:
+        cmd.extend(["--seed-days", str(seed_days)])
     job = Job(id=uuid.uuid4().hex[:12], command=" ".join(cmd))
     _jobs[job.id] = job
     threading.Thread(target=_run_analyze_job, args=(job, cmd, source), daemon=True).start()
     return job
 
 
-def start_report_only(source: str, storage_tb: Optional[float] = None, dataset_path: Optional[str] = None) -> Job:
+def start_report_only(source: str, storage_tb: Optional[float] = None,
+                      dataset_path: Optional[str] = None,
+                      seed_days: Optional[int] = None) -> Job:
     """Re-generate the markdown report using existing saved filters (no filter generation)."""
     cmd = [sys.executable, "-u", "analyze_and_generate_filters.py", source, "--report-only"]
     if storage_tb is not None:
         cmd.extend(["--storage", str(storage_tb)])
     if dataset_path:
         cmd.extend(["--dataset", dataset_path])
+    if seed_days is not None:
+        cmd.extend(["--seed-days", str(seed_days)])
     job = Job(id=uuid.uuid4().hex[:12], command=" ".join(cmd))
     _jobs[job.id] = job
     threading.Thread(target=_run_job, args=(job, cmd, PROJECT_ROOT), daemon=True).start()

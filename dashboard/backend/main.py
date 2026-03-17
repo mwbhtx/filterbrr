@@ -138,14 +138,14 @@ def api_scrape(req: ScrapeRequest):
 # Pipeline - Analyze & Generate Filters
 @app.post("/api/pipeline/analyze")
 def api_analyze(req: AnalyzeRequest):
-    job = start_analyze(req.source, req.storage_tb, req.dataset_path)
+    job = start_analyze(req.source, req.storage_tb, req.dataset_path, req.seed_days)
     return {"job_id": job.id}
 
 
 # Pipeline - Regenerate Report Only (uses existing filters)
 @app.post("/api/pipeline/report-only")
 def api_report_only(req: AnalyzeRequest):
-    job = start_report_only(req.source, req.storage_tb, req.dataset_path)
+    job = start_report_only(req.source, req.storage_tb, req.dataset_path, req.seed_days)
     return {"job_id": job.id}
 
 

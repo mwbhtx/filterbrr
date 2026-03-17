@@ -497,6 +497,7 @@ function App() {
               selectedSeedboxId={selectedSeedboxId}
               onSeedboxChange={setSelectedSeedboxId}
               onDataChanged={loadData}
+              avgSeedDays={avgSeedDays}
             />
 
             {/* Simulation setup */}

@@ -103,3 +103,4 @@ class AnalyzeRequest(BaseModel):
     source: str
     storage_tb: Optional[float] = None
     dataset_path: Optional[str] = None
+    seed_days: Optional[int] = None

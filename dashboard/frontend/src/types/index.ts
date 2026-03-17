@@ -121,6 +121,7 @@ export interface AnalyzeRequest {
   source: string;
   storage_tb?: number;
   dataset_path?: string;
+  seed_days?: number;
 }
 
 export interface JobStatus {

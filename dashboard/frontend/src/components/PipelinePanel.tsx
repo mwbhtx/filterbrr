@@ -11,6 +11,7 @@ interface SimulatorToolbarProps {
   selectedSeedboxId: string;
   onSeedboxChange: (id: string) => void;
   onDataChanged: () => void;
+  avgSeedDays: number;
 }
 
 export default function SimulatorToolbar({
@@ -21,6 +22,7 @@ export default function SimulatorToolbar({
   selectedSeedboxId,
   onSeedboxChange,
   onDataChanged,
+  avgSeedDays,
 }: SimulatorToolbarProps) {
   const [generateJobId, setGenerateJobId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -44,6 +46,7 @@ export default function SimulatorToolbar({
         source,
         storage_tb: storageTb,
         dataset_path: selectedDataset,
+        seed_days: avgSeedDays,
       });
       setGenerateJobId(job_id);
     } catch {
