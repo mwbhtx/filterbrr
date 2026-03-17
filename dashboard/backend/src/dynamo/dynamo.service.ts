@@ -8,10 +8,13 @@ export class DynamoService {
 
   constructor() {
     const isLocal = process.env.NODE_ENV !== 'production';
+    if (!isLocal && !process.env.AWS_REGION) {
+      throw new Error('AWS_REGION must be set in production');
+    }
     const dynamoClient = new DynamoDBClient(
       isLocal
         ? { endpoint: 'http://localhost:8000', region: 'ap-southeast-2', credentials: { accessKeyId: 'local', secretAccessKey: 'local' } }
-        : { region: process.env.AWS_REGION ?? 'ap-southeast-2' }
+        : { region: process.env.AWS_REGION }
     );
     this.client = DynamoDBDocumentClient.from(dynamoClient);
   }
