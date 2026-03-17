@@ -1,14 +1,13 @@
 import type {
   Filter,
   Dataset,
-  AppConfig,
+  Settings,
   SimulationRequest,
   SimulationResult,
   ScrapeRequest,
   ParseRequest,
   AnalyzeRequest,
   JobStatus,
-  AutobrrSettings,
   AutobrrConnectionStatus,
   SyncFilterEntry,
   AnalysisResults,
@@ -55,8 +54,6 @@ export const api = {
     fetchJSON<{ deleted: string }>(`/datasets/${encodeURIComponent(filename)}`, {
       method: "DELETE",
     }),
-  getConfig: () => fetchJSON<AppConfig>("/config"),
-
   runSimulation: (req: SimulationRequest) =>
     fetchJSON<SimulationResult>("/simulation/run", {
       method: "POST",
@@ -87,16 +84,16 @@ export const api = {
     fetchJSON<JobStatus>(`/pipeline/jobs/${jobId}`),
 
   // Settings
-  getSettings: () => fetchJSON<AutobrrSettings>("/settings"),
-  updateSettings: (settings: AutobrrSettings) =>
-    fetchJSON<AutobrrSettings>("/settings", {
+  getSettings: () => fetchJSON<Settings>("/settings"),
+  updateSettings: (settings: Settings) =>
+    fetchJSON<Settings>("/settings", {
       method: "PUT",
       body: JSON.stringify(settings),
     }),
 
   // Autobrr Sync
   getAutobrrStatus: () => fetchJSON<AutobrrConnectionStatus>("/autobrr/status"),
-  testAutobrrConnection: (settings: AutobrrSettings) =>
+  testAutobrrConnection: (settings: { autobrr_url: string; autobrr_api_key: string }) =>
     fetchJSON<AutobrrConnectionStatus>("/autobrr/status", {
       method: "POST",
       body: JSON.stringify(settings),

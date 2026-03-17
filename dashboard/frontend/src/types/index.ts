@@ -38,14 +38,6 @@ export interface Dataset {
   max_date: string | null;
 }
 
-export interface AppConfig {
-  storage_tb: number;
-  max_seed_days: number;
-  min_torrent_age_days: number;
-  burst_factor: number;
-  target_utilization_pct: number;
-}
-
 export interface SimulationRequest {
   dataset_path: string;
   filter_ids?: string[];
@@ -118,6 +110,7 @@ export interface ScrapeRequest {
   days: number;
   start_page: number;
   delay: number;
+  tracker_id?: string;
 }
 
 export interface ParseRequest {
@@ -138,10 +131,30 @@ export interface JobStatus {
   return_code: number | null;
 }
 
-export interface AutobrrSettings {
+export const SUPPORTED_TRACKERS = ["TorrentLeech"] as const;
+export type TrackerType = typeof SUPPORTED_TRACKERS[number];
+
+export interface Tracker {
+  id: string;
+  tracker_type: TrackerType;
+  username: string;
+  password: string;
+}
+
+export interface Seedbox {
+  id: string;
+  name: string;
+  storage_tb: number;
+}
+
+export interface Settings {
   autobrr_url: string;
   autobrr_api_key: string;
+  trackers: Tracker[];
+  seedboxes: Seedbox[];
 }
+
+export type AutobrrSettings = Settings;
 
 export interface AutobrrConnectionStatus {
   connected: boolean;
