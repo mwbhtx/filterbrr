@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   dynamodb-local:
-    image: amazon/dynamodb-local:latest
+    image: amazon/dynamodb-local@sha256:d89f8fcc6b1a39cb35976c248ed42a28c66ae00dc043099210f5571e42648ab4
     container_name: filterbrr-dynamodb
     ports:
       - '8000:8000'
@@ -11,7 +9,7 @@ services:
       - dynamodb-data:/data
 
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack@sha256:cea732cdcc0982900b6b0c5c4fca6b90b54959708b2830366d5e11e98e71f6ee
     container_name: filterbrr-localstack
     ports:
       - '4566:4566'
