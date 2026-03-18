@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -33,7 +34,7 @@ export default function LoginPage() {
 
   async function handleDemo() {
     setError('');
-    setLoading(true);
+    setDemoLoading(true);
     try {
       await login(DEMO_EMAIL, DEMO_PASSWORD);
       // Seed demo data into localStorage
@@ -42,44 +43,52 @@ export default function LoginPage() {
       navigate('/');
     } catch (err: any) {
       setError(err.message ?? 'Demo login failed');
-    } finally {
-      setLoading(false);
+      setDemoLoading(false);
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>filterbrr</CardTitle>
-          <CardDescription>Sign in to your account</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
-            </Button>
-          </form>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">or</span></div>
-          </div>
-          <Button variant="outline" className="w-full" onClick={handleDemo} disabled={loading}>
-            Try Demo
-          </Button>
-          <p className="text-center text-sm text-muted-foreground">
-            No account? <Link to="/signup" className="underline">Sign up</Link>
-          </p>
-        </CardContent>
+        {demoLoading ? (
+          <CardContent className="py-12 flex flex-col items-center gap-4">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+            <p className="text-sm text-muted-foreground">Initializing demo...</p>
+          </CardContent>
+        ) : (
+          <>
+            <CardHeader>
+              <CardTitle>filterbrr</CardTitle>
+              <CardDescription>Sign in to your account</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-1">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Signing in...' : 'Sign in'}
+                </Button>
+              </form>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">or</span></div>
+              </div>
+              <Button variant="outline" className="w-full" onClick={handleDemo} disabled={loading}>
+                Try Demo
+              </Button>
+              <p className="text-center text-sm text-muted-foreground">
+                No account? <Link to="/signup" className="underline">Sign up</Link>
+              </p>
+            </CardContent>
+          </>
+        )}
       </Card>
     </div>
   );
