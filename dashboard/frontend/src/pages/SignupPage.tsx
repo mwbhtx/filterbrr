@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { signUp } from '../auth/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,7 +72,7 @@ export default function SignupPage() {
               {loading ? 'Creating account...' : 'Create account'}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              Already have an account? <a href="/login" className="underline">Sign in</a>
+              Already have an account? <Link to="/login" className="underline">Sign in</Link>
             </p>
           </form>
         </CardContent>
