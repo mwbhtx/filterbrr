@@ -33,7 +33,7 @@ function datasetLabel(ds: Dataset): string {
 }
 
 export default function SimulatorPage() {
-  const { data: datasets = [], refetch: refetchDatasets } = useDatasets();
+  const { data: datasets = [] } = useDatasets();
   const { data: persistedFilters = [], refetch: refetchFilters } = useFilters();
   const deleteFilterMutation = useDeleteFilter();
 

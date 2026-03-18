@@ -22,10 +22,6 @@ const CATEGORIES = ["freeleech", "movies", "tv"];
 const inputClass =
   "w-full rounded bg-muted border border-border px-3 py-1.5 text-sm text-foreground disabled:opacity-50";
 
-const formatDate = (d: string | null) => {
-  if (!d) return "\u2014";
-  return d.length > 16 ? d.slice(0, 16) : d;
-};
 
 export default function DatasetsPage() {
   const { data: datasets = [], refetch } = useDatasets();

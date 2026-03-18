@@ -19,7 +19,7 @@ vi.mock('amazon-cognito-identity-js', () => {
   return { CognitoUserPool, CognitoUser, AuthenticationDetails };
 });
 
-import { getIdToken, storeSession, clearSession, logout } from './auth';
+import { getIdToken, clearSession, logout } from './auth';
 
 const TOKEN_KEY = 'filterbrr_id_token';
 const REFRESH_KEY = 'filterbrr_refresh_token';

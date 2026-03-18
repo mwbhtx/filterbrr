@@ -205,9 +205,6 @@ export default function FiltersPage() {
     }
   };
 
-  const isReadOnly =
-    selectedFilter?._source === "generated" &&
-    !selectedFilter?._source.startsWith("temp");
   const isDirty = selectedFilter
     ? dirtyIds.has(selectedFilter._id)
     : false;
