@@ -1,12 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import { ListObjectsV2Command, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { ListObjectsV2Command, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { S3Service } from '../s3/s3.service';
 
 @Injectable()
 export class DatasetsService {
   constructor(private readonly s3: S3Service) {}
 
+  private async ensureDemoDataset(): Promise<void> {
+    const key = 'demo/datasets/freeleech_2026-02-16_0000.json';
+    try {
+      await this.s3.client.send(new HeadObjectCommand({ Bucket: this.s3.bucket, Key: key }));
+    } catch {
+      const data = readFileSync(join(__dirname, 'demo-dataset.json'), 'utf-8');
+      await this.s3.client.send(new PutObjectCommand({
+        Bucket: this.s3.bucket,
+        Key: key,
+        Body: data,
+        ContentType: 'application/json',
+      }));
+    }
+  }
+
   async list(userId: string): Promise<Record<string, unknown>[]> {
+    if (userId === 'demo') {
+      await this.ensureDemoDataset();
+    }
     const result = await this.s3.client.send(
       new ListObjectsV2Command({ Bucket: this.s3.bucket, Prefix: `${userId}/datasets/` })
     );

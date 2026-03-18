@@ -7,7 +7,7 @@ import type {
 // ---------------------------------------------------------------------------
 // Dataset path
 // ---------------------------------------------------------------------------
-export const DEMO_DATASET_PATH = 'demo/datasets/freeleech_demo.json';
+export const DEMO_DATASET_PATH = 'demo/datasets/freeleech_2026-02-16_0000.json';
 
 // ---------------------------------------------------------------------------
 // Settings
