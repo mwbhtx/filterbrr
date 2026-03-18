@@ -69,7 +69,7 @@ export default function DatasetsPage() {
       {/* New Scrape */}
       <Card>
         <CardHeader className="border-b border-border pb-3">
-          <CardTitle>Scrape</CardTitle>
+          <CardTitle>Scrape <span className="text-sm font-normal text-muted-foreground ml-2">Select a tracker and time range to build a dataset</span></CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
