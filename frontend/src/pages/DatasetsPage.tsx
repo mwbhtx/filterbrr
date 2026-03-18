@@ -38,8 +38,10 @@ export default function DatasetsPage() {
   const [scrapeTrackerId, setScrapeTrackerId] = useState<string>(() =>
     trackers.length > 0 ? trackers[0].id : ""
   );
-  const [scrapeJobId, setScrapeJobId] = useState<string | null>(null);
-  const [scrapeRunning, setScrapeRunning] = useState(false);
+  const [scrapeJobId, setScrapeJobId] = useState<string | null>(
+    () => localStorage.getItem('active-scrape-job')
+  );
+  const [scrapeRunning, setScrapeRunning] = useState(() => !!localStorage.getItem('active-scrape-job'));
 
   const handleDelete = async (filename: string) => {
     deleteDataset.mutate(filename);
@@ -56,6 +58,7 @@ export default function DatasetsPage() {
         tracker_id: trackerId || undefined,
       });
       setScrapeJobId(job_id);
+      localStorage.setItem('active-scrape-job', job_id);
     } catch {
       setScrapeRunning(false);
     }
@@ -143,6 +146,7 @@ export default function DatasetsPage() {
             jobId={scrapeJobId}
             onComplete={() => {
               setScrapeRunning(false);
+              localStorage.removeItem('active-scrape-job');
               refetch();
             }}
           />

@@ -71,8 +71,10 @@ export default function SimulatorPage() {
   const [activeChart, setActiveChart] = useState<"utilization" | "grabs" | "flow" | "upload">("utilization");
 
   // Generate filters state
-  const [generateJobId, setGenerateJobId] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [generateJobId, setGenerateJobId] = useState<string | null>(
+    () => localStorage.getItem('active-generate-job')
+  );
+  const [generating, setGenerating] = useState(() => !!localStorage.getItem('active-generate-job'));
 
   // Filter state
   const [tempFilters, setTempFilters] = useState<Filter[]>([]);
@@ -151,6 +153,7 @@ export default function SimulatorPage() {
         seed_days: maxSeedDays,
       });
       setGenerateJobId(job_id);
+      localStorage.setItem('active-generate-job', job_id);
     } catch {
       setGenerating(false);
     }
@@ -158,6 +161,7 @@ export default function SimulatorPage() {
 
   const handleGenerateComplete = () => {
     setGenerating(false);
+    localStorage.removeItem('active-generate-job');
     refetchFilters();
     if (selectedDs) {
       api.getAnalysisResults(selectedDs.category).then(setAnalysisResults).catch(() => {});
