@@ -18,6 +18,7 @@ function formatElapsed(seconds: number): string {
 interface SSEData {
   status: JobStatus["status"];
   progress: string;
+  started_at?: string;
   result?: Record<string, unknown>;
   error?: string;
 }
@@ -28,7 +29,7 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const completedRef = useRef<string | null>(null);
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (!jobId) {
@@ -39,7 +40,7 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
       return;
     }
 
-    startTimeRef.current = Date.now();
+    startTimeRef.current = 0;
     setStatus("running");
     setProgress("Starting...");
     setError(null);
@@ -49,9 +50,11 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
       completedRef.current = null;
     }
 
-    // Elapsed timer
+    // Elapsed timer — uses server started_at once available
     const timer = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      if (startTimeRef.current > 0) {
+        setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      }
     }, 1000);
 
     // SSE connection via fetch (supports auth headers unlike EventSource)
@@ -90,6 +93,9 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
               setStatus(data.status);
               setProgress(data.progress ?? '');
               if (data.error) setError(data.error);
+              if (data.started_at && !startTimeRef.current) {
+                startTimeRef.current = new Date(data.started_at).getTime();
+              }
 
               if (eventType === 'complete') {
                 clearInterval(timer);

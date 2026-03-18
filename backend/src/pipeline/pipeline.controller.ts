@@ -73,6 +73,7 @@ export class PipelineController {
           data: {
             status: job.status,
             progress: job.progress,
+            started_at: job.started_at,
             ...(job.result && { result: job.result }),
             ...(job.error && { error: job.error }),
           },
