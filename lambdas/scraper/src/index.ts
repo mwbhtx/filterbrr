@@ -3,6 +3,8 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { normalizeTorrent } from './normalize';
+import { RawTorrent, NormalizedTorrent, ScrapeEvent } from './types';
 
 const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({
   region: process.env.AWS_REGION ?? 'us-east-1',
@@ -69,43 +71,13 @@ async function completeJob(jobId: string, status: 'completed' | 'failed' | 'canc
   }));
 }
 
-export interface ScrapeEvent {
-  jobId?: string;
-  userId: string;
-  category: string;
-  days: number;
-  startPage: number;
-  delay: number;
-  trackerUsername: string;
-  trackerPassword: string;
-}
-
-interface TorrentRow {
-  name: string;
-  size: number;
-  date: string;
-  seeders: number;
-  leechers: number;
-  completed: number;
-  category: string;
-}
-
 const CATEGORY_FACETS: Record<string, string> = {
   freeleech: 'tags%3AFREELEECH',
   movies:    'cat%3AMovies',
   tv:        'cat%3ATV',
 };
 
-export function getCategoryFacets(category: string): string {
-  return CATEGORY_FACETS[category] ?? CATEGORY_FACETS['freeleech'];
-}
-
-export function toCSV(rows: TorrentRow[]): string {
-  const header = 'name,size,date,seeders,leechers,completed,category\n';
-  return header + rows.map(r =>
-    `"${r.name.replace(/"/g, '""')}",${r.size},"${r.date}",${r.seeders},${r.leechers},${r.completed},"${r.category}"`
-  ).join('\n');
-}
+export { ScrapeEvent };
 
 export const handler: Handler<ScrapeEvent> = async (event) => {
   const { userId, category, days, trackerUsername, trackerPassword, jobId } = event;
@@ -161,8 +133,8 @@ export const handler: Handler<ScrapeEvent> = async (event) => {
       },
     });
 
-    const facets = getCategoryFacets(category);
-    const rows: TorrentRow[] = [];
+    const facets = CATEGORY_FACETS[category] ?? CATEGORY_FACETS['freeleech'];
+    const normalizedTorrents: NormalizedTorrent[] = [];
     let page = event.startPage ?? 1;
     let referenceDate: Date | null = null;
     let currentDay = 1;
@@ -173,66 +145,54 @@ export const handler: Handler<ScrapeEvent> = async (event) => {
       const url = `/torrents/browse/list/facets/${facets}/orderby/added/order/desc/page/${page}`;
       const response = await session.get(url);
       const raw = response.data;
-      const torrents: unknown[] = Array.isArray(raw)
+      const torrents: RawTorrent[] = Array.isArray(raw)
         ? raw
-        : (raw as { torrentList?: unknown[] })?.torrentList ?? [];
+        : (raw as { torrentList?: RawTorrent[] })?.torrentList ?? [];
 
       if (torrents.length === 0) break;
 
       if (referenceDate === null) {
-        const first = torrents[0] as { addedTimestamp?: string };
+        const first = torrents[0];
         referenceDate = first.addedTimestamp ? new Date(first.addedTimestamp + ' UTC') : new Date();
       }
 
       const cutoff = new Date(referenceDate.getTime() - days * 86400_000);
       let hitOld = false;
 
-      for (const t of torrents as Array<{
-        name: string; size: number; addedTimestamp: string;
-        seeders: number; leechers: number; completed: number;
-      }>) {
+      for (const t of torrents) {
         const added = new Date(t.addedTimestamp + ' UTC');
         if (added < cutoff) { hitOld = true; break; }
 
         const daysSinceRef = Math.floor((referenceDate!.getTime() - added.getTime()) / 86400_000) + 1;
         if (daysSinceRef > currentDay) {
           currentDay = daysSinceRef;
-          if (jobId) await updateProgress(jobId, `Scraping day ${currentDay} of ${days} (${rows.length} torrents)`);
+          if (jobId) await updateProgress(jobId, `Scraping day ${currentDay} of ${days} (${normalizedTorrents.length} torrents)`);
         }
 
-        rows.push({
-          name: t.name,
-          size: t.size,
-          date: t.addedTimestamp,
-          seeders: t.seeders,
-          leechers: t.leechers,
-          completed: t.completed,
-          category,
-        });
+        normalizedTorrents.push(normalizeTorrent(t));
       }
 
       if (hitOld) break;
 
       if (jobId && await isCancelling(jobId)) {
         await completeJob(jobId, 'cancelled', 'Cancelled');
-        return { key: null, rowCount: rows.length, cancelled: true };
+        return { key: null, torrentCount: normalizedTorrents.length, cancelled: true };
       }
 
       page++;
       await new Promise(r => setTimeout(r, (event.delay ?? 1) * 1000));
     }
 
-    if (rows.length === 0) {
-      const errMsg = 'Scrape returned 0 rows — not saving empty dataset';
+    if (normalizedTorrents.length === 0) {
+      const errMsg = 'Scrape returned 0 torrents — not saving empty dataset';
       if (jobId) await completeJob(jobId, 'failed', errMsg, undefined, errMsg);
       throw new Error(errMsg);
     }
 
-    if (jobId) await updateProgress(jobId, `Uploading results (${rows.length} torrents)...`);
+    if (jobId) await updateProgress(jobId, `Uploading results (${normalizedTorrents.length} torrents)...`);
 
-    const csv = toCSV(rows);
     const timestamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '');
-    const key = `${userId}/datasets/torrents_data_${category}_${timestamp}.csv`;
+    const key = `${userId}/datasets/${category}_${timestamp}.json`;
 
     const s3 = new S3Client({
       region: process.env.AWS_REGION ?? 'us-east-1',
@@ -245,12 +205,12 @@ export const handler: Handler<ScrapeEvent> = async (event) => {
     await s3.send(new PutObjectCommand({
       Bucket: process.env.S3_BUCKET ?? 'filterbrr-userdata',
       Key: key,
-      Body: csv,
-      ContentType: 'text/csv',
+      Body: JSON.stringify(normalizedTorrents),
+      ContentType: 'application/json',
     }));
 
-    const result = { key, rowCount: rows.length };
-    if (jobId) await completeJob(jobId, 'completed', `Complete — ${rows.length} torrents scraped`, result);
+    const result = { key, torrentCount: normalizedTorrents.length };
+    if (jobId) await completeJob(jobId, 'completed', `Complete — ${normalizedTorrents.length} torrents scraped`, result);
 
     return result;
   } catch (err) {
