@@ -5,7 +5,7 @@ import axios, { AxiosInstance } from 'axios';
 export class AutobrrService {
   private getClient(url: string, apiKey: string): AxiosInstance {
     return axios.create({
-      baseURL: `${url}/api/v1`,
+      baseURL: `${url}/api`,
       headers: { 'X-API-Token': apiKey },
     });
   }
