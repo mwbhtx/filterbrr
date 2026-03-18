@@ -121,14 +121,13 @@ export default function SimulatorPage() {
     }
   }, [seedboxes]);
 
-  // Auto-select first dataset when tracker changes
+  // Auto-select dataset: if stored dataset no longer exists or doesn't match tracker, pick first available
   useEffect(() => {
     const current = datasets.find(d => d.path === selectedDataset);
-    if (current && current.tracker_type !== selectedTrackerType) {
+    if (!current || (selectedTrackerType && current.tracker_type !== selectedTrackerType)) {
       const first = filteredDatasets[0];
       if (first) setSelectedDataset(first.path);
-    } else if (!selectedDataset && filteredDatasets.length > 0) {
-      setSelectedDataset(filteredDatasets[0].path);
+      else if (!first && selectedDataset) setSelectedDataset("");
     }
   }, [selectedTrackerType, datasets]);
 
