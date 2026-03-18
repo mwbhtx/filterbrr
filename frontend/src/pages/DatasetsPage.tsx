@@ -211,7 +211,7 @@ export default function DatasetsPage() {
       {/* Dataset table */}
       <h2 className="text-base font-semibold">Datasets</h2>
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-4">
           <Table>
             <TableHeader>
               <TableRow>
