@@ -3,7 +3,7 @@
 variable "github_repo" {
   description = "GitHub repository in format owner/repo"
   type        = string
-  default     = "matthewbennett/filterbrr"
+  default     = "mwbhtx/filterbrr"
 }
 
 data "aws_caller_identity" "current" {}
