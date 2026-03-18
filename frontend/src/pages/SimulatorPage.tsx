@@ -360,11 +360,23 @@ export default function SimulatorPage() {
                         {datasets.length === 0 && (
                           <option key="__empty" value="">No datasets — run a scrape first</option>
                         )}
-                        {datasets.map((ds) => (
-                          <option key={ds.path} value={ds.path}>
-                            {ds.scraped_at ?? ds.category}
-                          </option>
-                        ))}
+                        {datasets.map((ds) => {
+                          let label = ds.scraped_at ?? ds.category;
+                          if (ds.min_date && ds.max_date) {
+                            const days = Math.round(
+                              (new Date(ds.max_date).getTime() - new Date(ds.min_date).getTime()) / 86400000
+                            ) + 1;
+                            label += ` · ${days} day${days !== 1 ? "s" : ""}`;
+                          }
+                          if (ds.torrent_count != null) {
+                            label += ` · ${ds.torrent_count} torrents`;
+                          }
+                          return (
+                            <option key={ds.path} value={ds.path}>
+                              {label}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                     <div>
