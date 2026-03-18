@@ -340,210 +340,210 @@ export default function SimulatorPage() {
   const isDirty = selectedFilter ? dirtyIds.has(selectedFilter._id) : false;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden -mx-6 -my-4">
-      {/* Data Context Bar — full width */}
-      <div className="shrink-0 border-b border-border bg-card px-6 py-3">
-        {missing ? (
-          <p className="text-sm text-muted-foreground">
-            {trackers.length === 0 && seedboxes.length === 0
-              ? "Add a tracker and seedbox in Settings to get started."
-              : trackers.length === 0
-              ? "Add a tracker in Settings to get started."
-              : "Add a seedbox in Settings to get started."}
-          </p>
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden -mx-6 -my-4">
+      {/* Column 1: Filters */}
+      <div className="w-56 shrink-0 border-r border-border overflow-hidden">
+        <FilterList
+          filters={allFilters}
+          selectedId={selectedFilterId}
+          onSelect={(f) => setSelectedFilterId(f._id)}
+          onCreateNew={handleCreateNew}
+          onClearTemp={handleClearTemp}
+          onSaveAllTemp={handleSaveAllTemp}
+          onDeleteFilter={handleDeleteTemp}
+          dirtyIds={dirtyIds}
+          syncingId={syncingId}
+          onPush={handlePush}
+          onPull={handlePull}
+          onPushAll={handlePushAll}
+          onPullAll={handlePullAll}
+          onCheckConnection={handleCheckConnection}
+          connectionStatus={connectionStatus}
+          checkingConnection={checkingConnection}
+        />
+      </div>
+
+      {/* Column 2: Filter Detail (always visible) */}
+      <div className="w-80 shrink-0 border-r border-border overflow-y-auto">
+        {selectedFilter ? (
+          <>
+            {filterError && (
+              <div className="mx-3 mt-3 px-3 py-2 rounded bg-destructive/20 border border-destructive/50 text-destructive text-sm flex items-center justify-between">
+                <span>{filterError}</span>
+                <button onClick={() => setFilterError(null)} className="ml-2 text-destructive hover:text-destructive">✕</button>
+              </div>
+            )}
+            <FilterForm
+              filter={selectedFilter}
+              analysisResults={analysisResults}
+              readOnly={
+                selectedFilter._source === "generated" &&
+                !tempFilters.some((f) => f._id === selectedFilter._id)
+              }
+              onSave={handleFilterSave}
+              onDelete={selectedFilter._source !== "generated" ? handleFilterDelete : undefined}
+              onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
+              onChange={handleFilterChange}
+              onPush={handlePush}
+              pushing={syncingId === selectedFilter._id}
+              onCancel={handleFilterCancel}
+              isDirty={isDirty}
+            />
+          </>
         ) : (
-          <div className="flex items-end gap-3">
-            <div className="min-w-0">
-              <label className="block text-xs text-muted-foreground mb-1">Tracker</label>
-              <select
-                value={selectedTrackerType}
-                onChange={(e) => setSelectedTrackerType(e.target.value)}
-                className={selectCls}
-              >
-                {trackers.map((t) => (
-                  <option key={t.id} value={t.tracker_type}>{t.tracker_type}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1 min-w-0">
-              <label className="block text-xs text-muted-foreground mb-1">Dataset</label>
-              <select
-                value={selectedDataset}
-                onChange={(e) => setSelectedDataset(e.target.value)}
-                disabled={filteredDatasets.length === 0}
-                className={selectCls}
-              >
-                {filteredDatasets.length === 0 && (
-                  <option key="__empty" value="">No datasets — run a scrape first</option>
-                )}
-                {filteredDatasets.map((ds) => (
-                  <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
-                ))}
-              </select>
-            </div>
-            <div className="min-w-0">
-              <label className="block text-xs text-muted-foreground mb-1">Seedbox</label>
-              <select
-                value={selectedSeedboxId}
-                onChange={(e) => handleSeedboxChange(e.target.value)}
-                className={selectCls}
-              >
-                {seedboxes.map((sb) => (
-                  <option key={sb.id} value={sb.id}>{sb.name} ({sb.storage_tb} TB)</option>
-                ))}
-              </select>
-            </div>
-            <div className="w-24 shrink-0">
-              <label className="block text-xs text-muted-foreground mb-1">Seed Days</label>
-              <input
-                type="number"
-                value={maxSeedDays}
-                onChange={(e) => setMaxSeedDays(Number(e.target.value))}
-                min={1}
-                className={selectCls}
-              />
-            </div>
-            <div className="w-24 shrink-0">
-              <label className="block text-xs text-muted-foreground mb-1">Avg Ratio</label>
-              <input
-                type="number"
-                value={avgRatio}
-                onChange={(e) => setAvgRatio(Number(e.target.value))}
-                min={0}
-                step={0.1}
-                className={selectCls}
-              />
-            </div>
+          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            Select a filter
           </div>
         )}
       </div>
 
-      {/* 3-column layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Column 1: Filters */}
-        <div className="w-56 shrink-0 border-r border-border flex flex-col overflow-hidden">
-          {/* Generate Filters button + progress */}
-          <div className="shrink-0 p-3 border-b border-border">
-            <Button
-              onClick={handleGenerate}
-              disabled={generating || !selectedDataset || !selectedSeedboxId || missing}
-              size="sm"
-              className="w-full"
-            >
-              {generating ? "Generating..." : "Generate Filters"}
-            </Button>
-            <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
-          </div>
-          {/* Filter list */}
-          <div className="flex-1 overflow-hidden">
-            <FilterList
-              filters={allFilters}
-              selectedId={selectedFilterId}
-              onSelect={(f) => setSelectedFilterId(f._id)}
-              onCreateNew={handleCreateNew}
-              onClearTemp={handleClearTemp}
-              onSaveAllTemp={handleSaveAllTemp}
-              onDeleteFilter={handleDeleteTemp}
-              dirtyIds={dirtyIds}
-              syncingId={syncingId}
-              onPush={handlePush}
-              onPull={handlePull}
-              onPushAll={handlePushAll}
-              onPullAll={handlePullAll}
-              onCheckConnection={handleCheckConnection}
-              connectionStatus={connectionStatus}
-              checkingConnection={checkingConnection}
-            />
-          </div>
-        </div>
-
-        {/* Column 2: Filter Detail (always visible) */}
-        <div className="w-80 shrink-0 border-r border-border overflow-y-auto">
-          {selectedFilter ? (
-            <>
-              {filterError && (
-                <div className="mx-3 mt-3 px-3 py-2 rounded bg-destructive/20 border border-destructive/50 text-destructive text-sm flex items-center justify-between">
-                  <span>{filterError}</span>
-                  <button onClick={() => setFilterError(null)} className="ml-2 text-destructive hover:text-destructive">✕</button>
-                </div>
-              )}
-              <FilterForm
-                filter={selectedFilter}
-                analysisResults={analysisResults}
-                readOnly={
-                  selectedFilter._source === "generated" &&
-                  !tempFilters.some((f) => f._id === selectedFilter._id)
-                }
-                onSave={handleFilterSave}
-                onDelete={selectedFilter._source !== "generated" ? handleFilterDelete : undefined}
-                onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
-                onChange={handleFilterChange}
-                onPush={handlePush}
-                pushing={syncingId === selectedFilter._id}
-                onCancel={handleFilterCancel}
-                isDirty={isDirty}
-              />
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-              Select a filter
-            </div>
-          )}
-        </div>
-
-        {/* Column 3: Simulation */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-          <div className="flex items-center gap-3">
-            <Button onClick={handleRunSimulation} disabled={running || !selectedDataset || missing} size="sm">
-              {running ? "Running..." : "Run Simulation"}
-            </Button>
-            {simError && <span className="text-sm text-destructive">{simError}</span>}
-          </div>
-
-          {simResult && (
-            <>
-              <MetricsBar result={simResult} />
-              <Card>
-                <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
-                <CardContent>
-                  <FilterBreakdownTable result={simResult} />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {([
-                      { key: "utilization", label: "Disk Utilization" },
-                      { key: "grabs", label: "Daily Grabs" },
-                      { key: "flow", label: "GB Flow" },
-                      { key: "upload", label: "Upload" },
-                    ] as const).map((tab) => (
-                      <button
-                        key={tab.key}
-                        onClick={() => setActiveChart(tab.key)}
-                        className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                          activeChart === tab.key
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-muted"
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
+      {/* Column 3: Controls + Simulation */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+        {/* Data controls */}
+        {missing ? (
+          <Card>
+            <CardContent className="py-4">
+              <p className="text-sm text-muted-foreground">
+                {trackers.length === 0 && seedboxes.length === 0
+                  ? "Add a tracker and seedbox in Settings to get started."
+                  : trackers.length === 0
+                  ? "Add a tracker in Settings to get started."
+                  : "Add a seedbox in Settings to get started."}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="py-4 space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Tracker</label>
+                  <select
+                    value={selectedTrackerType}
+                    onChange={(e) => setSelectedTrackerType(e.target.value)}
+                    className={selectCls}
+                  >
+                    {trackers.map((t) => (
+                      <option key={t.id} value={t.tracker_type}>{t.tracker_type}</option>
                     ))}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {activeChart === "utilization" && <UtilizationChart dailyStats={simResult.daily_stats} targetPct={80} />}
-                  {activeChart === "grabs" && <DailyGrabsChart dailyStats={simResult.daily_stats} />}
-                  {activeChart === "flow" && <GBFlowChart dailyStats={simResult.daily_stats} />}
-                  {activeChart === "upload" && <UploadChart dailyStats={simResult.daily_stats} />}
-                </CardContent>
-              </Card>
-              <GrabbedList torrents={simResult.grabbed_torrents} />
-              <SkippedList torrents={simResult.skipped_torrents} />
-            </>
-          )}
-        </div>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Dataset</label>
+                  <select
+                    value={selectedDataset}
+                    onChange={(e) => setSelectedDataset(e.target.value)}
+                    disabled={filteredDatasets.length === 0}
+                    className={selectCls}
+                  >
+                    {filteredDatasets.length === 0 && (
+                      <option key="__empty" value="">No datasets — run a scrape first</option>
+                    )}
+                    {filteredDatasets.map((ds) => (
+                      <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Seedbox</label>
+                  <select
+                    value={selectedSeedboxId}
+                    onChange={(e) => handleSeedboxChange(e.target.value)}
+                    className={selectCls}
+                  >
+                    {seedboxes.map((sb) => (
+                      <option key={sb.id} value={sb.id}>{sb.name} ({sb.storage_tb} TB)</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Seed Days</label>
+                  <input
+                    type="number"
+                    value={maxSeedDays}
+                    onChange={(e) => setMaxSeedDays(Number(e.target.value))}
+                    min={1}
+                    className={selectCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Avg Ratio (0 = skip upload est.)</label>
+                  <input
+                    type="number"
+                    value={avgRatio}
+                    onChange={(e) => setAvgRatio(Number(e.target.value))}
+                    min={0}
+                    step={0.1}
+                    className={selectCls}
+                  />
+                </div>
+              </div>
+              {/* Action buttons */}
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleGenerate}
+                  disabled={generating || !selectedDataset || !selectedSeedboxId}
+                  size="sm"
+                  variant="outline"
+                >
+                  {generating ? "Generating..." : "Generate Filters"}
+                </Button>
+                <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm">
+                  {running ? "Running..." : "Run Simulation"}
+                </Button>
+                {simError && <span className="text-sm text-destructive">{simError}</span>}
+              </div>
+              <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Simulation results */}
+        {simResult && (
+          <>
+            <MetricsBar result={simResult} />
+            <Card>
+              <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
+              <CardContent>
+                <FilterBreakdownTable result={simResult} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {([
+                    { key: "utilization", label: "Disk Utilization" },
+                    { key: "grabs", label: "Daily Grabs" },
+                    { key: "flow", label: "GB Flow" },
+                    { key: "upload", label: "Upload" },
+                  ] as const).map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveChart(tab.key)}
+                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                        activeChart === tab.key
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {activeChart === "utilization" && <UtilizationChart dailyStats={simResult.daily_stats} targetPct={80} />}
+                {activeChart === "grabs" && <DailyGrabsChart dailyStats={simResult.daily_stats} />}
+                {activeChart === "flow" && <GBFlowChart dailyStats={simResult.daily_stats} />}
+                {activeChart === "upload" && <UploadChart dailyStats={simResult.daily_stats} />}
+              </CardContent>
+            </Card>
+            <GrabbedList torrents={simResult.grabbed_torrents} />
+            <SkippedList torrents={simResult.skipped_torrents} />
+          </>
+        )}
       </div>
     </div>
   );
