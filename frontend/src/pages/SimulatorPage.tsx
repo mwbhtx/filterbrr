@@ -48,8 +48,8 @@ export default function SimulatorPage() {
   const [selectedDataset, setSelectedDataset] = useState(stored.dataset ?? "");
   const [selectedSeedboxId, setSelectedSeedboxId] = useState(stored.seedboxId ?? "");
   const [storageTb, setStorageTb] = useState(stored.storageTb ?? 4);
-  const [maxSeedDays, setMaxSeedDays] = useState(stored.maxSeedDays ?? 30);
-  const [avgRatio, setAvgRatio] = useState(stored.avgRatio ?? 0.2);
+  const [maxSeedDays, setMaxSeedDays] = useState(stored.maxSeedDays ?? 10);
+  const [avgRatio, setAvgRatio] = useState(stored.avgRatio ?? 0.8);
 
   // Persist settings to localStorage on change
   useEffect(() => {
