@@ -371,219 +371,259 @@ export default function SimulatorPage() {
 
   const isDirty = selectedFilter ? dirtyIds.has(selectedFilter._id) : false;
 
-  return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden -mx-6 -my-4">
-      {/* Column 1: Filters */}
-      <div className="w-56 shrink-0 border-r border-border overflow-hidden">
-        <FilterList
-          filters={allFilters}
-          selectedId={selectedFilterId}
-          onSelect={(f) => setSelectedFilterId(f._id)}
-          onCreateNew={handleCreateNew}
-          onClearTemp={handleClearTemp}
-          onSaveAllTemp={handleSaveAllTemp}
-          onDeleteFilter={handleDeleteTemp}
-          dirtyIds={dirtyIds}
-          {...(!isDemo && {
-            syncingId,
-            onPush: handlePush,
-            onPull: handlePull,
-            onPushAll: handlePushAll,
-            onPullAll: handlePullAll,
-            onCheckConnection: handleCheckConnection,
-            connectionStatus,
-            checkingConnection,
-          })}
-        />
-      </div>
+  const [mobileTab, setMobileTab] = useState<"filters" | "detail" | "simulation">("simulation");
 
-      {/* Column 2: Filter Detail (always visible) */}
-      <div className="w-80 shrink-0 border-r border-border overflow-y-auto">
-        {selectedFilter ? (
-          <>
-            {filterError && (
-              <div className="mx-3 mt-3 px-3 py-2 rounded bg-destructive/20 border border-destructive/50 text-destructive text-sm flex items-center justify-between">
-                <span>{filterError}</span>
-                <button onClick={() => setFilterError(null)} className="ml-2 text-destructive hover:text-destructive">✕</button>
-              </div>
-            )}
-            <FilterForm
-              filter={selectedFilter}
-              analysisResults={analysisResults}
-              readOnly={
-                selectedFilter._source === "generated" &&
-                !tempFilters.some((f) => f._id === selectedFilter._id)
-              }
-              onSave={handleFilterSave}
-              onDelete={selectedFilter._source !== "generated" ? handleFilterDelete : undefined}
-              onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
-              onChange={handleFilterChange}
-              onPush={isDemo ? undefined : handlePush}
-              pushing={syncingId === selectedFilter._id}
-              onCancel={handleFilterCancel}
-              isDirty={isDirty}
-            />
-          </>
-        ) : (
-          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-            Select a filter
-          </div>
-        )}
-      </div>
+  const filterListContent = (
+    <FilterList
+      filters={allFilters}
+      selectedId={selectedFilterId}
+      onSelect={(f) => { setSelectedFilterId(f._id); setMobileTab("detail"); }}
+      onCreateNew={() => { handleCreateNew(); setMobileTab("detail"); }}
+      onClearTemp={handleClearTemp}
+      onSaveAllTemp={handleSaveAllTemp}
+      onDeleteFilter={handleDeleteTemp}
+      dirtyIds={dirtyIds}
+      {...(!isDemo && {
+        syncingId,
+        onPush: handlePush,
+        onPull: handlePull,
+        onPushAll: handlePushAll,
+        onPullAll: handlePullAll,
+        onCheckConnection: handleCheckConnection,
+        connectionStatus,
+        checkingConnection,
+      })}
+    />
+  );
 
-      {/* Column 3: Controls + Simulation */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-        {/* Data controls */}
-        <Card>
-          <CardContent className="py-4 space-y-4">
-            <div className="grid grid-cols-4 gap-3">
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1">Scrape Dataset<HintIcon tip="The scraped torrent dataset to run the simulation against" /></label>
-                <select
-                  value={selectedDataset}
-                  onChange={(e) => setSelectedDataset(e.target.value)}
-                  disabled={sortedDatasets.length === 0}
-                  className={selectCls}
-                >
-                  {sortedDatasets.length === 0 && (
-                    <option key="__empty" value="">No datasets — run a scrape first</option>
-                  )}
-                  {sortedDatasets.map((ds) => (
-                    <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1">Server Storage Capacity (TB)<HintIcon tip="Total disk space available for storing downloaded torrents" /></label>
-                <input
-                  type="number"
-                  value={storageTb}
-                  onChange={(e) => setStorageTb(Math.max(0.5, Number(e.target.value)))}
-                  min={0.5}
-                  step={0.5}
-                  className={selectCls}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1">Avg Seed Days<HintIcon tip="Average number of days each torrent is seeded before removal" /></label>
-                <input
-                  type="number"
-                  value={maxSeedDays}
-                  onChange={(e) => setMaxSeedDays(Number(e.target.value))}
-                  min={1}
-                  className={selectCls}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1">Avg Ratio<HintIcon tip="Average upload-to-download ratio achieved per torrent" /></label>
-                <input
-                  type="number"
-                  value={avgRatio}
-                  onChange={(e) => setAvgRatio(Math.min(10, Math.max(0.2, Number(e.target.value))))}
-                  min={0.2}
-                  max={10}
-                  step={0.1}
-                  className={selectCls}
-                />
-              </div>
+  const filterDetailContent = (
+    <>
+      {selectedFilter ? (
+        <>
+          {filterError && (
+            <div className="mx-3 mt-3 px-3 py-2 rounded bg-destructive/20 border border-destructive/50 text-destructive text-sm flex items-center justify-between">
+              <span>{filterError}</span>
+              <button onClick={() => setFilterError(null)} className="ml-2 text-destructive hover:text-destructive">✕</button>
             </div>
-            {/* Filter chips */}
-            {allFilters.length > 0 && (
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1.5">
-                  Simulation Filters<HintIcon tip="Toggle which filters are included in the simulation" />
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {allFilters.map(f => {
-                    const active = enabledFilterIds.has(f._id);
-                    return (
-                      <button
-                        key={f._id}
-                        onClick={() => setEnabledFilterIds(prev => {
-                          const next = new Set(prev);
-                          if (next.has(f._id)) next.delete(f._id);
-                          else next.add(f._id);
-                          return next;
-                        })}
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
-                          active
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-muted text-muted-foreground border-border opacity-60'
-                        }`}
-                      >
-                        {f.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+          )}
+          <FilterForm
+            filter={selectedFilter}
+            analysisResults={analysisResults}
+            readOnly={
+              selectedFilter._source === "generated" &&
+              !tempFilters.some((f) => f._id === selectedFilter._id)
+            }
+            onSave={handleFilterSave}
+            onDelete={selectedFilter._source !== "generated" ? handleFilterDelete : undefined}
+            onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
+            onChange={handleFilterChange}
+            onPush={isDemo ? undefined : handlePush}
+            pushing={syncingId === selectedFilter._id}
+            onCancel={handleFilterCancel}
+            isDirty={isDirty}
+          />
+        </>
+      ) : (
+        <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+          Select a filter
+        </div>
+      )}
+    </>
+  );
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={handleGenerate}
-                disabled={generating || !selectedDataset}
-                size="sm"
-                variant="outline"
-                className="shrink-0"
+  const simulationContent = (
+    <div className="overflow-y-auto px-4 md:px-6 py-4 space-y-6 flex-1">
+      <Card>
+        <CardContent className="py-4 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Scrape Dataset<HintIcon tip="The scraped torrent dataset to run the simulation against" /></label>
+              <select
+                value={selectedDataset}
+                onChange={(e) => setSelectedDataset(e.target.value)}
+                disabled={sortedDatasets.length === 0}
+                className={selectCls}
               >
-                {generating ? "Generating..." : "Generate Filters"}
-              </Button>
-              <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm" className="shrink-0">
-                {running ? "Running..." : "Run Simulation"}
-              </Button>
-              <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
-              {simError && <span className="text-sm text-destructive shrink-0">{simError}</span>}
+                {sortedDatasets.length === 0 && (
+                  <option key="__empty" value="">No datasets — run a scrape first</option>
+                )}
+                {sortedDatasets.map((ds) => (
+                  <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
+                ))}
+              </select>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Simulation results */}
-        {simResult && (
-          <>
-            <MetricsBar result={simResult} />
-            <GrabbedList torrents={simResult.grabbed_torrents} />
-            <SkippedList torrents={simResult.skipped_torrents} />
-            <Card>
-              <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
-              <CardContent>
-                <FilterBreakdownTable result={simResult} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {([
-                    { key: "utilization", label: "Disk Utilization" },
-                    { key: "grabs", label: "Daily Grabs" },
-                    { key: "flow", label: "GB Flow" },
-                    { key: "upload", label: "Upload" },
-                  ] as const).map((tab) => (
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Storage (TB)<HintIcon tip="Total disk space available for storing downloaded torrents" /></label>
+              <input
+                type="number"
+                value={storageTb}
+                onChange={(e) => setStorageTb(Math.max(0.5, Number(e.target.value)))}
+                min={0.5}
+                step={0.5}
+                className={selectCls}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Avg Seed Days<HintIcon tip="Average number of days each torrent is seeded before removal" /></label>
+              <input
+                type="number"
+                value={maxSeedDays}
+                onChange={(e) => setMaxSeedDays(Number(e.target.value))}
+                min={1}
+                className={selectCls}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Avg Ratio<HintIcon tip="Average upload-to-download ratio achieved per torrent" /></label>
+              <input
+                type="number"
+                value={avgRatio}
+                onChange={(e) => setAvgRatio(Math.min(10, Math.max(0.2, Number(e.target.value))))}
+                min={0.2}
+                max={10}
+                step={0.1}
+                className={selectCls}
+              />
+            </div>
+          </div>
+          {allFilters.length > 0 && (
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1.5">
+                Simulation Filters<HintIcon tip="Toggle which filters are included in the simulation" />
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {allFilters.map(f => {
+                  const active = enabledFilterIds.has(f._id);
+                  return (
                     <button
-                      key={tab.key}
-                      onClick={() => setActiveChart(tab.key)}
-                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                        activeChart === tab.key
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-muted"
+                      key={f._id}
+                      onClick={() => setEnabledFilterIds(prev => {
+                        const next = new Set(prev);
+                        if (next.has(f._id)) next.delete(f._id);
+                        else next.add(f._id);
+                        return next;
+                      })}
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                        active
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border opacity-60'
                       }`}
                     >
-                      {tab.label}
+                      {f.name}
                     </button>
-                  ))}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {activeChart === "utilization" && <UtilizationChart dailyStats={simResult.daily_stats} targetPct={80} />}
-                {activeChart === "grabs" && <DailyGrabsChart dailyStats={simResult.daily_stats} />}
-                {activeChart === "flow" && <GBFlowChart dailyStats={simResult.daily_stats} />}
-                {activeChart === "upload" && <UploadChart dailyStats={simResult.daily_stats} />}
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              onClick={handleGenerate}
+              disabled={generating || !selectedDataset}
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+            >
+              {generating ? "Generating..." : "Generate Filters"}
+            </Button>
+            <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm" className="shrink-0">
+              {running ? "Running..." : "Run Simulation"}
+            </Button>
+            <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
+            {simError && <span className="text-sm text-destructive shrink-0">{simError}</span>}
+          </div>
+        </CardContent>
+      </Card>
+
+      {simResult && (
+        <>
+          <MetricsBar result={simResult} />
+          <GrabbedList torrents={simResult.grabbed_torrents} />
+          <SkippedList torrents={simResult.skipped_torrents} />
+          <Card>
+            <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
+            <CardContent>
+              <FilterBreakdownTable result={simResult} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2 flex-wrap">
+                {([
+                  { key: "utilization", label: "Disk Utilization" },
+                  { key: "grabs", label: "Daily Grabs" },
+                  { key: "flow", label: "GB Flow" },
+                  { key: "upload", label: "Upload" },
+                ] as const).map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveChart(tab.key)}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                      activeChart === tab.key
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {activeChart === "utilization" && <UtilizationChart dailyStats={simResult.daily_stats} targetPct={80} />}
+              {activeChart === "grabs" && <DailyGrabsChart dailyStats={simResult.daily_stats} />}
+              {activeChart === "flow" && <GBFlowChart dailyStats={simResult.daily_stats} />}
+              {activeChart === "upload" && <UploadChart dailyStats={simResult.daily_stats} />}
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
+  );
+
+  return (
+    <>
+      {/* Mobile layout */}
+      <div className="flex flex-col h-[calc(100vh-4rem)] -mx-6 -my-4 md:hidden">
+        <div className="flex border-b border-border shrink-0">
+          {([
+            { key: "simulation", label: "Simulate" },
+            { key: "filters", label: "Filters" },
+            { key: "detail", label: "Detail" },
+          ] as const).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setMobileTab(tab.key)}
+              className={`flex-1 px-3 py-2.5 text-sm font-medium transition-colors ${
+                mobileTab === tab.key
+                  ? "text-foreground border-b-2 border-primary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {mobileTab === "filters" && filterListContent}
+          {mobileTab === "detail" && filterDetailContent}
+          {mobileTab === "simulation" && simulationContent}
+        </div>
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden md:flex h-[calc(100vh-4rem)] overflow-hidden -mx-6 -my-4">
+        <div className="w-56 shrink-0 border-r border-border overflow-hidden">
+          {filterListContent}
+        </div>
+        <div className="w-80 shrink-0 border-r border-border overflow-y-auto">
+          {filterDetailContent}
+        </div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {simulationContent}
+        </div>
+      </div>
+    </>
   );
 }
