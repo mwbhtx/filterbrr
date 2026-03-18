@@ -123,7 +123,7 @@ export const api = {
   // Autobrr Sync
   getAutobrrStatus: () => fetchJSON<AutobrrConnectionStatus>("/autobrr/status"),
   testAutobrrConnection: (settings: { autobrr_url: string; autobrr_api_key: string }) =>
-    fetchJSON<AutobrrConnectionStatus>("/autobrr/status", {
+    fetchJSON<AutobrrConnectionStatus>("/autobrr/test", {
       method: "POST",
       body: JSON.stringify(settings),
     }),
