@@ -1,0 +1,184 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      scraper: ${{ steps.filter.outputs.scraper }}
+      analyzer: ${{ steps.filter.outputs.analyzer }}
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+            scraper:
+              - 'lambdas/scraper/**'
+            analyzer:
+              - 'lambdas/analyzer/**'
+            infra:
+              - 'infrastructure/**'
+
+  infra:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform init
+        working-directory: infrastructure
+      - run: terraform apply -auto-approve
+        working-directory: infrastructure
+
+  backend:
+    needs: [changes, infra]
+    if: always() && needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Build
+        working-directory: backend
+        run: |
+          npm ci
+          npm run build
+      - name: Package
+        working-directory: backend
+        run: |
+          cd dist
+          cp ../package.json ../package-lock.json .
+          npm ci --production
+          zip -rq ../../backend.zip . -x "*.map"
+      - name: Deploy
+        run: |
+          aws lambda update-function-code \
+            --function-name filterbrr-backend \
+            --zip-file fileb://backend.zip
+
+  scraper:
+    needs: [changes, infra]
+    if: always() && needs.changes.outputs.scraper == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: lambdas/scraper/package-lock.json
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Build
+        working-directory: lambdas/scraper
+        run: |
+          npm ci
+          npm run build
+      - name: Package
+        working-directory: lambdas/scraper
+        run: |
+          cd dist
+          cp ../package.json ../package-lock.json .
+          npm ci --production
+          zip -rq ../../../scraper.zip . -x "*.map"
+      - name: Deploy
+        run: |
+          aws lambda update-function-code \
+            --function-name filterbrr-scraper \
+            --zip-file fileb://scraper.zip
+
+  analyzer:
+    needs: [changes, infra]
+    if: always() && needs.changes.outputs.analyzer == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: lambdas/analyzer/package-lock.json
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Build
+        working-directory: lambdas/analyzer
+        run: |
+          npm ci
+          npm run build
+      - name: Package
+        working-directory: lambdas/analyzer
+        run: |
+          cd dist
+          cp ../package.json ../package-lock.json .
+          npm ci --production
+          zip -rq ../../../analyzer.zip . -x "*.map"
+      - name: Deploy
+        run: |
+          aws lambda update-function-code \
+            --function-name filterbrr-analyzer \
+            --zip-file fileb://analyzer.zip
+
+  frontend:
+    needs: [changes, infra]
+    if: always() && needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Build
+        working-directory: frontend
+        env:
+          VITE_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
+          VITE_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
+        run: |
+          npm ci
+          npm run build
+      - name: Deploy
+        run: |
+          aws s3 sync frontend/dist/ s3://filterbrr-frontend --delete
+          DIST_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items[?contains(@, 'filterbrr.com')]].Id" \
+            --output text)
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
