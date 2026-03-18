@@ -1,15 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
+import { LambdaClient, InvokeCommand, InvocationType } from '@aws-sdk/client-lambda';
 import { SettingsService } from '../settings/settings.service';
 import { JobRepository, Job } from './job.repository';
-import { SqsService } from './sqs.service';
+
+const LOCAL_LAMBDA_URLS: Record<string, string> = {
+  'filterbrr-scraper':  'http://localhost:9001/2015-03-31/functions/function/invocations',
+  'filterbrr-analyzer': 'http://localhost:9002/2015-03-31/functions/function/invocations',
+};
 
 @Injectable()
 export class PipelineService {
+  private readonly logger = new Logger(PipelineService.name);
+  private readonly isLocal = process.env.NODE_ENV !== 'production';
+  private readonly lambda = new LambdaClient({ region: process.env.AWS_REGION ?? 'us-east-1' });
+
   constructor(
     private readonly settings: SettingsService,
     private readonly jobRepo: JobRepository,
-    private readonly sqs: SqsService,
   ) {}
 
   async startScrape(userId: string, dto: Record<string, unknown>): Promise<{ job_id: string }> {
@@ -33,7 +42,7 @@ export class PipelineService {
     };
 
     const command = `scrape ${tracker.tracker_type} ${dto['category']} ${dto['days']}d`;
-    return this.enqueue(userId, command, 'filterbrr-scraper', payload);
+    return this.createAndInvoke(userId, command, 'filterbrr-scraper', payload);
   }
 
   async startAnalyze(userId: string, dto: Record<string, unknown>): Promise<{ job_id: string }> {
@@ -46,7 +55,7 @@ export class PipelineService {
 
     const payload: Record<string, unknown> = { userId, datasetKey, storageTb, seedDays, source };
     const command = `analyze ${source} storageTb=${storageTb} seedDays=${seedDays}`;
-    return this.enqueue(userId, command, 'filterbrr-analyzer', payload);
+    return this.createAndInvoke(userId, command, 'filterbrr-analyzer', payload);
   }
 
   async getJob(jobId: string): Promise<Job | null> {
@@ -54,30 +63,73 @@ export class PipelineService {
   }
 
   async cancelJob(jobId: string): Promise<void> {
-    await this.jobRepo.setCancelled(jobId);
+    await this.jobRepo.setCancelling(jobId);
   }
 
-  private async enqueue(
+  private async createAndInvoke(
     userId: string,
     command: string,
     functionName: string,
     payload: Record<string, unknown>,
   ): Promise<{ job_id: string }> {
+    const jobId = uuidv4();
     const job: Job = {
-      job_id: uuidv4(),
+      job_id: jobId,
       user_id: userId,
       command,
       function_name: functionName,
       payload,
-      status: 'queued',
-      output: [],
-      return_code: null,
+      status: 'running',
+      progress: 'Starting...',
+      result: null,
+      error: null,
       cancelled: false,
       started_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
     await this.jobRepo.create(job);
-    await this.sqs.enqueue(job.job_id);
-    return { job_id: job.job_id };
+
+    const lambdaPayload = { ...payload, jobId };
+    if (this.isLocal) {
+      this.invokeLocalLambda(functionName, lambdaPayload, jobId);
+    } else {
+      this.invokeLambda(functionName, lambdaPayload, jobId);
+    }
+
+    return { job_id: jobId };
+  }
+
+  private invokeLocalLambda(functionName: string, payload: unknown, jobId: string): void {
+    const url = LOCAL_LAMBDA_URLS[functionName];
+    if (!url) {
+      this.logger.error(`No local URL configured for ${functionName}`);
+      return;
+    }
+    axios.post(url, payload, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 900_000,
+    }).then(async (response) => {
+      const body = response.data;
+      if (body?.errorMessage) {
+        await this.jobRepo.updateStatus(jobId, 'failed', undefined, undefined, `${body.errorType ?? 'LambdaError'}: ${body.errorMessage}`);
+      } else {
+        await this.jobRepo.updateStatus(jobId, 'completed', undefined, body ?? {});
+      }
+    }).catch(async (err) => {
+      const isCancelling = await this.jobRepo.isCancelling(jobId);
+      if (!isCancelling) {
+        await this.jobRepo.updateStatus(jobId, 'failed', undefined, undefined, err instanceof Error ? err.message : String(err));
+      }
+    });
+  }
+
+  private invokeLambda(functionName: string, payload: unknown, jobId: string): void {
+    this.lambda.send(new InvokeCommand({
+      FunctionName: functionName,
+      InvocationType: InvocationType.Event,
+      Payload: Buffer.from(JSON.stringify(payload)),
+    })).catch(async (err) => {
+      await this.jobRepo.updateStatus(jobId, 'failed', undefined, undefined, err instanceof Error ? err.message : String(err));
+    });
   }
 }

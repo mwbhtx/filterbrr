@@ -1,4 +1,5 @@
-import { Controller, Post, Delete, Get, Param, Body, Req, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Delete, Get, Param, Body, Req, Sse, NotFoundException, MessageEvent } from '@nestjs/common';
+import { Observable, interval, switchMap, from, map, takeWhile, startWith, distinctUntilChanged } from 'rxjs';
 import { PipelineService } from './pipeline.service';
 import { ScrapeRequestDto } from './dto/scrape-request.dto';
 import { AnalyzeRequestDto } from './dto/analyze-request.dto';
@@ -40,10 +41,45 @@ export class PipelineController {
     return {
       id: job.job_id,
       command: job.command,
-      status: job.status === 'queued' ? 'running' : job.status === 'cancelled' ? 'failed' : job.status,
-      output: job.output,
-      return_code: job.return_code,
+      status: job.status,
+      progress: job.progress,
+      result: job.result,
+      error: job.error,
     };
+  }
+
+  @Sse('jobs/:id/stream')
+  streamJob(@Param('id') id: string): Observable<MessageEvent> {
+    let lastUpdatedAt = '';
+
+    return interval(2000).pipe(
+      startWith(0),
+      switchMap(() => from(this.pipeline.getJob(id))),
+      map((job): { job: typeof job; changed: boolean } => {
+        if (!job) return { job: null, changed: true };
+        const changed = job.updated_at !== lastUpdatedAt;
+        if (changed) lastUpdatedAt = job.updated_at;
+        return { job, changed };
+      }),
+      distinctUntilChanged((prev, curr) => !curr.changed),
+      map(({ job }): MessageEvent => {
+        if (!job) {
+          return { type: 'complete', data: { status: 'failed', error: 'Job not found' } };
+        }
+
+        const isTerminal = ['completed', 'failed', 'cancelled'].includes(job.status);
+        return {
+          type: isTerminal ? 'complete' : 'progress',
+          data: {
+            status: job.status,
+            progress: job.progress,
+            ...(job.result && { result: job.result }),
+            ...(job.error && { error: job.error }),
+          },
+        };
+      }),
+      takeWhile((event) => event.type !== 'complete', true),
+    );
   }
 
   @Delete('jobs/:id')

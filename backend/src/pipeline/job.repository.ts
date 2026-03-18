@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PutCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { DynamoService } from '../dynamo/dynamo.service';
 
-export type JobStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type JobStatus = 'running' | 'completed' | 'failed' | 'cancelling' | 'cancelled';
 
 export interface Job {
   job_id: string;
@@ -11,8 +11,9 @@ export interface Job {
   function_name: string;
   payload: Record<string, unknown>;
   status: JobStatus;
-  output: string[];
-  return_code: number | null;
+  progress: string;
+  result: Record<string, unknown> | null;
+  error: string | null;
   cancelled: boolean;
   started_at: string;
   updated_at: string;
@@ -35,49 +36,64 @@ export class JobRepository {
     return (result.Item as Job) ?? null;
   }
 
-  async updateStatus(jobId: string, status: JobStatus, returnCode?: number): Promise<void> {
+  async updateStatus(jobId: string, status: JobStatus, progress?: string, result?: Record<string, unknown>, error?: string): Promise<void> {
+    let expr = 'SET #s = :s, updated_at = :u';
+    const names: Record<string, string> = { '#s': 'status' };
+    const values: Record<string, unknown> = {
+      ':s': status,
+      ':u': new Date().toISOString(),
+    };
+    if (progress !== undefined) {
+      expr += ', progress = :p';
+      values[':p'] = progress;
+    }
+    if (result !== undefined) {
+      expr += ', #r = :r';
+      names['#r'] = 'result';
+      values[':r'] = result;
+    }
+    if (error !== undefined) {
+      expr += ', #e = :e';
+      names['#e'] = 'error';
+      values[':e'] = error;
+    }
     await this.dynamo.client.send(new UpdateCommand({
       TableName: TABLE,
       Key: { job_id: jobId },
-      UpdateExpression: 'SET #s = :s, updated_at = :u' + (returnCode !== undefined ? ', return_code = :r' : ''),
+      UpdateExpression: expr,
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: values,
+    }));
+  }
+
+  async updateProgress(jobId: string, progress: string): Promise<void> {
+    await this.dynamo.client.send(new UpdateCommand({
+      TableName: TABLE,
+      Key: { job_id: jobId },
+      UpdateExpression: 'SET progress = :p, updated_at = :u',
+      ExpressionAttributeValues: {
+        ':p': progress,
+        ':u': new Date().toISOString(),
+      },
+    }));
+  }
+
+  async setCancelling(jobId: string): Promise<void> {
+    await this.dynamo.client.send(new UpdateCommand({
+      TableName: TABLE,
+      Key: { job_id: jobId },
+      UpdateExpression: 'SET #s = :s, progress = :p, updated_at = :u',
       ExpressionAttributeNames: { '#s': 'status' },
       ExpressionAttributeValues: {
-        ':s': status,
-        ':u': new Date().toISOString(),
-        ...(returnCode !== undefined && { ':r': returnCode }),
-      },
-    }));
-  }
-
-  async appendOutput(jobId: string, line: string): Promise<void> {
-    await this.dynamo.client.send(new UpdateCommand({
-      TableName: TABLE,
-      Key: { job_id: jobId },
-      UpdateExpression: 'SET output = list_append(if_not_exists(output, :empty), :line), updated_at = :u',
-      ExpressionAttributeValues: {
-        ':line': [line],
-        ':empty': [],
+        ':s': 'cancelling',
+        ':p': 'Cancelling...',
         ':u': new Date().toISOString(),
       },
     }));
   }
 
-  async setCancelled(jobId: string): Promise<void> {
-    await this.dynamo.client.send(new UpdateCommand({
-      TableName: TABLE,
-      Key: { job_id: jobId },
-      UpdateExpression: 'SET cancelled = :t, #s = :s, updated_at = :u',
-      ExpressionAttributeNames: { '#s': 'status' },
-      ExpressionAttributeValues: {
-        ':t': true,
-        ':s': 'cancelled',
-        ':u': new Date().toISOString(),
-      },
-    }));
-  }
-
-  async isCancelled(jobId: string): Promise<boolean> {
+  async isCancelling(jobId: string): Promise<boolean> {
     const job = await this.get(jobId);
-    return job?.cancelled === true;
+    return job?.status === 'cancelling';
   }
 }
