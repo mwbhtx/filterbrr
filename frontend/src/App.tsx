@@ -8,6 +8,7 @@ import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import RequireAuth from './auth/RequireAuth';
+import { useIsDemo } from './auth/useIsDemo';
 
 const TABS = [
   { path: '/simulator', label: 'Simulator' },
@@ -16,8 +17,13 @@ const TABS = [
 ];
 
 function Dashboard() {
+  const isDemo = useIsDemo();
   const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
+
+  const visibleTabs = isDemo
+    ? TABS.filter(t => t.path === '/simulator')
+    : TABS;
 
   const handleLogout = () => {
     logout();
@@ -27,9 +33,9 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="border-b px-6 py-3 shrink-0 flex items-center gap-6">
-        <h1 className="text-lg font-semibold">filterbrr</h1>
+        <img src="/logo.svg" alt="filterbrr" className="h-7 w-auto" />
         <nav className="flex gap-1">
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <NavLink
               key={t.path}
               to={t.path}
@@ -57,8 +63,8 @@ function Dashboard() {
       <main className="flex-1 px-6 py-4">
         <Routes>
           <Route path="/simulator" element={<SimulatorPage />} />
-          <Route path="/datasets" element={<DatasetsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          {!isDemo && <Route path="/datasets" element={<DatasetsPage />} />}
+          {!isDemo && <Route path="/settings" element={<SettingsPage />} />}
           <Route path="*" element={<SimulatorPage />} />
         </Routes>
       </main>
