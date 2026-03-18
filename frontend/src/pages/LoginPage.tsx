@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../auth/auth';
+import { DEMO_SETTINGS, DEMO_SIMULATION_RESULT } from '../data/demoSeed';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(DEMO_EMAIL, DEMO_PASSWORD);
+      // Seed demo data into localStorage
+      localStorage.setItem('simulator-settings', JSON.stringify(DEMO_SETTINGS));
+      localStorage.setItem('simulator-last-result', JSON.stringify(DEMO_SIMULATION_RESULT));
       navigate('/');
     } catch (err: any) {
       setError(err.message ?? 'Demo login failed');
