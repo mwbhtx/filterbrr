@@ -47,6 +47,7 @@ export default function DatasetsPage() {
   // Scrape controls
   const [scrapeCategory, setScrapeCategory] = useState("freeleech");
   const [scrapeDays, setScrapeDays] = useState(30);
+  const [scrapeStartPage, setScrapeStartPage] = useState(1);
   const [scrapeJobId, setScrapeJobId] = useState<string | null>(
     () => localStorage.getItem('active-scrape-job')
   );
@@ -76,7 +77,7 @@ export default function DatasetsPage() {
       const { job_id } = await api.startScrape({
         category: scrapeCategory,
         days: scrapeDays,
-        start_page: 1,
+        start_page: scrapeStartPage,
         tracker_id: trackerId,
       });
       setScrapeJobId(job_id);
@@ -124,7 +125,7 @@ export default function DatasetsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs text-muted-foreground mb-1">Category</label>
               <select
@@ -152,6 +153,17 @@ export default function DatasetsPage() {
                 <option value={60}>60 days</option>
                 <option value={90}>90 days</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Start Page</label>
+              <input
+                type="number"
+                value={scrapeStartPage}
+                onChange={(e) => setScrapeStartPage(Math.max(1, Number(e.target.value)))}
+                min={1}
+                disabled={scrapeRunning}
+                className={inputClass}
+              />
             </div>
           </div>
           <div className="flex items-center gap-3">
