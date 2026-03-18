@@ -3,14 +3,14 @@ import { api } from "../api/client";
 import { useSettings } from "../hooks/useSettings";
 import { useDatasets } from "../hooks/useDatasets";
 import { useFilters, useDeleteFilter } from "../hooks/useFilters";
-import type { SimulationResult, AnalysisResults, Filter, AutobrrConnectionStatus } from "../types";
+import type { SimulationResult, AnalysisResults, Filter, Dataset, AutobrrConnectionStatus } from "../types";
 import MetricsBar from "../components/MetricsBar";
 import FilterBreakdownTable from "../components/FilterBreakdown";
 import { UtilizationChart, DailyGrabsChart, GBFlowChart, UploadChart } from "../components/TimeSeriesChart";
 import { GrabbedList, SkippedList } from "../components/TorrentList";
-import PipelinePanel from "../components/PipelinePanel";
 import FilterList from "../components/FilterList";
 import FilterForm from "../components/FilterForm";
+import JobRunner from "../components/JobRunner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -19,26 +19,47 @@ const selectCls =
 
 const genTempId = () => `temp_${Math.random().toString(36).slice(2, 10)}`;
 
+function datasetLabel(ds: Dataset): string {
+  let label = ds.scraped_at ?? ds.category;
+  if (ds.min_date && ds.max_date) {
+    const days = Math.round(
+      (new Date(ds.max_date).getTime() - new Date(ds.min_date).getTime()) / 86400000
+    ) + 1;
+    label += ` · ${days} day${days !== 1 ? "s" : ""}`;
+  }
+  if (ds.torrent_count != null) {
+    label += ` · ${ds.torrent_count} torrents`;
+  }
+  return label;
+}
+
 export default function SimulatorPage() {
   const { data: settings } = useSettings();
-  const { data: datasets = [] } = useDatasets();
+  const { data: datasets = [], refetch: refetchDatasets } = useDatasets();
   const { data: persistedFilters = [], refetch: refetchFilters } = useFilters();
   const deleteFilterMutation = useDeleteFilter();
 
   const trackers = settings?.trackers ?? [];
   const seedboxes = settings?.seedboxes ?? [];
 
-  // Simulator state
+  // Data context state
+  const [selectedTrackerType, setSelectedTrackerType] = useState("");
   const [selectedDataset, setSelectedDataset] = useState("");
   const [selectedSeedboxId, setSelectedSeedboxId] = useState("");
   const [storageTb, setStorageTb] = useState(4);
   const [maxSeedDays, setMaxSeedDays] = useState(30);
   const [avgRatio, setAvgRatio] = useState(0);
+
+  // Simulation state
   const [simResult, setSimResult] = useState<SimulationResult | null>(null);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
   const [running, setRunning] = useState(false);
   const [simError, setSimError] = useState<string | null>(null);
   const [activeChart, setActiveChart] = useState<"utilization" | "grabs" | "flow" | "upload">("utilization");
+
+  // Generate filters state
+  const [generateJobId, setGenerateJobId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   // Filter state
   const [tempFilters, setTempFilters] = useState<Filter[]>([]);
@@ -59,6 +80,23 @@ export default function SimulatorPage() {
   const dirtyIds = new Set(dirtyMap.keys());
   const selectedFilter = allFilters.find((f) => f._id === selectedFilterId) ?? null;
 
+  // Datasets filtered by selected tracker
+  const filteredDatasets = [...datasets]
+    .filter(ds => !selectedTrackerType || ds.tracker_type === selectedTrackerType)
+    .sort((a, b) => {
+      if (a.scraped_at && b.scraped_at) return b.scraped_at.localeCompare(a.scraped_at);
+      if (a.scraped_at) return -1;
+      if (b.scraped_at) return 1;
+      return 0;
+    });
+
+  // Auto-select first tracker
+  useEffect(() => {
+    if (trackers.length > 0 && !selectedTrackerType) {
+      setSelectedTrackerType(trackers[0].tracker_type);
+    }
+  }, [trackers]);
+
   // Auto-select first seedbox
   useEffect(() => {
     if (seedboxes.length > 0 && !selectedSeedboxId) {
@@ -68,12 +106,16 @@ export default function SimulatorPage() {
     }
   }, [seedboxes]);
 
-  // Auto-select first dataset
+  // Auto-select first dataset when tracker changes
   useEffect(() => {
-    if (datasets.length > 0 && !selectedDataset) {
-      setSelectedDataset(datasets[0].path);
+    const current = datasets.find(d => d.path === selectedDataset);
+    if (current && current.tracker_type !== selectedTrackerType) {
+      const first = filteredDatasets[0];
+      if (first) setSelectedDataset(first.path);
+    } else if (!selectedDataset && filteredDatasets.length > 0) {
+      setSelectedDataset(filteredDatasets[0].path);
     }
-  }, [datasets]);
+  }, [selectedTrackerType, datasets]);
 
   const handleSeedboxChange = (id: string) => {
     setSelectedSeedboxId(id);
@@ -81,6 +123,35 @@ export default function SimulatorPage() {
     if (sb) setStorageTb(sb.storage_tb);
   };
 
+  // Generate filters
+  const selectedDs = datasets.find(d => d.path === selectedDataset);
+  const source = selectedDs?.category ?? "freeleech";
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const selectedSb = seedboxes.find(sb => sb.id === selectedSeedboxId);
+      const { job_id } = await api.startAnalyze({
+        source,
+        storage_tb: selectedSb?.storage_tb ?? storageTb,
+        dataset_path: selectedDataset,
+        seed_days: maxSeedDays,
+      });
+      setGenerateJobId(job_id);
+    } catch {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerateComplete = () => {
+    setGenerating(false);
+    refetchFilters();
+    if (selectedDs) {
+      api.getAnalysisResults(selectedDs.category).then(setAnalysisResults).catch(() => {});
+    }
+  };
+
+  // Simulation
   const handleRunSimulation = async () => {
     if (!selectedDataset) return;
     setRunning(true);
@@ -93,10 +164,9 @@ export default function SimulatorPage() {
         avg_ratio: avgRatio,
       });
       setSimResult(result);
-      const ds = datasets.find((d) => d.path === selectedDataset);
-      if (ds) {
+      if (selectedDs) {
         try {
-          const ar = await api.getAnalysisResults(ds.category);
+          const ar = await api.getAnalysisResults(selectedDs.category);
           setAnalysisResults(ar);
         } catch { /* optional */ }
       }
@@ -225,51 +295,33 @@ export default function SimulatorPage() {
   const handlePush = async (filterId: string) => {
     setSyncingId(filterId);
     setFilterError(null);
-    try {
-      await api.pushFilter(filterId);
-    } catch (err: unknown) {
-      setFilterError(err instanceof Error ? err.message : "Push failed");
-    } finally {
-      setSyncingId(null);
-    }
+    try { await api.pushFilter(filterId); }
+    catch (err: unknown) { setFilterError(err instanceof Error ? err.message : "Push failed"); }
+    finally { setSyncingId(null); }
   };
 
   const handlePushAll = async () => {
     setSyncingId("all");
     setFilterError(null);
-    try {
-      await api.pushAll();
-    } catch (err: unknown) {
-      setFilterError(err instanceof Error ? err.message : "Push all failed");
-    } finally {
-      setSyncingId(null);
-    }
+    try { await api.pushAll(); }
+    catch (err: unknown) { setFilterError(err instanceof Error ? err.message : "Push all failed"); }
+    finally { setSyncingId(null); }
   };
 
   const handlePull = async (remoteId: number) => {
     setSyncingId(String(remoteId));
     setFilterError(null);
-    try {
-      await api.pullFilter(remoteId);
-      await refetchFilters();
-    } catch (err: unknown) {
-      setFilterError(err instanceof Error ? err.message : "Pull failed");
-    } finally {
-      setSyncingId(null);
-    }
+    try { await api.pullFilter(remoteId); await refetchFilters(); }
+    catch (err: unknown) { setFilterError(err instanceof Error ? err.message : "Pull failed"); }
+    finally { setSyncingId(null); }
   };
 
   const handlePullAll = async () => {
     setSyncingId("all");
     setFilterError(null);
-    try {
-      await api.pullAll();
-      await refetchFilters();
-    } catch (err: unknown) {
-      setFilterError(err instanceof Error ? err.message : "Pull all failed");
-    } finally {
-      setSyncingId(null);
-    }
+    try { await api.pullAll(); await refetchFilters(); }
+    catch (err: unknown) { setFilterError(err instanceof Error ? err.message : "Pull all failed"); }
+    finally { setSyncingId(null); }
   };
 
   const handleCheckConnection = async () => {
@@ -288,150 +340,166 @@ export default function SimulatorPage() {
   const isDirty = selectedFilter ? dirtyIds.has(selectedFilter._id) : false;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-0 overflow-hidden -mx-6 -my-4">
-      {/* Left column — filter list */}
-      <div className="w-56 shrink-0 overflow-hidden border-r border-border">
-        <FilterList
-          filters={allFilters}
-          selectedId={selectedFilterId}
-          onSelect={(f) => setSelectedFilterId(f._id)}
-          onCreateNew={handleCreateNew}
-          onClearTemp={handleClearTemp}
-          onSaveAllTemp={handleSaveAllTemp}
-          onDeleteFilter={handleDeleteTemp}
-          dirtyIds={dirtyIds}
-          syncingId={syncingId}
-          onPush={handlePush}
-          onPull={handlePull}
-          onPushAll={handlePushAll}
-          onPullAll={handlePullAll}
-          onCheckConnection={handleCheckConnection}
-          connectionStatus={connectionStatus}
-          checkingConnection={checkingConnection}
-        />
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden -mx-6 -my-4">
+      {/* Data Context Bar — full width */}
+      <div className="shrink-0 border-b border-border bg-card px-6 py-3">
+        {missing ? (
+          <p className="text-sm text-muted-foreground">
+            {trackers.length === 0 && seedboxes.length === 0
+              ? "Add a tracker and seedbox in Settings to get started."
+              : trackers.length === 0
+              ? "Add a tracker in Settings to get started."
+              : "Add a seedbox in Settings to get started."}
+          </p>
+        ) : (
+          <div className="flex items-end gap-3">
+            <div className="min-w-0">
+              <label className="block text-xs text-muted-foreground mb-1">Tracker</label>
+              <select
+                value={selectedTrackerType}
+                onChange={(e) => setSelectedTrackerType(e.target.value)}
+                className={selectCls}
+              >
+                {trackers.map((t) => (
+                  <option key={t.id} value={t.tracker_type}>{t.tracker_type}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 min-w-0">
+              <label className="block text-xs text-muted-foreground mb-1">Dataset</label>
+              <select
+                value={selectedDataset}
+                onChange={(e) => setSelectedDataset(e.target.value)}
+                disabled={filteredDatasets.length === 0}
+                className={selectCls}
+              >
+                {filteredDatasets.length === 0 && (
+                  <option key="__empty" value="">No datasets — run a scrape first</option>
+                )}
+                {filteredDatasets.map((ds) => (
+                  <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="min-w-0">
+              <label className="block text-xs text-muted-foreground mb-1">Seedbox</label>
+              <select
+                value={selectedSeedboxId}
+                onChange={(e) => handleSeedboxChange(e.target.value)}
+                className={selectCls}
+              >
+                {seedboxes.map((sb) => (
+                  <option key={sb.id} value={sb.id}>{sb.name} ({sb.storage_tb} TB)</option>
+                ))}
+              </select>
+            </div>
+            <div className="w-24 shrink-0">
+              <label className="block text-xs text-muted-foreground mb-1">Seed Days</label>
+              <input
+                type="number"
+                value={maxSeedDays}
+                onChange={(e) => setMaxSeedDays(Number(e.target.value))}
+                min={1}
+                className={selectCls}
+              />
+            </div>
+            <div className="w-24 shrink-0">
+              <label className="block text-xs text-muted-foreground mb-1">Avg Ratio</label>
+              <input
+                type="number"
+                value={avgRatio}
+                onChange={(e) => setAvgRatio(Number(e.target.value))}
+                min={0}
+                step={0.1}
+                className={selectCls}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Right area — simulator + optional filter detail */}
+      {/* 3-column layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Main simulator content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-          {/* Pipeline panel */}
-          <PipelinePanel
-            datasets={datasets}
-            trackers={trackers}
-            seedboxes={seedboxes}
-            selectedDataset={selectedDataset}
-            onDatasetChange={setSelectedDataset}
-            selectedSeedboxId={selectedSeedboxId}
-            onSeedboxChange={handleSeedboxChange}
-            avgSeedDays={maxSeedDays}
-            onDataChanged={() => {
-              const ds = datasets.find((d) => d.path === selectedDataset);
-              if (ds) api.getAnalysisResults(ds.category).then(setAnalysisResults).catch(() => {});
-            }}
-            onGoToSettings={() => {}}
-          />
+        {/* Column 1: Filters */}
+        <div className="w-56 shrink-0 border-r border-border flex flex-col overflow-hidden">
+          {/* Generate Filters button + progress */}
+          <div className="shrink-0 p-3 border-b border-border">
+            <Button
+              onClick={handleGenerate}
+              disabled={generating || !selectedDataset || !selectedSeedboxId || missing}
+              size="sm"
+              className="w-full"
+            >
+              {generating ? "Generating..." : "Generate Filters"}
+            </Button>
+            <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
+          </div>
+          {/* Filter list */}
+          <div className="flex-1 overflow-hidden">
+            <FilterList
+              filters={allFilters}
+              selectedId={selectedFilterId}
+              onSelect={(f) => setSelectedFilterId(f._id)}
+              onCreateNew={handleCreateNew}
+              onClearTemp={handleClearTemp}
+              onSaveAllTemp={handleSaveAllTemp}
+              onDeleteFilter={handleDeleteTemp}
+              dirtyIds={dirtyIds}
+              syncingId={syncingId}
+              onPush={handlePush}
+              onPull={handlePull}
+              onPushAll={handlePushAll}
+              onPullAll={handlePullAll}
+              onCheckConnection={handleCheckConnection}
+              connectionStatus={connectionStatus}
+              checkingConnection={checkingConnection}
+            />
+          </div>
+        </div>
 
-          {/* Simulator controls */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Simulator</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {missing ? (
-                <p className="text-sm text-muted-foreground">
-                  {trackers.length === 0 && seedboxes.length === 0
-                    ? "Add a tracker and seedbox in Settings to get started."
-                    : trackers.length === 0
-                    ? "Add a tracker in Settings to get started."
-                    : "Add a seedbox in Settings to get started."}
-                </p>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">Dataset</label>
-                      <select
-                        value={selectedDataset}
-                        onChange={(e) => setSelectedDataset(e.target.value)}
-                        disabled={running || datasets.length === 0}
-                        className={selectCls}
-                      >
-                        {datasets.length === 0 && (
-                          <option key="__empty" value="">No datasets — run a scrape first</option>
-                        )}
-                        {datasets.map((ds) => {
-                          let label = ds.scraped_at ?? ds.category;
-                          if (ds.min_date && ds.max_date) {
-                            const days = Math.round(
-                              (new Date(ds.max_date).getTime() - new Date(ds.min_date).getTime()) / 86400000
-                            ) + 1;
-                            label += ` · ${days} day${days !== 1 ? "s" : ""}`;
-                          }
-                          if (ds.torrent_count != null) {
-                            label += ` · ${ds.torrent_count} torrents`;
-                          }
-                          return (
-                            <option key={ds.path} value={ds.path}>
-                              {label}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">Seedbox</label>
-                      <select
-                        value={selectedSeedboxId}
-                        onChange={(e) => handleSeedboxChange(e.target.value)}
-                        disabled={running}
-                        className={selectCls}
-                      >
-                        {seedboxes.map((sb) => (
-                          <option key={sb.id} value={sb.id}>
-                            {sb.name} ({sb.storage_tb} TB)
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">Max Seed Days</label>
-                      <input
-                        type="number"
-                        value={maxSeedDays}
-                        onChange={(e) => setMaxSeedDays(Number(e.target.value))}
-                        min={1}
-                        disabled={running}
-                        className={selectCls}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">
-                        Avg Ratio (0 = skip upload est.)
-                      </label>
-                      <input
-                        type="number"
-                        value={avgRatio}
-                        onChange={(e) => setAvgRatio(Number(e.target.value))}
-                        min={0}
-                        step={0.1}
-                        disabled={running}
-                        className={selectCls}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm">
-                      {running ? "Running..." : "Run Simulation"}
-                    </Button>
-                    {simError && <span className="text-sm text-destructive">{simError}</span>}
-                  </div>
-                </>
+        {/* Column 2: Filter Detail (always visible) */}
+        <div className="w-80 shrink-0 border-r border-border overflow-y-auto">
+          {selectedFilter ? (
+            <>
+              {filterError && (
+                <div className="mx-3 mt-3 px-3 py-2 rounded bg-destructive/20 border border-destructive/50 text-destructive text-sm flex items-center justify-between">
+                  <span>{filterError}</span>
+                  <button onClick={() => setFilterError(null)} className="ml-2 text-destructive hover:text-destructive">✕</button>
+                </div>
               )}
-            </CardContent>
-          </Card>
+              <FilterForm
+                filter={selectedFilter}
+                analysisResults={analysisResults}
+                readOnly={
+                  selectedFilter._source === "generated" &&
+                  !tempFilters.some((f) => f._id === selectedFilter._id)
+                }
+                onSave={handleFilterSave}
+                onDelete={selectedFilter._source !== "generated" ? handleFilterDelete : undefined}
+                onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
+                onChange={handleFilterChange}
+                onPush={handlePush}
+                pushing={syncingId === selectedFilter._id}
+                onCancel={handleFilterCancel}
+                isDirty={isDirty}
+              />
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+              Select a filter
+            </div>
+          )}
+        </div>
 
-          {/* Simulation results */}
+        {/* Column 3: Simulation */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+          <div className="flex items-center gap-3">
+            <Button onClick={handleRunSimulation} disabled={running || !selectedDataset || missing} size="sm">
+              {running ? "Running..." : "Run Simulation"}
+            </Button>
+            {simError && <span className="text-sm text-destructive">{simError}</span>}
+          </div>
+
           {simResult && (
             <>
               <MetricsBar result={simResult} />
@@ -476,34 +544,6 @@ export default function SimulatorPage() {
             </>
           )}
         </div>
-
-        {/* Filter detail panel — shown when a filter is selected */}
-        {selectedFilter && (
-          <div className="w-96 shrink-0 border-l border-border overflow-y-auto">
-            {filterError && (
-              <div className="mx-4 mt-4 px-3 py-2 rounded bg-destructive/20 border border-destructive/50 text-destructive text-sm flex items-center justify-between">
-                <span>{filterError}</span>
-                <button onClick={() => setFilterError(null)} className="ml-2 text-destructive hover:text-destructive">✕</button>
-              </div>
-            )}
-            <FilterForm
-              filter={selectedFilter}
-              analysisResults={analysisResults}
-              readOnly={
-                selectedFilter._source === "generated" &&
-                !tempFilters.some((f) => f._id === selectedFilter._id)
-              }
-              onSave={handleFilterSave}
-              onDelete={selectedFilter._source !== "generated" ? handleFilterDelete : undefined}
-              onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
-              onChange={handleFilterChange}
-              onPush={handlePush}
-              pushing={syncingId === selectedFilter._id}
-              onCancel={handleFilterCancel}
-              isDirty={isDirty}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
