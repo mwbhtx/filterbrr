@@ -10,6 +10,7 @@ import { GrabbedList, SkippedList } from "../components/TorrentList";
 import FilterList from "../components/FilterList";
 import FilterForm from "../components/FilterForm";
 import JobRunner from "../components/JobRunner";
+import { useIsDemo } from "../auth/useIsDemo";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +34,7 @@ function datasetLabel(ds: Dataset): string {
 }
 
 export default function SimulatorPage() {
+  const isDemo = useIsDemo();
   const { data: datasets = [] } = useDatasets();
   const { data: persistedFilters = [], refetch: refetchFilters } = useFilters();
   const deleteFilterMutation = useDeleteFilter();
@@ -338,14 +340,16 @@ export default function SimulatorPage() {
           onSaveAllTemp={handleSaveAllTemp}
           onDeleteFilter={handleDeleteTemp}
           dirtyIds={dirtyIds}
-          syncingId={syncingId}
-          onPush={handlePush}
-          onPull={handlePull}
-          onPushAll={handlePushAll}
-          onPullAll={handlePullAll}
-          onCheckConnection={handleCheckConnection}
-          connectionStatus={connectionStatus}
-          checkingConnection={checkingConnection}
+          {...(!isDemo && {
+            syncingId,
+            onPush: handlePush,
+            onPull: handlePull,
+            onPushAll: handlePushAll,
+            onPullAll: handlePullAll,
+            onCheckConnection: handleCheckConnection,
+            connectionStatus,
+            checkingConnection,
+          })}
         />
       </div>
 
@@ -370,7 +374,7 @@ export default function SimulatorPage() {
               onDelete={selectedFilter._source !== "generated" ? handleFilterDelete : undefined}
               onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
               onChange={handleFilterChange}
-              onPush={handlePush}
+              onPush={isDemo ? undefined : handlePush}
               pushing={syncingId === selectedFilter._id}
               onCancel={handleFilterCancel}
               isDirty={isDirty}
