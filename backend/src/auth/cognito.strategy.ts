@@ -19,7 +19,9 @@ export class CognitoStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: { sub: string }) {
-    return { userId: payload.sub };
+  validate(payload: { sub: string; email?: string }) {
+    const DEMO_SUB = process.env.DEMO_USER_SUB;
+    const userId = DEMO_SUB && payload.sub === DEMO_SUB ? 'demo' : payload.sub;
+    return { userId, email: payload.email };
   }
 }
