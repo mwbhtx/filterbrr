@@ -13,13 +13,17 @@ export class DatasetsService {
     try {
       await this.s3.client.send(new HeadObjectCommand({ Bucket: this.s3.bucket, Key: key }));
     } catch {
-      const data = readFileSync(join(__dirname, 'demo-dataset.json'), 'utf-8');
-      await this.s3.client.send(new PutObjectCommand({
-        Bucket: this.s3.bucket,
-        Key: key,
-        Body: data,
-        ContentType: 'application/json',
-      }));
+      try {
+        const data = readFileSync(join(__dirname, 'demo-dataset.json'), 'utf-8');
+        await this.s3.client.send(new PutObjectCommand({
+          Bucket: this.s3.bucket,
+          Key: key,
+          Body: data,
+          ContentType: 'application/json',
+        }));
+      } catch (err) {
+        console.error('Failed to seed demo dataset:', err);
+      }
     }
   }
 
