@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core'; // DemoWriteGuard runs after CognitoAuthGuard
 import { AuthModule } from './auth/auth.module';
 import { CognitoAuthGuard } from './auth/cognito-auth.guard';
 import { DemoWriteGuard } from './auth/demo.guard';
