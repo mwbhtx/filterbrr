@@ -17,7 +17,7 @@ export class S3Service {
             endpoint: 'http://localhost:4566',
             region: 'ap-southeast-2',
             forcePathStyle: true,
-            credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
+            credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? 'local', secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? 'local' },
           }
         : { region: process.env.AWS_REGION ?? 'ap-southeast-2' }
     );
