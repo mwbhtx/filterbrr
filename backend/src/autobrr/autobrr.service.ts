@@ -10,11 +10,12 @@ export class AutobrrService {
     });
   }
 
-  async testConnection(url: string, apiKey: string): Promise<{ connected: boolean; error?: string }> {
+  async testConnection(url: string, apiKey: string): Promise<{ connected: boolean; filter_count?: number; error?: string }> {
     try {
       const client = this.getClient(url, apiKey);
       await client.get('/config');
-      return { connected: true };
+      const filters = await client.get<unknown[]>('/filters');
+      return { connected: true, filter_count: Array.isArray(filters.data) ? filters.data.length : 0 };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Connection failed';
       return { connected: false, error: message };
