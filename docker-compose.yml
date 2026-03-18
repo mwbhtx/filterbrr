@@ -37,6 +37,7 @@ services:
       - S3_BUCKET=filterbrr-userdata
       - AWS_ENDPOINT_URL=http://localstack:4566
       - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - AWS_LAMBDA_FUNCTION_TIMEOUT=900
     depends_on:
       - localstack
 
@@ -56,6 +57,7 @@ services:
       - S3_BUCKET=filterbrr-userdata
       - AWS_ENDPOINT_URL=http://localstack:4566
       - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - AWS_LAMBDA_FUNCTION_TIMEOUT=900
     depends_on:
       - localstack
 
