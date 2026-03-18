@@ -49,7 +49,7 @@ export class DynamoService implements OnModuleInit {
     }
     this.rawClient = new DynamoDBClient(
       this.isLocal
-        ? { endpoint: 'http://localhost:8000', region: 'ap-southeast-2', credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? 'local', secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? 'local' } }
+        ? { endpoint: 'http://localhost:8000', region: 'us-east-1', credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? 'local', secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? 'local' } }
         : { region: process.env.AWS_REGION }
     );
     this.client = DynamoDBDocumentClient.from(this.rawClient);

@@ -1,0 +1,23 @@
+FROM public.ecr.aws/lambda/nodejs:22
+
+WORKDIR /var/task
+
+COPY package.json ./
+RUN npm install
+
+RUN npm install -g typescript nodemon
+
+COPY tsconfig.json ./
+
+# Override the Lambda base image entrypoint so we can run our own init script
+ENTRYPOINT []
+
+# src/ is volume-mounted at runtime
+# 1. Initial tsc build so handler exists on first invocation
+# 2. tsc --watch recompiles src/ -> dist/ in background
+# 3. nodemon watches dist/ and restarts the Lambda runtime on each recompile
+CMD ["sh", "-c", \
+  "tsc 2>/dev/null || true; \
+   tsc --watch --preserveWatchOutput & \
+   nodemon --watch dist --delay 1 --signal SIGTERM \
+     --exec '/lambda-entrypoint.sh dist/index.handler'"]

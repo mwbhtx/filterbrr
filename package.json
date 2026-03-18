@@ -1,0 +1,7 @@
+{
+  "name": "filterbrr-monorepo",
+  "private": true,
+  "workspaces": [
+    "backend"
+  ]
+}

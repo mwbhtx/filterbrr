@@ -34,8 +34,7 @@ Async Lambdas:
 
 ---
 
-<details>
-<summary><strong>Local Development</strong></summary>
+**Local Development**
 
 ### Prerequisites
 
@@ -44,39 +43,51 @@ Async Lambdas:
 
 ### Setup
 
+**1. Create env files**
+
+```bash
+cp backend/.env.example backend/.env.local
+cp frontend/.env.example frontend/.env.local
+```
+
+The backend runs with `NODE_ENV=local` which bypasses Cognito auth. The frontend `.env.local` needs real Cognito values to load — fill in `VITE_COGNITO_USER_POOL_ID` and `VITE_COGNITO_CLIENT_ID` from your AWS Cognito User Pool, otherwise the app will show a white screen.
+
+**2. Start services**
+
 ```bash
 # Start DynamoDB Local + LocalStack S3
-docker-compose up -d
+docker compose up -d
+```
 
+On first run, LocalStack will automatically create the `filterbrr-userdata` S3 bucket via the init script in `localstack-init/`. DynamoDB tables (`UserSettings`, `Filters`, `SyncState`) are created automatically by the backend on startup. Data persists across restarts via Docker named volumes.
+
+```bash
 # Backend (port 3000)
-cd dashboard/backend
+cd backend
 npm install
 npm run start:dev
 
 # Frontend (port 5173, proxies /api to backend)
-cd dashboard/frontend
+cd frontend
 npm install
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173).
 
-> Auth is bypassed in local dev (`NODE_ENV=local`). Copy `.env.example` files to `.env.local` in each package and fill in your Cognito values for production-like auth locally.
-
 ### Running Tests
 
 ```bash
 # Backend
-cd dashboard/backend && npm test
+cd backend && npm test
 
 # Frontend
-cd dashboard/frontend && npm test
+cd frontend && npm test
 ```
 
-</details>
 
-<details>
-<summary><strong>Deployment</strong></summary>
+
+**Deployment**
 
 Filterbrr is deployed to AWS using Terraform. Infrastructure includes:
 
@@ -94,4 +105,3 @@ terraform apply
 
 > Requires AWS credentials with appropriate IAM permissions.
 
-</details>
