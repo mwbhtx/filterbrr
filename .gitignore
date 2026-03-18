@@ -1,3 +1,6 @@
+# Internal docs
+docs/
+
 # Environment
 .env
 .env.local
