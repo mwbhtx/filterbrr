@@ -48,7 +48,7 @@ export default function SimulatorPage() {
   const [selectedSeedboxId, setSelectedSeedboxId] = useState("");
   const [storageTb, setStorageTb] = useState(4);
   const [maxSeedDays, setMaxSeedDays] = useState(30);
-  const [avgRatio, setAvgRatio] = useState(0);
+  const [avgRatio, setAvgRatio] = useState(0.2);
 
   // Simulation state
   const [simResult, setSimResult] = useState<SimulationResult | null>(null);
@@ -469,12 +469,13 @@ export default function SimulatorPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Avg Ratio (0 = skip upload est.)</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Avg Ratio</label>
                   <input
                     type="number"
                     value={avgRatio}
-                    onChange={(e) => setAvgRatio(Number(e.target.value))}
-                    min={0}
+                    onChange={(e) => setAvgRatio(Math.min(10, Math.max(0.2, Number(e.target.value))))}
+                    min={0.2}
+                    max={10}
                     step={0.1}
                     className={selectCls}
                   />
