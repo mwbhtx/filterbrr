@@ -8,11 +8,12 @@ export class DemoWriteGuard implements CanActivate {
       const method = req.method.toUpperCase();
       // Allow all GET requests
       if (method === 'GET') return true;
-      // Allow simulation and filter generation for demo
+      // Allow simulation, filter generation, and filter CRUD for demo
+      const url: string = req.url ?? '';
       if (method === 'POST') {
-        const url: string = req.url ?? '';
-        if (url.includes('/simulation/run') || url.includes('/pipeline/analyze')) return true;
+        if (url.includes('/simulation/run') || url.includes('/pipeline/analyze') || url.includes('/filters')) return true;
       }
+      if ((method === 'PUT' || method === 'DELETE') && url.includes('/filters')) return true;
       throw new ForbiddenException('Demo account is read-only');
     }
     return true;
