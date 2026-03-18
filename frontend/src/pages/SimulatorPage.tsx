@@ -469,7 +469,7 @@ export default function SimulatorPage() {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Seed Days</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Avg Seed Days</label>
                   <input
                     type="number"
                     value={maxSeedDays}
