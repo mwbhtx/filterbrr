@@ -6,9 +6,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Activity, Filter, Zap } from 'lucide-react';
 
 const DEMO_EMAIL = import.meta.env.VITE_DEMO_EMAIL;
 const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD;
+
+const FEATURES = [
+  {
+    icon: Filter,
+    title: 'Smart Filter Builder',
+    desc: 'Create and fine-tune autobrr filters with AI-assisted generation based on real torrent data.',
+  },
+  {
+    icon: Activity,
+    title: 'Simulation Engine',
+    desc: 'Test your filters against scraped datasets before going live — see grabs, disk usage, and ratios.',
+  },
+  {
+    icon: Zap,
+    title: 'One-Click Sync',
+    desc: 'Push filters directly to your autobrr instance. Pull existing ones in to iterate and improve.',
+  },
+];
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -37,7 +56,6 @@ export default function LoginPage() {
     setDemoLoading(true);
     try {
       await login(DEMO_EMAIL, DEMO_PASSWORD);
-      // Seed demo data into localStorage
       localStorage.setItem('simulator-settings', JSON.stringify(DEMO_SETTINGS));
       localStorage.setItem('simulator-last-result', JSON.stringify(DEMO_SIMULATION_RESULT));
       navigate('/');
@@ -48,48 +66,101 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-sm">
-        {demoLoading ? (
-          <CardContent className="py-12 flex flex-col items-center gap-4">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-            <p className="text-sm text-muted-foreground">Initializing demo...</p>
-          </CardContent>
-        ) : (
-          <>
-            <CardHeader>
-              <CardTitle>filterbrr</CardTitle>
-              <CardDescription>Sign in to your account</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-1">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+    <div className="min-h-screen flex bg-background">
+      {/* Left: Splash */}
+      <div className="hidden lg:flex flex-col justify-center flex-1 px-16 xl:px-24 relative overflow-hidden">
+        {/* Subtle radial glow */}
+        <div className="pointer-events-none absolute -top-1/4 -left-1/4 w-[80%] h-[80%] rounded-full bg-primary/[0.03] blur-3xl" />
+
+        <div className="relative z-10 max-w-lg">
+          <div className="flex items-center gap-3 mb-8">
+            <img
+              src="/logo-solid.svg"
+              alt="filterbrr"
+              className="h-12 w-auto brightness-0 invert .light:brightness-100 .light:invert-0"
+            />
+            <span className="text-2xl font-bold tracking-tight text-foreground">filterbrr</span>
+          </div>
+
+          <h1 className="text-4xl xl:text-5xl font-bold tracking-tight text-foreground leading-[1.1] mb-4">
+            Simulate before
+            <br />
+            you automate.
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed mb-12 max-w-md">
+            Build, test, and deploy autobrr filters with confidence.
+            See exactly what gets grabbed before flipping the switch.
+          </p>
+
+          <div className="space-y-6">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="flex gap-4 items-start">
+                <div className="shrink-0 mt-0.5 flex items-center justify-center size-9 rounded-lg bg-muted/60 ring-1 ring-border">
+                  <f.icon className="size-4 text-foreground" />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                <div>
+                  <p className="text-sm font-medium text-foreground">{f.title}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
                 </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign in'}
-                </Button>
-              </form>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">or</span></div>
               </div>
-              <Button variant="outline" className="w-full" onClick={handleDemo} disabled={loading}>
-                Try Demo
-              </Button>
-              <p className="text-center text-sm text-muted-foreground">
-                No account? <Link to="/signup" className="underline">Sign up</Link>
-              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Login */}
+      <div className="flex items-center justify-center w-full lg:w-[480px] lg:shrink-0 lg:border-l lg:border-border px-6">
+        <Card className="w-full max-w-sm">
+          {demoLoading ? (
+            <CardContent className="py-12 flex flex-col items-center gap-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+              <p className="text-sm text-muted-foreground">Initializing demo...</p>
             </CardContent>
-          </>
-        )}
-      </Card>
+          ) : (
+            <>
+              <CardHeader>
+                {/* Show branding on mobile where splash is hidden */}
+                <div className="flex items-center gap-2 mb-2 lg:hidden">
+                  <img
+                    src="/logo-solid.svg"
+                    alt="filterbrr"
+                    className="h-8 w-auto brightness-0 invert"
+                  />
+                  <span className="text-lg font-bold tracking-tight">filterbrr</span>
+                </div>
+                <CardTitle>Sign in</CardTitle>
+                <CardDescription>Enter your credentials to continue</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                  </div>
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Signing in...' : 'Sign in'}
+                  </Button>
+                </form>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or</span></div>
+                </div>
+                <Button variant="outline" className="w-full" onClick={handleDemo} disabled={loading}>
+                  Try Demo
+                </Button>
+                <p className="text-center text-sm text-muted-foreground">
+                  No account? <Link to="/signup" className="underline">Sign up</Link>
+                </p>
+              </CardContent>
+            </>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

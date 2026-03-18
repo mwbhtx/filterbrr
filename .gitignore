@@ -55,6 +55,9 @@ infra/override.tf.json
 # AWS
 .aws-sam/
 
+# Comparison test outputs
+lambdas/comparison-test/
+
 # OS
 .DS_Store
 Thumbs.db
