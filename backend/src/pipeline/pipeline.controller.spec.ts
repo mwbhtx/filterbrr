@@ -18,6 +18,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     cancelled: false,
     started_at: '2026-03-18T00:00:00.000Z',
     updated_at: '2026-03-18T00:00:00.000Z',
+    completed_at: null,
     ...overrides,
   };
 }

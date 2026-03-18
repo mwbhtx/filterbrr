@@ -86,6 +86,7 @@ export class PipelineService {
       cancelled: false,
       started_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      completed_at: null,
     };
     await this.jobRepo.create(job);
 

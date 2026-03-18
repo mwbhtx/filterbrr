@@ -17,6 +17,7 @@ export interface Job {
   cancelled: boolean;
   started_at: string;
   updated_at: string;
+  completed_at: string | null;
 }
 
 const TABLE = 'Jobs';
@@ -56,6 +57,10 @@ export class JobRepository {
       expr += ', #e = :e';
       names['#e'] = 'error';
       values[':e'] = error;
+    }
+    if (['completed', 'failed', 'cancelled'].includes(status)) {
+      expr += ', completed_at = :ca';
+      values[':ca'] = new Date().toISOString();
     }
     await this.dynamo.client.send(new UpdateCommand({
       TableName: TABLE,
