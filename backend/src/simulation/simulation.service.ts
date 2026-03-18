@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { S3Service } from '../s3/s3.service';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
-import { parse } from 'csv-parse/sync';
 
 export interface FilterData {
   enabled: boolean;
@@ -106,21 +105,14 @@ export class SimulationService {
     );
     const text = await (obj.Body as { transformToString: () => Promise<string> }).transformToString();
 
-    let rows: TorrentRow[];
-    if (req.datasetKey.endsWith('.json') || text.trimStart().startsWith('[')) {
-      // JSON dataset (new format from scraper)
-      const torrents = JSON.parse(text) as Array<Record<string, unknown>>;
-      rows = torrents.map(t => ({
-        name: String(t.name ?? ''),
-        date: String(t.date ?? ''),
-        size: String(t.size_bytes ?? t.size ?? '0'),
-        seeders: Number(t.seeders ?? 0),
-        ...t,
-      }));
-    } else {
-      // Legacy CSV format
-      rows = parse(text, { columns: true, cast: true }) as TorrentRow[];
-    }
+    const torrents = JSON.parse(text) as Array<Record<string, unknown>>;
+    const rows: TorrentRow[] = torrents.map(t => ({
+      name: String(t.name ?? ''),
+      date: String(t.date ?? ''),
+      size: String(t.size_bytes ?? t.size ?? '0'),
+      seeders: Number(t.seeders ?? 0),
+      ...t,
+    }));
 
     return this.simulate(rows, req);
   }
