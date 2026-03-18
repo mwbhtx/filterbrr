@@ -67,8 +67,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Left: Splash */}
-      <div className="hidden lg:flex flex-col justify-center flex-1 px-16 xl:px-24 relative overflow-hidden">
+      {/* Left: Splash (desktop) */}
+      <div className="hidden lg:flex flex-col justify-center items-end flex-1 pr-16 xl:pr-24 relative overflow-hidden">
         {/* Subtle radial glow */}
         <div className="pointer-events-none absolute -top-1/4 -left-1/4 w-[80%] h-[80%] rounded-full bg-primary/[0.03] blur-3xl" />
 
@@ -108,8 +108,27 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right: Login */}
-      <div className="flex items-center justify-center w-full lg:w-[480px] lg:shrink-0 lg:border-l lg:border-border px-6">
+      {/* Mobile + Desktop Login */}
+      <div className="flex flex-col items-center w-full lg:flex-1 lg:items-start lg:pl-16 xl:pl-24 lg:border-l lg:border-border lg:justify-center px-6 py-12 lg:py-0 overflow-y-auto">
+        {/* Mobile hero — hidden on desktop */}
+        <div className="text-center mb-8 lg:hidden">
+          <div className="flex items-center justify-center gap-2.5 mb-4">
+            <img
+              src="/logo-solid.svg"
+              alt="filterbrr"
+              className="h-10 w-auto brightness-0 invert"
+            />
+            <span className="text-xl font-bold tracking-tight text-foreground">filterbrr</span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground leading-tight mb-2">
+            Simulate before you automate.
+          </h1>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+            Build, test, and deploy autobrr filters with confidence.
+          </p>
+        </div>
+
+        {/* Login card */}
         <Card className="w-full max-w-sm">
           {demoLoading ? (
             <CardContent className="py-12 flex flex-col items-center gap-4">
@@ -119,15 +138,6 @@ export default function LoginPage() {
           ) : (
             <>
               <CardHeader>
-                {/* Show branding on mobile where splash is hidden */}
-                <div className="flex items-center gap-2 mb-2 lg:hidden">
-                  <img
-                    src="/logo-solid.svg"
-                    alt="filterbrr"
-                    className="h-8 w-auto brightness-0 invert"
-                  />
-                  <span className="text-lg font-bold tracking-tight">filterbrr</span>
-                </div>
                 <CardTitle>Sign in</CardTitle>
                 <CardDescription>Enter your credentials to continue</CardDescription>
               </CardHeader>
@@ -160,6 +170,21 @@ export default function LoginPage() {
             </>
           )}
         </Card>
+
+        {/* Mobile features — hidden on desktop */}
+        <div className="mt-10 space-y-5 w-full max-w-sm lg:hidden">
+          {FEATURES.map((f) => (
+            <div key={f.title} className="flex gap-3.5 items-start">
+              <div className="shrink-0 mt-0.5 flex items-center justify-center size-8 rounded-lg bg-muted/60 ring-1 ring-border">
+                <f.icon className="size-3.5 text-foreground" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">{f.title}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
