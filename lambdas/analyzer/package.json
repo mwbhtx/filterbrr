@@ -1,5 +1,5 @@
 {
-  "name": "filterbrr-scraper",
+  "name": "filterbrr-analyzer",
   "version": "1.0.0",
   "scripts": {
     "build": "tsc",
@@ -9,9 +9,7 @@
     "@aws-sdk/client-dynamodb": "^3.1011.0",
     "@aws-sdk/client-s3": "^3.0.0",
     "@aws-sdk/lib-dynamodb": "^3.1011.0",
-    "axios": "^1.6.0",
-    "axios-cookiejar-support": "^4.0.0",
-    "tough-cookie": "^4.1.0"
+    "csv-parse": "^5.5.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.0",
