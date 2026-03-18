@@ -111,8 +111,8 @@ export default function LoginPage() {
       {/* Mobile + Desktop Login */}
       <div className="flex flex-col items-center w-full lg:flex-1 lg:items-start lg:pl-16 xl:pl-24 lg:border-l lg:border-border lg:justify-center px-6 py-12 lg:py-0 overflow-y-auto">
         {/* Mobile hero — hidden on desktop */}
-        <div className="text-center mb-8 lg:hidden">
-          <div className="flex items-center justify-center gap-2.5 mb-4">
+        <div className="mb-8 lg:hidden w-full max-w-sm">
+          <div className="flex items-center gap-2.5 mb-4">
             <img
               src="/logo-solid.svg"
               alt="filterbrr"
@@ -123,7 +123,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground leading-tight mb-2">
             Simulate before you automate.
           </h1>
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
             Build, test, and deploy autobrr filters with confidence.
           </p>
         </div>
