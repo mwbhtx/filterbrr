@@ -12,37 +12,53 @@ export class DatasetsService {
     );
     const items = await Promise.all((result.Contents ?? []).map(async (obj) => {
       const filename = obj.Key?.split('/').pop() ?? '';
-      // filename format: torrents_data_{category}_{YYYY-MM-DD_HHmm}.csv
-      const match = filename.match(/^torrents_data_([^_]+)_(\d{4}-\d{2}-\d{2}_\d{4})\.csv$/);
+
+      // New format: {category}_{YYYY-MM-DD_HHmm}.json
+      const jsonMatch = filename.match(/^([^_]+)_(\d{4}-\d{2}-\d{2}_\d{4})\.json$/);
+      // Legacy format: torrents_data_{category}_{YYYY-MM-DD_HHmm}.csv
+      const csvMatch = filename.match(/^torrents_data_([^_]+)_(\d{4}-\d{2}-\d{2}_\d{4})\.csv$/);
+
+      const match = jsonMatch ?? csvMatch;
       const category = match?.[1] ?? null;
       const scraped_at = match?.[2]?.replace('_', 'T').replace(/(\d{2})(\d{2})$/, '$1:$2') ?? null;
+      const isJson = !!jsonMatch;
 
       let torrent_count: number | null = null;
       let min_date: string | null = null;
       let max_date: string | null = null;
 
       try {
-        const csvObj = await this.s3.client.send(new GetObjectCommand({ Bucket: this.s3.bucket, Key: obj.Key! }));
-        const text = await (csvObj.Body as { transformToString: () => Promise<string> }).transformToString();
-        const lines = text.trim().split('\n');
-        torrent_count = Math.max(0, lines.length - 1); // subtract header
-        const splitCsv = (line: string) => {
-          const fields: string[] = [];
-          let cur = '', inQuote = false;
-          for (const ch of line) {
-            if (ch === '"') { inQuote = !inQuote; }
-            else if (ch === ',' && !inQuote) { fields.push(cur); cur = ''; }
-            else { cur += ch; }
-          }
-          fields.push(cur);
-          return fields;
-        };
-        const headers = splitCsv(lines[0] ?? '');
-        const dateCol = headers.indexOf('date');
-        if (dateCol >= 0) {
-          const dates = lines.slice(1).map(l => splitCsv(l)[dateCol]).filter(Boolean).sort();
+        const dataObj = await this.s3.client.send(new GetObjectCommand({ Bucket: this.s3.bucket, Key: obj.Key! }));
+        const text = await (dataObj.Body as { transformToString: () => Promise<string> }).transformToString();
+
+        if (isJson) {
+          const torrents = JSON.parse(text) as Array<{ date?: string }>;
+          torrent_count = torrents.length;
+          const dates = torrents.map(t => t.date).filter(Boolean).sort() as string[];
           min_date = dates[0] ?? null;
           max_date = dates[dates.length - 1] ?? null;
+        } else {
+          // Legacy CSV parsing
+          const lines = text.trim().split('\n');
+          torrent_count = Math.max(0, lines.length - 1);
+          const splitCsv = (line: string) => {
+            const fields: string[] = [];
+            let cur = '', inQuote = false;
+            for (const ch of line) {
+              if (ch === '"') { inQuote = !inQuote; }
+              else if (ch === ',' && !inQuote) { fields.push(cur); cur = ''; }
+              else { cur += ch; }
+            }
+            fields.push(cur);
+            return fields;
+          };
+          const headers = splitCsv(lines[0] ?? '');
+          const dateCol = headers.indexOf('date');
+          if (dateCol >= 0) {
+            const dates = lines.slice(1).map(l => splitCsv(l)[dateCol]).filter(Boolean).sort();
+            min_date = dates[0] ?? null;
+            max_date = dates[dates.length - 1] ?? null;
+          }
         }
       } catch { /* leave nulls if read fails */ }
 
