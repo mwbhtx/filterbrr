@@ -218,14 +218,16 @@ export default function DatasetsPage() {
                 <TableHead>Category</TableHead>
                 <TableHead>Scraped At</TableHead>
                 <TableHead className="text-right">Torrents</TableHead>
-                <TableHead>Date Range</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead className="text-right">Days</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {datasets.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     No datasets found. Run a scrape to get started.
                   </TableCell>
                 </TableRow>
@@ -241,9 +243,15 @@ export default function DatasetsPage() {
                   <TableCell className="text-right text-foreground">
                     {ds.torrent_count?.toLocaleString() ?? "\u2014"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
+                  <TableCell className="text-foreground text-xs">
+                    {ds.min_date ? ds.min_date.slice(0, 10) : "\u2014"}
+                  </TableCell>
+                  <TableCell className="text-foreground text-xs">
+                    {ds.max_date ? ds.max_date.slice(0, 10) : "\u2014"}
+                  </TableCell>
+                  <TableCell className="text-right text-foreground text-xs">
                     {ds.min_date && ds.max_date
-                      ? `${formatDate(ds.min_date)} \u2014 ${formatDate(ds.max_date)}`
+                      ? Math.round((new Date(ds.max_date).getTime() - new Date(ds.min_date).getTime()) / 86400000) + 1
                       : "\u2014"}
                   </TableCell>
                   <TableCell className="text-right">
