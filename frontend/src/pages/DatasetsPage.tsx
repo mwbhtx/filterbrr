@@ -66,8 +66,6 @@ export default function DatasetsPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <h2 className="text-base font-semibold">Datasets</h2>
-
       {/* New Scrape */}
       <Card>
         <CardHeader className="border-b border-border pb-3">
@@ -155,6 +153,7 @@ export default function DatasetsPage() {
       </Card>
 
       {/* Dataset table */}
+      <h2 className="text-base font-semibold">Datasets</h2>
       <Card>
         <CardContent className="p-0">
           <Table>
