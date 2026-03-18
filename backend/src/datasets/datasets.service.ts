@@ -48,6 +48,7 @@ export class DatasetsService {
 
       return {
         key: obj.Key,
+        path: obj.Key,
         filename,
         last_modified: obj.LastModified,
         category,
