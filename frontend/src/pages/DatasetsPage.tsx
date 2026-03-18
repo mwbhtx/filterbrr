@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "../api/client";
 import { useDatasets, useDeleteDataset } from "../hooks/useDatasets";
-import { useSettings } from "../hooks/useSettings";
+import { useSettings, useUpdateSettings } from "../hooks/useSettings";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,15 +29,24 @@ export default function DatasetsPage() {
   const { data: datasets = [], refetch } = useDatasets();
   const deleteDataset = useDeleteDataset();
   const { data: settings } = useSettings();
-  const trackers = settings?.trackers ?? [];
+  const updateSettingsMutation = useUpdateSettings();
+
+  // Pre-fill credentials from settings
+  const existingTracker = settings?.trackers?.[0];
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  // Sync from settings on load
+  useEffect(() => {
+    if (existingTracker) {
+      setUsername((prev) => prev || existingTracker.username);
+      setPassword((prev) => prev || existingTracker.password);
+    }
+  }, [existingTracker]);
 
   // Scrape controls
   const [scrapeCategory, setScrapeCategory] = useState("freeleech");
   const [scrapeDays, setScrapeDays] = useState(30);
-  const [scrapeStartPage, setScrapeStartPage] = useState(1);
-  const [scrapeTrackerId, setScrapeTrackerId] = useState<string>(() =>
-    trackers.length > 0 ? trackers[0].id : ""
-  );
   const [scrapeJobId, setScrapeJobId] = useState<string | null>(
     () => localStorage.getItem('active-scrape-job')
   );
@@ -48,14 +57,27 @@ export default function DatasetsPage() {
   };
 
   const handleScrape = async () => {
-    const trackerId = scrapeTrackerId || (trackers.length > 0 ? trackers[0].id : undefined);
     setScrapeRunning(true);
     try {
+      // Save credentials to settings before scraping
+      const trackerId = existingTracker?.id ?? Math.random().toString(36).slice(2, 10);
+      const trackerEntry = {
+        id: trackerId,
+        tracker_type: "TorrentLeech" as const,
+        username,
+        password,
+      };
+      const updatedSettings = {
+        ...(settings ?? { autobrr_url: "", autobrr_api_key: "", seedboxes: [] }),
+        trackers: [trackerEntry],
+      };
+      await updateSettingsMutation.mutateAsync(updatedSettings);
+
       const { job_id } = await api.startScrape({
         category: scrapeCategory,
         days: scrapeDays,
-        start_page: scrapeStartPage,
-        tracker_id: trackerId || undefined,
+        start_page: 1,
+        tracker_id: trackerId,
       });
       setScrapeJobId(job_id);
       localStorage.setItem('active-scrape-job', job_id);
@@ -69,28 +91,40 @@ export default function DatasetsPage() {
       {/* New Scrape */}
       <Card>
         <CardHeader className="border-b border-border pb-3">
-          <CardTitle>Scrape <span className="text-sm font-normal text-muted-foreground ml-2">Select a tracker and time range to build a dataset</span></CardTitle>
+          <CardTitle>Scrape <span className="text-sm font-normal text-muted-foreground ml-2">Enter credentials and time range to build a dataset</span></CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Tracker</label>
-            <select
-              value={scrapeTrackerId}
-              onChange={(e) => setScrapeTrackerId(e.target.value)}
-              disabled={scrapeRunning}
-              className={inputClass}
-            >
-              {trackers.length === 0 && (
-                <option value="">No trackers — configure in Settings</option>
-              )}
-              {trackers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.tracker_type}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={scrapeRunning}
+                className={inputClass}
+                placeholder="TorrentLeech username"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={scrapeRunning}
+                className={inputClass}
+                placeholder="TorrentLeech password"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-muted-foreground mb-1">Category</label>
               <select
@@ -119,22 +153,11 @@ export default function DatasetsPage() {
                 <option value={90}>90 days</option>
               </select>
             </div>
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">Start Page</label>
-              <input
-                type="number"
-                value={scrapeStartPage}
-                onChange={(e) => setScrapeStartPage(Number(e.target.value))}
-                min={1}
-                disabled={scrapeRunning}
-                className={inputClass}
-              />
-            </div>
           </div>
           <div className="flex items-center gap-3">
             <Button
               onClick={handleScrape}
-              disabled={scrapeRunning}
+              disabled={scrapeRunning || !username || !password}
               size="sm"
               className="shrink-0"
             >
@@ -183,7 +206,7 @@ export default function DatasetsPage() {
                     {ds.scraped_at ?? "Legacy"}
                   </TableCell>
                   <TableCell className="text-right text-foreground">
-                    {ds.torrent_count?.toLocaleString() ?? "—"}
+                    {ds.torrent_count?.toLocaleString() ?? "\u2014"}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-xs">
                     {ds.min_date && ds.max_date

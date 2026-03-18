@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { api } from "../api/client";
-import { useSettings } from "../hooks/useSettings";
 import { useDatasets } from "../hooks/useDatasets";
 import { useFilters, useDeleteFilter } from "../hooks/useFilters";
 import type { SimulationResult, AnalysisResults, Filter, Dataset, AutobrrConnectionStatus } from "../types";
@@ -34,19 +33,13 @@ function datasetLabel(ds: Dataset): string {
 }
 
 export default function SimulatorPage() {
-  const { data: settings } = useSettings();
   const { data: datasets = [], refetch: refetchDatasets } = useDatasets();
   const { data: persistedFilters = [], refetch: refetchFilters } = useFilters();
   const deleteFilterMutation = useDeleteFilter();
 
-  const trackers = settings?.trackers ?? [];
-  const seedboxes = settings?.seedboxes ?? [];
-
   // Data context state — restore from localStorage
   const stored = JSON.parse(localStorage.getItem('simulator-settings') ?? '{}');
-  const [selectedTrackerType, setSelectedTrackerType] = useState(stored.trackerType ?? "");
   const [selectedDataset, setSelectedDataset] = useState(stored.dataset ?? "");
-  const [selectedSeedboxId, setSelectedSeedboxId] = useState(stored.seedboxId ?? "");
   const [storageTb, setStorageTb] = useState(stored.storageTb ?? 4);
   const [maxSeedDays, setMaxSeedDays] = useState(stored.maxSeedDays ?? 10);
   const [avgRatio, setAvgRatio] = useState(stored.avgRatio ?? 0.8);
@@ -54,14 +47,12 @@ export default function SimulatorPage() {
   // Persist settings to localStorage on change
   useEffect(() => {
     localStorage.setItem('simulator-settings', JSON.stringify({
-      trackerType: selectedTrackerType,
       dataset: selectedDataset,
-      seedboxId: selectedSeedboxId,
       storageTb,
       maxSeedDays,
       avgRatio,
     }));
-  }, [selectedTrackerType, selectedDataset, selectedSeedboxId, storageTb, maxSeedDays, avgRatio]);
+  }, [selectedDataset, storageTb, maxSeedDays, avgRatio]);
 
   // Simulation state
   const [simResult, setSimResult] = useState<SimulationResult | null>(null);
@@ -95,47 +86,23 @@ export default function SimulatorPage() {
   const dirtyIds = new Set(dirtyMap.keys());
   const selectedFilter = allFilters.find((f) => f._id === selectedFilterId) ?? null;
 
-  // Datasets filtered by selected tracker
-  const filteredDatasets = [...datasets]
-    .filter(ds => !selectedTrackerType || ds.tracker_type === selectedTrackerType)
-    .sort((a, b) => {
-      if (a.scraped_at && b.scraped_at) return b.scraped_at.localeCompare(a.scraped_at);
-      if (a.scraped_at) return -1;
-      if (b.scraped_at) return 1;
-      return 0;
-    });
+  // All datasets sorted by scraped_at desc
+  const sortedDatasets = [...datasets].sort((a, b) => {
+    if (a.scraped_at && b.scraped_at) return b.scraped_at.localeCompare(a.scraped_at);
+    if (a.scraped_at) return -1;
+    if (b.scraped_at) return 1;
+    return 0;
+  });
 
-  // Auto-select first tracker
-  useEffect(() => {
-    if (trackers.length > 0 && !selectedTrackerType) {
-      setSelectedTrackerType(trackers[0].tracker_type);
-    }
-  }, [trackers]);
-
-  // Auto-select first seedbox
-  useEffect(() => {
-    if (seedboxes.length > 0 && !selectedSeedboxId) {
-      const first = seedboxes[0];
-      setSelectedSeedboxId(first.id);
-      setStorageTb(first.storage_tb);
-    }
-  }, [seedboxes]);
-
-  // Auto-select dataset: if stored dataset no longer exists or doesn't match tracker, pick first available
+  // Auto-select dataset: if stored dataset no longer exists, pick first available
   useEffect(() => {
     const current = datasets.find(d => d.path === selectedDataset);
-    if (!current || (selectedTrackerType && current.tracker_type !== selectedTrackerType)) {
-      const first = filteredDatasets[0];
+    if (!current) {
+      const first = sortedDatasets[0];
       if (first) setSelectedDataset(first.path);
-      else if (!first && selectedDataset) setSelectedDataset("");
+      else if (selectedDataset) setSelectedDataset("");
     }
-  }, [selectedTrackerType, datasets]);
-
-  const handleSeedboxChange = (id: string) => {
-    setSelectedSeedboxId(id);
-    const sb = seedboxes.find((s) => s.id === id);
-    if (sb) setStorageTb(sb.storage_tb);
-  };
+  }, [datasets]);
 
   // Generate filters
   const selectedDs = datasets.find(d => d.path === selectedDataset);
@@ -144,10 +111,9 @@ export default function SimulatorPage() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const selectedSb = seedboxes.find(sb => sb.id === selectedSeedboxId);
       const { job_id } = await api.startAnalyze({
         source,
-        storage_tb: selectedSb?.storage_tb ?? storageTb,
+        storage_tb: storageTb,
         dataset_path: selectedDataset,
         seed_days: maxSeedDays,
       });
@@ -346,7 +312,6 @@ export default function SimulatorPage() {
     }
   };
 
-  const missing = trackers.length === 0 || seedboxes.length === 0;
   const isDirty = selectedFilter ? dirtyIds.has(selectedFilter._id) : false;
 
   return (
@@ -410,107 +375,78 @@ export default function SimulatorPage() {
       {/* Column 3: Controls + Simulation */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
         {/* Data controls */}
-        {missing ? (
-          <Card>
-            <CardContent className="py-4">
-              <p className="text-sm text-muted-foreground">
-                {trackers.length === 0 && seedboxes.length === 0
-                  ? "Add a tracker and seedbox in Settings to get started."
-                  : trackers.length === 0
-                  ? "Add a tracker in Settings to get started."
-                  : "Add a seedbox in Settings to get started."}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="py-4 space-y-4">
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Tracker</label>
-                  <select
-                    value={selectedTrackerType}
-                    onChange={(e) => setSelectedTrackerType(e.target.value)}
-                    className={selectCls}
-                  >
-                    {trackers.map((t) => (
-                      <option key={t.id} value={t.tracker_type}>{t.tracker_type}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Dataset</label>
-                  <select
-                    value={selectedDataset}
-                    onChange={(e) => setSelectedDataset(e.target.value)}
-                    disabled={filteredDatasets.length === 0}
-                    className={selectCls}
-                  >
-                    {filteredDatasets.length === 0 && (
-                      <option key="__empty" value="">No datasets — run a scrape first</option>
-                    )}
-                    {filteredDatasets.map((ds) => (
-                      <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Seedbox</label>
-                  <select
-                    value={selectedSeedboxId}
-                    onChange={(e) => handleSeedboxChange(e.target.value)}
-                    className={selectCls}
-                  >
-                    {seedboxes.map((sb) => (
-                      <option key={sb.id} value={sb.id}>{sb.name} ({sb.storage_tb} TB)</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Avg Seed Days</label>
-                  <input
-                    type="number"
-                    value={maxSeedDays}
-                    onChange={(e) => setMaxSeedDays(Number(e.target.value))}
-                    min={1}
-                    className={selectCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Avg Ratio</label>
-                  <input
-                    type="number"
-                    value={avgRatio}
-                    onChange={(e) => setAvgRatio(Math.min(10, Math.max(0.2, Number(e.target.value))))}
-                    min={0.2}
-                    max={10}
-                    step={0.1}
-                    className={selectCls}
-                  />
-                </div>
-              </div>
-              {/* Action buttons */}
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleGenerate}
-                  disabled={generating || !selectedDataset || !selectedSeedboxId}
-                  size="sm"
-                  variant="outline"
-                  className="shrink-0"
+        <Card>
+          <CardContent className="py-4 space-y-4">
+            <div className="grid grid-cols-4 gap-3">
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Dataset</label>
+                <select
+                  value={selectedDataset}
+                  onChange={(e) => setSelectedDataset(e.target.value)}
+                  disabled={sortedDatasets.length === 0}
+                  className={selectCls}
                 >
-                  {generating ? "Generating..." : "Generate Filters"}
-                </Button>
-                <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm" className="shrink-0">
-                  {running ? "Running..." : "Run Simulation"}
-                </Button>
-                <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
-                {simError && <span className="text-sm text-destructive shrink-0">{simError}</span>}
+                  {sortedDatasets.length === 0 && (
+                    <option key="__empty" value="">No datasets — run a scrape first</option>
+                  )}
+                  {sortedDatasets.map((ds) => (
+                    <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
+                  ))}
+                </select>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Storage (TB)</label>
+                <input
+                  type="number"
+                  value={storageTb}
+                  onChange={(e) => setStorageTb(Math.max(0.5, Number(e.target.value)))}
+                  min={0.5}
+                  step={0.5}
+                  className={selectCls}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Avg Seed Days</label>
+                <input
+                  type="number"
+                  value={maxSeedDays}
+                  onChange={(e) => setMaxSeedDays(Number(e.target.value))}
+                  min={1}
+                  className={selectCls}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Avg Ratio</label>
+                <input
+                  type="number"
+                  value={avgRatio}
+                  onChange={(e) => setAvgRatio(Math.min(10, Math.max(0.2, Number(e.target.value))))}
+                  min={0.2}
+                  max={10}
+                  step={0.1}
+                  className={selectCls}
+                />
+              </div>
+            </div>
+            {/* Action buttons */}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleGenerate}
+                disabled={generating || !selectedDataset}
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+              >
+                {generating ? "Generating..." : "Generate Filters"}
+              </Button>
+              <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm" className="shrink-0">
+                {running ? "Running..." : "Run Simulation"}
+              </Button>
+              <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
+              {simError && <span className="text-sm text-destructive shrink-0">{simError}</span>}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Simulation results */}
         {simResult && (
