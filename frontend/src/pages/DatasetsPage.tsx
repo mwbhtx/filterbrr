@@ -221,13 +221,14 @@ export default function DatasetsPage() {
                 <TableHead>Start Date</TableHead>
                 <TableHead>End Date</TableHead>
                 <TableHead className="text-right">Days</TableHead>
+                <TableHead className="text-right">Duration</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {datasets.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     No datasets found. Run a scrape to get started.
                   </TableCell>
                 </TableRow>
@@ -252,6 +253,13 @@ export default function DatasetsPage() {
                   <TableCell className="text-right text-foreground text-xs">
                     {ds.min_date && ds.max_date
                       ? Math.round((new Date(ds.max_date).getTime() - new Date(ds.min_date).getTime()) / 86400000) + 1
+                      : "\u2014"}
+                  </TableCell>
+                  <TableCell className="text-right text-foreground text-xs">
+                    {ds.scrape_duration_sec != null
+                      ? ds.scrape_duration_sec >= 60
+                        ? `${Math.floor(ds.scrape_duration_sec / 60)}m ${ds.scrape_duration_sec % 60}s`
+                        : `${ds.scrape_duration_sec}s`
                       : "\u2014"}
                   </TableCell>
                   <TableCell className="text-right">

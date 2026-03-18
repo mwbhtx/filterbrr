@@ -36,6 +36,7 @@ export interface Dataset {
   torrent_count: number | null;
   min_date: string | null;
   max_date: string | null;
+  scrape_duration_sec: number | null;
 }
 
 export interface SimulationRequest {

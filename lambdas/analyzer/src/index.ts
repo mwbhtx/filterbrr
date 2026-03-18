@@ -108,7 +108,8 @@ export const handler: Handler<AnalyzeEvent> = async (event) => {
 
     const obj = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: event.datasetKey }));
     const text = await (obj.Body as { transformToString: () => Promise<string> }).transformToString();
-    const rawTorrents: NormalizedTorrent[] = JSON.parse(text);
+    const parsed = JSON.parse(text);
+    const rawTorrents: NormalizedTorrent[] = Array.isArray(parsed) ? parsed : (parsed.torrents ?? []);
 
     if (jobId) await updateProgress(jobId, `Loading dataset (${rawTorrents.length} rows)...`);
 

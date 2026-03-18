@@ -105,7 +105,8 @@ export class SimulationService {
     );
     const text = await (obj.Body as { transformToString: () => Promise<string> }).transformToString();
 
-    const torrents = JSON.parse(text) as Array<Record<string, unknown>>;
+    const parsed = JSON.parse(text);
+    const torrents = (Array.isArray(parsed) ? parsed : (parsed.torrents ?? [])) as Array<Record<string, unknown>>;
     const rows: TorrentRow[] = torrents.map(t => ({
       name: String(t.name ?? ''),
       date: String(t.date ?? ''),

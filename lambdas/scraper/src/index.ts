@@ -81,6 +81,7 @@ export { ScrapeEvent };
 
 export const handler: Handler<ScrapeEvent> = async (event) => {
   const { userId, category, days, trackerUsername, trackerPassword, jobId } = event;
+  const scrapeStartTime = Date.now();
 
   try {
     if (jobId) await updateProgress(jobId, 'Logging in...');
@@ -202,14 +203,27 @@ export const handler: Handler<ScrapeEvent> = async (event) => {
       }),
     });
 
+    const durationSec = Math.round((Date.now() - scrapeStartTime) / 1000);
+
+    const datasetPayload = {
+      meta: {
+        category,
+        days,
+        torrentCount: normalizedTorrents.length,
+        durationSec,
+        scrapedAt: new Date().toISOString(),
+      },
+      torrents: normalizedTorrents,
+    };
+
     await s3.send(new PutObjectCommand({
       Bucket: process.env.S3_BUCKET ?? 'filterbrr-userdata',
       Key: key,
-      Body: JSON.stringify(normalizedTorrents),
+      Body: JSON.stringify(datasetPayload),
       ContentType: 'application/json',
     }));
 
-    const result = { key, torrentCount: normalizedTorrents.length };
+    const result = { key, torrentCount: normalizedTorrents.length, durationSec };
     if (jobId) await completeJob(jobId, 'completed', `Complete — ${normalizedTorrents.length} torrents scraped`, result);
 
     return result;

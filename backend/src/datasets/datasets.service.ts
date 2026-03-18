@@ -26,14 +26,19 @@ export class DatasetsService {
       let torrent_count: number | null = null;
       let min_date: string | null = null;
       let max_date: string | null = null;
+      let scrape_duration_sec: number | null = null;
 
       try {
         const dataObj = await this.s3.client.send(new GetObjectCommand({ Bucket: this.s3.bucket, Key: obj.Key! }));
         const text = await (dataObj.Body as { transformToString: () => Promise<string> }).transformToString();
 
         if (isJson) {
-          const torrents = JSON.parse(text) as Array<{ date?: string }>;
-          torrent_count = torrents.length;
+          const parsed = JSON.parse(text);
+          // New format: { meta: {...}, torrents: [...] } or legacy: [...]
+          const torrents: Array<{ date?: string }> = Array.isArray(parsed) ? parsed : (parsed.torrents ?? []);
+          const meta = Array.isArray(parsed) ? null : parsed.meta;
+          torrent_count = meta?.torrentCount ?? torrents.length;
+          scrape_duration_sec = meta?.durationSec ?? null;
           const dates = torrents.map(t => t.date).filter(Boolean).sort() as string[];
           min_date = dates[0] ?? null;
           max_date = dates[dates.length - 1] ?? null;
@@ -73,6 +78,7 @@ export class DatasetsService {
         torrent_count,
         min_date,
         max_date,
+        scrape_duration_sec,
       };
     }));
     return items.sort((a, b) => {
