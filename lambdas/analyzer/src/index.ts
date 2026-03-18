@@ -1,8 +1,17 @@
 import { Handler } from 'aws-lambda';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { parse } from 'csv-parse/sync';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, UpdateCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import type { AnalyzeEvent, NormalizedTorrent, ScoredTorrent, GeneratedFilter } from './types';
+import { scoreTorrents, analyzeAllAttributes } from './scoring';
+import { assignTiers, calculateDailyVolume, calculateRateLimits, MIN_TORRENT_AGE_DAYS } from './tiers';
+import { generateFilter, EXCEPT_RELEASES } from './filters';
+import { runSimulation, calibrateLowTier, matchExceptReleases } from './simulation';
+import { generateReport } from './report';
+
+// ---------------------------------------------------------------------------
+// AWS clients
+// ---------------------------------------------------------------------------
 
 const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({
   region: process.env.AWS_REGION ?? 'us-east-1',
@@ -11,6 +20,21 @@ const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({
     credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? 'local', secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? 'local' },
   }),
 }));
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION ?? 'us-east-1',
+  ...(process.env.AWS_ENDPOINT_URL && {
+    endpoint: process.env.AWS_ENDPOINT_URL,
+    forcePathStyle: true,
+  }),
+});
+
+const BUCKET = process.env.S3_BUCKET ?? 'filterbrr-userdata';
+const FILTERS_TABLE = process.env.FILTERS_TABLE ?? 'Filters';
+
+// ---------------------------------------------------------------------------
+// DynamoDB helpers (job tracking)
+// ---------------------------------------------------------------------------
 
 async function updateProgress(jobId: string, progress: string): Promise<void> {
   try {
@@ -69,95 +93,203 @@ async function completeJob(jobId: string, status: 'completed' | 'failed' | 'canc
   }));
 }
 
-export interface AnalyzeEvent {
-  jobId?: string;
-  userId: string;
-  datasetKey: string;
-  storageTb: number;
-  seedDays: number;
-  source: string;
-}
-
-export interface TorrentRow {
-  name: string;
-  size: string;
-  date: string;
-  seeders: number;
-  leechers: number;
-  completed: number;
-}
-
-export interface FilterTier {
-  tier: number;
-  name: string;
-  minSeeders: number;
-  maxSizeGb: number;
-  releaseGroups: string[];
-}
-
-export function analyzeTiers(rows: TorrentRow[], storageTb: number): FilterTier[] {
-  const sorted = [...rows].sort((a, b) => b.seeders - a.seeders);
-  const total = sorted.length;
-
-  const percentileSeeders = (pct: number): number =>
-    sorted[Math.floor(total * pct)]?.seeders ?? 0;
-
-  return [
-    { tier: 1, name: 'opportunistic', minSeeders: percentileSeeders(0.75), maxSizeGb: storageTb * 100, releaseGroups: [] },
-    { tier: 2, name: 'low',           minSeeders: percentileSeeders(0.50), maxSizeGb: storageTb * 75,  releaseGroups: [] },
-    { tier: 3, name: 'medium',        minSeeders: percentileSeeders(0.25), maxSizeGb: storageTb * 50,  releaseGroups: [] },
-    { tier: 4, name: 'high',          minSeeders: sorted[0]?.seeders ?? 0, maxSizeGb: storageTb * 25,  releaseGroups: [] },
-  ];
-}
+// ---------------------------------------------------------------------------
+// Handler
+// ---------------------------------------------------------------------------
 
 export const handler: Handler<AnalyzeEvent> = async (event) => {
   const { jobId } = event;
 
   try {
+    // ------------------------------------------------------------------
+    // 1. Load dataset from S3
+    // ------------------------------------------------------------------
     if (jobId) await updateProgress(jobId, 'Loading dataset...');
 
-    const s3 = new S3Client({
-      region: process.env.AWS_REGION ?? 'us-east-1',
-      ...(process.env.AWS_ENDPOINT_URL && {
-        endpoint: process.env.AWS_ENDPOINT_URL,
-        forcePathStyle: true,
-      }),
-    });
-    const bucket = process.env.S3_BUCKET ?? 'filterbrr-userdata';
+    const obj = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: event.datasetKey }));
+    const text = await (obj.Body as { transformToString: () => Promise<string> }).transformToString();
+    const rawTorrents: NormalizedTorrent[] = JSON.parse(text);
 
-    const csvObj = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: event.datasetKey }));
-    const csvText = await (csvObj.Body as { transformToString: () => Promise<string> }).transformToString();
-    const rows = parse(csvText, { columns: true, cast: true }) as TorrentRow[];
+    if (jobId) await updateProgress(jobId, `Loading dataset (${rawTorrents.length} rows)...`);
 
-    if (jobId) await updateProgress(jobId, `Loading dataset (${rows.length} rows)...`);
+    // ------------------------------------------------------------------
+    // 2. Compute age_days and cast to ScoredTorrent
+    // ------------------------------------------------------------------
+    const now = Date.now();
+    const allScored: ScoredTorrent[] = rawTorrents.map(t => ({
+      ...t,
+      score: 0,
+      score_per_gb: 0,
+      age_days: (now - new Date(t.date + (t.date.includes('T') ? '' : ' UTC')).getTime()) / 86400_000,
+    }));
 
-    const tiers = analyzeTiers(rows, event.storageTb);
+    // ------------------------------------------------------------------
+    // 3. Filter to mature torrents and exclude EXCEPT_RELEASES
+    // ------------------------------------------------------------------
+    if (jobId) await updateProgress(jobId, 'Filtering and scoring...');
 
-    const outputKeys: string[] = [];
-    for (let i = 0; i < tiers.length; i++) {
-      const tier = tiers[i];
+    const matureTorrents = allScored.filter(
+      t => t.age_days >= MIN_TORRENT_AGE_DAYS && !matchExceptReleases(t.name, EXCEPT_RELEASES),
+    );
 
-      if (jobId) await updateProgress(jobId, `Generating tier ${i + 1} of ${tiers.length}...`);
+    // ------------------------------------------------------------------
+    // 4. Score torrents
+    // ------------------------------------------------------------------
+    scoreTorrents(matureTorrents);
 
-      const key = `${event.userId}/filters/generated/${event.source}/tier-${tier.tier}-${tier.name}.json`;
-      await s3.send(new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: JSON.stringify(tier, null, 2),
-        ContentType: 'application/json',
-      }));
-      outputKeys.push(key);
-
-      if (jobId && await isCancelling(jobId)) {
-        await completeJob(jobId, 'cancelled', 'Cancelled');
-        return { outputKeys, cancelled: true };
-      }
+    if (jobId && await isCancelling(jobId)) {
+      await completeJob(jobId, 'cancelled', 'Cancelled');
+      return { cancelled: true };
     }
 
-    if (jobId) await updateProgress(jobId, 'Uploading filters...');
+    // ------------------------------------------------------------------
+    // 5. Analyze all attributes
+    // ------------------------------------------------------------------
+    if (jobId) await updateProgress(jobId, 'Analyzing attributes...');
 
-    const result = { outputKeys };
-    if (jobId) await completeJob(jobId, 'completed', `Complete — ${tiers.length} filters generated`, result);
+    const analyses = analyzeAllAttributes(matureTorrents);
+
+    // ------------------------------------------------------------------
+    // 6. Assign tiers
+    // ------------------------------------------------------------------
+    if (jobId) await updateProgress(jobId, 'Assigning tiers...');
+
+    const tierMap = assignTiers(analyses, matureTorrents);
+
+    // ------------------------------------------------------------------
+    // 7. Calculate daily volume and rate limits
+    // ------------------------------------------------------------------
+    const { dailyVolume, medianSizes } = calculateDailyVolume(matureTorrents, tierMap);
+    const rateLimits = calculateRateLimits(dailyVolume, medianSizes, event.storageTb);
+
+    // ------------------------------------------------------------------
+    // 8. Generate 4 filters
+    // ------------------------------------------------------------------
+    if (jobId) await updateProgress(jobId, 'Generating filters...');
+
+    const tierNames: Array<[string, number]> = [
+      ['high', 0],
+      ['medium', 1],
+      ['low', 2],
+      ['opportunistic', 3],
+    ];
+
+    const generatedFilters: GeneratedFilter[] = tierNames.map(([name, idx]) =>
+      generateFilter(name, idx, tierMap, rateLimits, event.source, analyses),
+    );
+
+    if (jobId && await isCancelling(jobId)) {
+      await completeJob(jobId, 'cancelled', 'Cancelled');
+      return { cancelled: true };
+    }
+
+    // ------------------------------------------------------------------
+    // 9. Staged simulation
+    // ------------------------------------------------------------------
+    // Use the full allScored set (including young/excluded) for simulation
+    // to test that filters correctly reject them.
+    const simTorrents: NormalizedTorrent[] = allScored;
+
+    // Stage 1: High tier only
+    if (jobId) await updateProgress(jobId, 'Running simulation (stage 1/3)...');
+
+    const highOnly = generatedFilters.map(f => ({
+      ...f,
+      data: { ...f.data, enabled: f.name.includes('high') ? f.data.enabled : false },
+    }));
+    runSimulation(simTorrents, highOnly, event.storageTb);
+
+    // Stage 2: High + medium
+    if (jobId) await updateProgress(jobId, 'Running simulation (stage 2/3)...');
+
+    const highMedium = generatedFilters.map(f => ({
+      ...f,
+      data: {
+        ...f.data,
+        enabled: (f.name.includes('high') || f.name.includes('medium')) ? f.data.enabled : false,
+      },
+    }));
+    runSimulation(simTorrents, highMedium, event.storageTb);
+
+    // Stage 3: Calibrate low tier with all 4 filters
+    if (jobId) await updateProgress(jobId, 'Calibrating low tier (stage 3/3)...');
+
+    const { bestSettings, bestSim } = calibrateLowTier(
+      generatedFilters,
+      simTorrents,
+      event.storageTb,
+    );
+
+    // Update the low filter with calibrated settings
+    const lowFilter = generatedFilters.find(f => f.name.includes('low'));
+    if (lowFilter) {
+      lowFilter.data.max_downloads = bestSettings.rate;
+      lowFilter.data.max_size = bestSettings.maxSize;
+      lowFilter.data.enabled = true;
+    }
+
+    const simResult = bestSim;
+
+    if (jobId && await isCancelling(jobId)) {
+      await completeJob(jobId, 'cancelled', 'Cancelled');
+      return { cancelled: true };
+    }
+
+    // ------------------------------------------------------------------
+    // 10. Write filters to DynamoDB
+    // ------------------------------------------------------------------
+    if (jobId) await updateProgress(jobId, 'Writing filters to database...');
+
+    for (const [tierName, idx] of tierNames) {
+      const filter = generatedFilters[idx];
+      await dynamo.send(new PutCommand({
+        TableName: FILTERS_TABLE,
+        Item: {
+          user_id: event.userId,
+          filter_id: `gen-${event.source}-${tierName}`,
+          name: filter.name,
+          version: filter.version,
+          data: filter.data,
+          _source: 'generated',
+          created_at: new Date().toISOString(),
+        },
+      }));
+    }
+
+    // ------------------------------------------------------------------
+    // 11. Generate markdown report
+    // ------------------------------------------------------------------
+    if (jobId) await updateProgress(jobId, 'Generating report...');
+
+    const report = generateReport(
+      event.source,
+      matureTorrents,
+      analyses,
+      tierMap,
+      dailyVolume,
+      medianSizes,
+      rateLimits,
+      event.storageTb,
+      generatedFilters,
+      simResult,
+    );
+
+    // ------------------------------------------------------------------
+    // 12. Upload report to S3
+    // ------------------------------------------------------------------
+    const reportKey = `${event.userId}/reports/analysis_${event.source}.md`;
+    await s3.send(new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: reportKey,
+      Body: report,
+      ContentType: 'text/markdown',
+    }));
+
+    // ------------------------------------------------------------------
+    // 13. Complete
+    // ------------------------------------------------------------------
+    const result = { filterCount: 4, reportKey };
+    if (jobId) await completeJob(jobId, 'completed', `Complete — 4 filters generated`, result);
 
     return result;
   } catch (err) {
