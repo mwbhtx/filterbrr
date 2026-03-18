@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../api/client";
+import { SUPPORTED_TRACKERS } from "../types";
+import type { TrackerType } from "../types";
 import { useDatasets, useDeleteDataset } from "../hooks/useDatasets";
 import { useSettings, useUpdateSettings } from "../hooks/useSettings";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -31,18 +33,22 @@ export default function DatasetsPage() {
   const { data: settings } = useSettings();
   const updateSettingsMutation = useUpdateSettings();
 
-  // Pre-fill credentials from settings
-  const existingTracker = settings?.trackers?.[0];
+  // Tracker selection + credentials
+  const [selectedTracker, setSelectedTracker] = useState<TrackerType>(SUPPORTED_TRACKERS[0]);
+  const existingTracker = settings?.trackers?.find(t => t.tracker_type === selectedTracker);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  // Sync from settings on load
+  // Sync credentials from settings when tracker changes
   useEffect(() => {
     if (existingTracker) {
-      setUsername((prev) => prev || existingTracker.username);
-      setPassword((prev) => prev || existingTracker.password);
+      setUsername(existingTracker.username);
+      setPassword(existingTracker.password);
+    } else {
+      setUsername("");
+      setPassword("");
     }
-  }, [existingTracker]);
+  }, [selectedTracker, existingTracker?.username, existingTracker?.password]);
 
   // Scrape controls
   const [scrapeCategory, setScrapeCategory] = useState("freeleech");
@@ -64,13 +70,15 @@ export default function DatasetsPage() {
       const trackerId = existingTracker?.id ?? Math.random().toString(36).slice(2, 10);
       const trackerEntry = {
         id: trackerId,
-        tracker_type: "TorrentLeech" as const,
+        tracker_type: selectedTracker,
         username,
         password,
       };
+      // Upsert this tracker, keep others
+      const otherTrackers = (settings?.trackers ?? []).filter(t => t.tracker_type !== selectedTracker);
       const updatedSettings = {
         ...(settings ?? { autobrr_url: "", autobrr_api_key: "", seedboxes: [] }),
-        trackers: [trackerEntry],
+        trackers: [...otherTrackers, trackerEntry],
       };
       await updateSettingsMutation.mutateAsync(updatedSettings);
 
@@ -95,6 +103,19 @@ export default function DatasetsPage() {
           <CardTitle>Scrape <span className="text-sm font-normal text-muted-foreground ml-2">Enter credentials and time range to build a dataset</span></CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div>
+            <label className="block text-xs text-muted-foreground mb-1">Tracker</label>
+            <select
+              value={selectedTracker}
+              onChange={(e) => setSelectedTracker(e.target.value as TrackerType)}
+              disabled={scrapeRunning}
+              className={inputClass}
+            >
+              {SUPPORTED_TRACKERS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-muted-foreground mb-1">Username</label>
