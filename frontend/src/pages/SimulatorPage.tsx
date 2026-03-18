@@ -42,13 +42,26 @@ export default function SimulatorPage() {
   const trackers = settings?.trackers ?? [];
   const seedboxes = settings?.seedboxes ?? [];
 
-  // Data context state
-  const [selectedTrackerType, setSelectedTrackerType] = useState("");
-  const [selectedDataset, setSelectedDataset] = useState("");
-  const [selectedSeedboxId, setSelectedSeedboxId] = useState("");
-  const [storageTb, setStorageTb] = useState(4);
-  const [maxSeedDays, setMaxSeedDays] = useState(30);
-  const [avgRatio, setAvgRatio] = useState(0.2);
+  // Data context state — restore from localStorage
+  const stored = JSON.parse(localStorage.getItem('simulator-settings') ?? '{}');
+  const [selectedTrackerType, setSelectedTrackerType] = useState(stored.trackerType ?? "");
+  const [selectedDataset, setSelectedDataset] = useState(stored.dataset ?? "");
+  const [selectedSeedboxId, setSelectedSeedboxId] = useState(stored.seedboxId ?? "");
+  const [storageTb, setStorageTb] = useState(stored.storageTb ?? 4);
+  const [maxSeedDays, setMaxSeedDays] = useState(stored.maxSeedDays ?? 30);
+  const [avgRatio, setAvgRatio] = useState(stored.avgRatio ?? 0.2);
+
+  // Persist settings to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('simulator-settings', JSON.stringify({
+      trackerType: selectedTrackerType,
+      dataset: selectedDataset,
+      seedboxId: selectedSeedboxId,
+      storageTb,
+      maxSeedDays,
+      avgRatio,
+    }));
+  }, [selectedTrackerType, selectedDataset, selectedSeedboxId, storageTb, maxSeedDays, avgRatio]);
 
   // Simulation state
   const [simResult, setSimResult] = useState<SimulationResult | null>(null);
