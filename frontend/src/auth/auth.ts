@@ -52,6 +52,8 @@ export function logout() {
   const user = pool.getCurrentUser();
   user?.signOut();
   clearSession();
+  localStorage.removeItem('simulator-settings');
+  localStorage.removeItem('simulator-last-result');
 }
 
 export function refreshSession(): Promise<void> {
