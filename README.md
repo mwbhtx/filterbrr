@@ -1,5 +1,7 @@
 # Filterbrr
 
+[filterbrr.com](https://filterbrr.com)
+
 A SaaS platform for managing and optimising torrent filters on private trackers. Filterbrr scrapes tracker listings, analyses seeding trends, and automatically generates and synchronises intelligent filter configurations to [autobrr](https://autobrr.com).
 
 **Stack:** React 19 · NestJS · AWS Lambda · DynamoDB · S3 · Terraform · TypeScript end-to-end
@@ -10,8 +12,10 @@ A SaaS platform for managing and optimising torrent filters on private trackers.
 
 - **Scraper** — Authenticates to private trackers and scrapes torrent listings into structured datasets
 - **Analyser** — Calculates percentile-based filter tiers from scrape data to maximise seeding efficiency
-- **Simulator** — Back-tests filter configurations against historical datasets before deploying
+- **Simulator** — Back-tests filter configurations against historical datasets with toggleable filter chips before deploying
 - **Sync** — Pushes validated filters directly to autobrr via API
+- **Demo mode** — Read-only demo login to explore the simulator without credentials
+- **Real-time progress** — SSE streaming for long-running scrape and analysis jobs
 - **Multi-user** — Per-user data isolation via AWS Cognito + DynamoDB partition keys
 
 ---
@@ -24,7 +28,7 @@ Browser (React + Vite)
     ▼
 API Gateway → NestJS (Lambda)
     │
-    ├── DynamoDB   (settings, filters, sync state)
+    ├── DynamoDB   (settings, filters, sync state, jobs)
     └── S3         (scrape datasets, generated filters)
 
 Async Lambdas:
@@ -55,11 +59,11 @@ The backend runs with `NODE_ENV=local` which bypasses Cognito auth. The frontend
 **2. Start services**
 
 ```bash
-# Start DynamoDB Local + LocalStack S3
+# Start DynamoDB Local + LocalStack S3 + local Lambda containers
 docker compose up -d
 ```
 
-On first run, LocalStack will automatically create the `filterbrr-userdata` S3 bucket via the init script in `localstack-init/`. DynamoDB tables (`UserSettings`, `Filters`, `SyncState`) are created automatically by the backend on startup. Data persists across restarts via Docker named volumes.
+On first run, LocalStack will automatically create the `filterbrr-userdata` S3 bucket via the init script in `localstack-init/`. DynamoDB tables (`UserSettings`, `Filters`, `SyncState`, `Jobs`) are created automatically by the backend on startup. Data persists across restarts via Docker named volumes.
 
 ```bash
 # Backend (port 3000)
@@ -98,7 +102,7 @@ Filterbrr is deployed to AWS using Terraform. Infrastructure includes:
 - **CloudFront + S3** — Frontend CDN hosting
 
 ```bash
-cd infra
+cd infrastructure
 terraform init
 terraform apply
 ```

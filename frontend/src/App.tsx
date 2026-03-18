@@ -33,7 +33,10 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="border-b px-6 py-3 shrink-0 flex items-center gap-6">
-        <img src="/logo.svg" alt="filterbrr" className="h-7 w-auto" />
+        <div className="flex items-center gap-2">
+          <img src="/logo-solid.svg" alt="filterbrr" className="h-9 w-auto brightness-0 invert" />
+          <span className="text-base font-semibold tracking-tight">filterbrr</span>
+        </div>
         <nav className="flex gap-1">
           {visibleTabs.map(t => (
             <NavLink

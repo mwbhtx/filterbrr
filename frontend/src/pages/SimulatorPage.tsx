@@ -13,6 +13,18 @@ import JobRunner from "../components/JobRunner";
 import { useIsDemo } from "../auth/useIsDemo";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { HelpCircle } from "lucide-react";
+
+function HintIcon({ tip }: { tip: string }) {
+  return (
+    <span className="relative group inline-flex ml-1 align-middle">
+      <HelpCircle className="size-3 text-muted-foreground/60 cursor-help" />
+      <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 rounded-md bg-popover border border-border px-3 py-2 text-sm leading-relaxed text-popover-foreground opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-50 text-center">
+        {tip}
+      </span>
+    </span>
+  );
+}
 
 const selectCls =
   "w-full rounded bg-muted border border-border px-3 py-1.5 text-sm text-foreground disabled:opacity-50";
@@ -97,6 +109,34 @@ export default function SimulatorPage() {
     ...tempFilters,
   ];
   const dirtyIds = new Set(dirtyMap.keys());
+
+  // Track which filters are enabled for simulation (restore from localStorage)
+  const [enabledFilterIds, setEnabledFilterIds] = useState<Set<string>>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('simulator-enabled-filters') ?? '[]');
+      return new Set(saved);
+    } catch { return new Set(); }
+  });
+
+  // Keep enabledFilterIds in sync — enable new filters by default
+  useEffect(() => {
+    setEnabledFilterIds(prev => {
+      const next = new Set(prev);
+      for (const f of allFilters) {
+        if (!prev.has(f._id) && !next.has(f._id)) next.add(f._id);
+      }
+      // Remove IDs that no longer exist
+      for (const id of next) {
+        if (!allFilters.some(f => f._id === id)) next.delete(id);
+      }
+      return next;
+    });
+  }, [allFilters.map(f => f._id).join(",")]);
+
+  // Persist enabled filter IDs to localStorage
+  useEffect(() => {
+    localStorage.setItem('simulator-enabled-filters', JSON.stringify([...enabledFilterIds]));
+  }, [enabledFilterIds]);
   const selectedFilter = allFilters.find((f) => f._id === selectedFilterId) ?? null;
 
   // All datasets sorted by scraped_at desc
@@ -152,8 +192,12 @@ export default function SimulatorPage() {
     setRunning(true);
     setSimError(null);
     try {
+      const activeFilterIds = allFilters
+        .filter(f => enabledFilterIds.has(f._id))
+        .map(f => f._id);
       const result = await api.runSimulation({
         dataset_path: selectedDataset,
+        filter_ids: activeFilterIds.length > 0 ? activeFilterIds : undefined,
         storage_tb: storageTb,
         max_seed_days: maxSeedDays,
         avg_ratio: avgRatio,
@@ -394,7 +438,7 @@ export default function SimulatorPage() {
           <CardContent className="py-4 space-y-4">
             <div className="grid grid-cols-4 gap-3">
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Dataset</label>
+                <label className="block text-xs text-muted-foreground mb-1">Scrape Dataset<HintIcon tip="The scraped torrent dataset to run the simulation against" /></label>
                 <select
                   value={selectedDataset}
                   onChange={(e) => setSelectedDataset(e.target.value)}
@@ -410,7 +454,7 @@ export default function SimulatorPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Storage (TB)</label>
+                <label className="block text-xs text-muted-foreground mb-1">Server Storage Capacity (TB)<HintIcon tip="Total disk space available for storing downloaded torrents" /></label>
                 <input
                   type="number"
                   value={storageTb}
@@ -421,7 +465,7 @@ export default function SimulatorPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Avg Seed Days</label>
+                <label className="block text-xs text-muted-foreground mb-1">Avg Seed Days<HintIcon tip="Average number of days each torrent is seeded before removal" /></label>
                 <input
                   type="number"
                   value={maxSeedDays}
@@ -431,7 +475,7 @@ export default function SimulatorPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Avg Ratio</label>
+                <label className="block text-xs text-muted-foreground mb-1">Avg Ratio<HintIcon tip="Average upload-to-download ratio achieved per torrent" /></label>
                 <input
                   type="number"
                   value={avgRatio}
@@ -443,6 +487,38 @@ export default function SimulatorPage() {
                 />
               </div>
             </div>
+            {/* Filter chips */}
+            {allFilters.length > 0 && (
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1.5">
+                  Simulation Filters<HintIcon tip="Toggle which filters are included in the simulation" />
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {allFilters.map(f => {
+                    const active = enabledFilterIds.has(f._id);
+                    return (
+                      <button
+                        key={f._id}
+                        onClick={() => setEnabledFilterIds(prev => {
+                          const next = new Set(prev);
+                          if (next.has(f._id)) next.delete(f._id);
+                          else next.add(f._id);
+                          return next;
+                        })}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                          active
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-muted text-muted-foreground border-border opacity-60'
+                        }`}
+                      >
+                        {f.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Action buttons */}
             <div className="flex items-center gap-3">
               <Button
@@ -467,6 +543,8 @@ export default function SimulatorPage() {
         {simResult && (
           <>
             <MetricsBar result={simResult} />
+            <GrabbedList torrents={simResult.grabbed_torrents} />
+            <SkippedList torrents={simResult.skipped_torrents} />
             <Card>
               <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
               <CardContent>
@@ -503,8 +581,6 @@ export default function SimulatorPage() {
                 {activeChart === "upload" && <UploadChart dailyStats={simResult.daily_stats} />}
               </CardContent>
             </Card>
-            <GrabbedList torrents={simResult.grabbed_torrents} />
-            <SkippedList torrents={simResult.skipped_torrents} />
           </>
         )}
       </div>
