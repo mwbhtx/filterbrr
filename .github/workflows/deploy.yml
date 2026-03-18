@@ -78,7 +78,7 @@ jobs:
         run: |
           cd dist
           cp ../package.json ../package-lock.json .
-          npm ci --production
+          npm ci --omit=dev --legacy-peer-deps
           zip -rq ../../backend.zip . -x "*.map"
       - name: Deploy
         run: |
