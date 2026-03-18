@@ -180,7 +180,7 @@ export const handler: Handler<ScrapeEvent> = async (event) => {
       }
 
       page++;
-      await new Promise(r => setTimeout(r, (event.delay ?? 1) * 1000));
+      await new Promise(r => setTimeout(r, Math.max(1, event.delay ?? 1) * 1000));
     }
 
     if (normalizedTorrents.length === 0) {
