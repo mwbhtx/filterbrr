@@ -15,8 +15,8 @@ services:
     ports:
       - '4566:4566'
     environment:
-      - SERVICES=s3,sqs
-      - DEFAULT_REGION=ap-southeast-2
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
     volumes:
       - localstack-data:/var/lib/localstack
       - ./localstack-init:/etc/localstack/init/ready.d
@@ -31,7 +31,7 @@ services:
     volumes:
       - ./lambdas/scraper/src:/var/task/src
     environment:
-      - AWS_REGION=ap-southeast-2
+      - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local
       - S3_BUCKET=filterbrr-userdata
@@ -50,7 +50,7 @@ services:
     volumes:
       - ./lambdas/analyzer/src:/var/task/src
     environment:
-      - AWS_REGION=ap-southeast-2
+      - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local
       - S3_BUCKET=filterbrr-userdata
