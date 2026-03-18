@@ -13,7 +13,7 @@ const LOCAL_LAMBDA_URLS: Record<string, string> = {
 export class WorkerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WorkerService.name);
   private readonly isLocal = process.env.NODE_ENV !== 'production';
-  private readonly lambda = new LambdaClient({ region: process.env.AWS_REGION ?? 'ap-southeast-2' });
+  private readonly lambda = new LambdaClient({ region: process.env.AWS_REGION ?? 'us-east-1' });
   private running = false;
   private activeJobId: string | null = null;
 
