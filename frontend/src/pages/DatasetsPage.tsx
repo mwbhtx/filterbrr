@@ -69,7 +69,7 @@ export default function DatasetsPage() {
       {/* New Scrape */}
       <Card>
         <CardHeader className="border-b border-border pb-3">
-          <CardTitle>New Scrape</CardTitle>
+          <CardTitle>Scrape</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
