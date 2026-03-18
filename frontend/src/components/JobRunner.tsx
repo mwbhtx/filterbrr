@@ -121,33 +121,31 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
 
   return (
     <div className="mt-3">
-      <div className="flex items-center gap-2 mb-1">
-        <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-          status === "running" ? "bg-accent/20 text-accent-foreground" :
-          status === "cancelling" ? "bg-accent/20 text-accent-foreground animate-pulse" :
-          status === "completed" ? "bg-accent/20 text-accent-foreground" :
-          "bg-destructive/20 text-destructive"
-        }`}>
-          {status === "cancelling" ? "cancelling..." : status}
-        </span>
-        <span className="text-xs text-muted-foreground ml-auto shrink-0">
-          {formatElapsed(elapsed)}
-        </span>
-        {status === "running" && (
-          <Button
-            variant="destructive"
-            size="xs"
-            onClick={() => api.cancelJob(jobId!)}
-          >
-            Cancel
-          </Button>
+      <div className="bg-background border border-border rounded p-3 text-xs font-mono text-muted-foreground flex items-center gap-2">
+        {!isTerminal && !error && (
+          <svg className="size-3.5 shrink-0 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
         )}
-      </div>
-      <div className="bg-background border border-border rounded p-3 text-xs font-mono text-muted-foreground">
         {error ? (
-          <span className="text-destructive">{error}</span>
+          <span className="text-destructive flex-1">{error}</span>
         ) : (
-          <span>{progress}</span>
+          <span className="flex-1">{progress}</span>
+        )}
+        {!isTerminal && (
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-muted-foreground">{formatElapsed(elapsed)}</span>
+            {status === "running" && (
+              <Button
+                variant="destructive"
+                size="xs"
+                onClick={() => api.cancelJob(jobId!)}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </div>
