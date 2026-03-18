@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { SettingsService } from '../settings/settings.service';
 import { JobRepository, Job } from './job.repository';
 import { SqsService } from './sqs.service';
-import { WorkerService } from './worker.service';
 
 @Injectable()
 export class PipelineService {
@@ -11,7 +10,6 @@ export class PipelineService {
     private readonly settings: SettingsService,
     private readonly jobRepo: JobRepository,
     private readonly sqs: SqsService,
-    private readonly worker: WorkerService,
   ) {}
 
   async startScrape(userId: string, dto: Record<string, unknown>): Promise<{ job_id: string }> {
