@@ -120,34 +120,32 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
   const isTerminal = ["completed", "failed", "cancelled"].includes(status);
 
   return (
-    <div className="mt-3">
-      <div className="bg-background border border-border rounded p-3 text-xs font-mono text-muted-foreground flex items-center gap-2">
-        {!isTerminal && !error && (
-          <svg className="size-3.5 shrink-0 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-        )}
-        {error ? (
-          <span className="text-destructive flex-1">{error}</span>
-        ) : (
-          <span className="flex-1">{progress}</span>
-        )}
-        {!isTerminal && (
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-muted-foreground">{formatElapsed(elapsed)}</span>
-            {status === "running" && (
-              <Button
-                variant="destructive"
-                size="xs"
-                onClick={() => api.cancelJob(jobId!)}
-              >
-                Cancel
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
+    <div className="bg-background border border-border rounded px-3 py-2 text-xs font-mono text-muted-foreground flex items-center gap-2 flex-1 min-w-0">
+      {!isTerminal && !error && (
+        <svg className="size-3.5 shrink-0 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      )}
+      {error ? (
+        <span className="text-destructive flex-1 truncate">{error}</span>
+      ) : (
+        <span className="flex-1 truncate">{progress}</span>
+      )}
+      {!isTerminal && (
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-muted-foreground">{formatElapsed(elapsed)}</span>
+          {status === "running" && (
+            <Button
+              variant="destructive"
+              size="xs"
+              onClick={() => api.cancelJob(jobId!)}
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

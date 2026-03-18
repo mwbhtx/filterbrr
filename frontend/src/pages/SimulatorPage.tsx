@@ -505,15 +505,16 @@ export default function SimulatorPage() {
                   disabled={generating || !selectedDataset || !selectedSeedboxId}
                   size="sm"
                   variant="outline"
+                  className="shrink-0"
                 >
                   {generating ? "Generating..." : "Generate Filters"}
                 </Button>
-                <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm">
+                <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm" className="shrink-0">
                   {running ? "Running..." : "Run Simulation"}
                 </Button>
-                {simError && <span className="text-sm text-destructive">{simError}</span>}
+                <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
+                {simError && <span className="text-sm text-destructive shrink-0">{simError}</span>}
               </div>
-              <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
             </CardContent>
           </Card>
         )}

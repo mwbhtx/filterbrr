@@ -133,23 +133,24 @@ export default function DatasetsPage() {
               />
             </div>
           </div>
-          <div>
+          <div className="flex items-center gap-3">
             <Button
               onClick={handleScrape}
               disabled={scrapeRunning}
               size="sm"
+              className="shrink-0"
             >
               {scrapeRunning ? "Running..." : "Run Scrape"}
             </Button>
+            <JobRunner
+              jobId={scrapeJobId}
+              onComplete={() => {
+                setScrapeRunning(false);
+                localStorage.removeItem('active-scrape-job');
+                refetch();
+              }}
+            />
           </div>
-          <JobRunner
-            jobId={scrapeJobId}
-            onComplete={() => {
-              setScrapeRunning(false);
-              localStorage.removeItem('active-scrape-job');
-              refetch();
-            }}
-          />
         </CardContent>
       </Card>
 
