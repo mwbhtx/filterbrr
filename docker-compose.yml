@@ -2,6 +2,7 @@ services:
   dynamodb-local:
     image: amazon/dynamodb-local@sha256:d89f8fcc6b1a39cb35976c248ed42a28c66ae00dc043099210f5571e42648ab4
     container_name: filterbrr-dynamodb
+    user: root
     ports:
       - '8000:8000'
     command: '-jar DynamoDBLocal.jar -sharedDb -dbPath /data'
@@ -14,10 +15,47 @@ services:
     ports:
       - '4566:4566'
     environment:
-      - SERVICES=s3
+      - SERVICES=s3,sqs
       - DEFAULT_REGION=ap-southeast-2
     volumes:
       - localstack-data:/var/lib/localstack
+      - ./localstack-init:/etc/localstack/init/ready.d
+
+  scraper-lambda:
+    build:
+      context: ./lambdas/scraper
+      dockerfile: Dockerfile.dev
+    container_name: filterbrr-scraper
+    ports:
+      - '9001:8080'
+    volumes:
+      - ./lambdas/scraper/src:/var/task/src
+    environment:
+      - AWS_REGION=ap-southeast-2
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - S3_BUCKET=filterbrr-userdata
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    depends_on:
+      - localstack
+
+  analyzer-lambda:
+    build:
+      context: ./lambdas/analyzer
+      dockerfile: Dockerfile.dev
+    container_name: filterbrr-analyzer
+    ports:
+      - '9002:8080'
+    volumes:
+      - ./lambdas/analyzer/src:/var/task/src
+    environment:
+      - AWS_REGION=ap-southeast-2
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - S3_BUCKET=filterbrr-userdata
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    depends_on:
+      - localstack
 
 volumes:
   dynamodb-data:
