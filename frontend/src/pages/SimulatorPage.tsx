@@ -55,11 +55,22 @@ export default function SimulatorPage() {
   }, [selectedDataset, storageTb, maxSeedDays, avgRatio]);
 
   // Simulation state
-  const [simResult, setSimResult] = useState<SimulationResult | null>(null);
+  const [simResult, setSimResult] = useState<SimulationResult | null>(() => {
+    const stored = localStorage.getItem('simulator-last-result');
+    if (!stored) return null;
+    try { return JSON.parse(stored); } catch { return null; }
+  });
   const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
   const [running, setRunning] = useState(false);
   const [simError, setSimError] = useState<string | null>(null);
   const [activeChart, setActiveChart] = useState<"utilization" | "grabs" | "flow" | "upload">("utilization");
+
+  // Persist simulation result to localStorage on change
+  useEffect(() => {
+    if (simResult) {
+      localStorage.setItem('simulator-last-result', JSON.stringify(simResult));
+    }
+  }, [simResult]);
 
   // Generate filters state
   const [generateJobId, setGenerateJobId] = useState<string | null>(
