@@ -180,12 +180,6 @@ export default function SimulatorPage() {
         avg_ratio: avgRatio,
       });
       setSimResult(result);
-      if (selectedDs) {
-        try {
-          const ar = await api.getAnalysisResults(selectedDs.category);
-          setAnalysisResults(ar);
-        } catch { /* optional */ }
-      }
     } catch (err: unknown) {
       setSimError(err instanceof Error ? err.message : "Simulation failed");
     } finally {
