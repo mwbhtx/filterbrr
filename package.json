@@ -2,6 +2,7 @@
   "name": "filterbrr-monorepo",
   "private": true,
   "workspaces": [
-    "backend"
+    "backend",
+    "frontend"
   ]
 }

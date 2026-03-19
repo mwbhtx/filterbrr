@@ -98,7 +98,7 @@ jobs:
         run: |
           mkdir -p lambda-pkg/dist
           cp -r backend/dist/* lambda-pkg/dist/
-          cp backend/package.json backend/package-lock.json lambda-pkg/
+          cp backend/package.json package-lock.json lambda-pkg/
           cd lambda-pkg && npm ci --omit=dev --legacy-peer-deps
           zip -rq ../backend.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
@@ -183,21 +183,20 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
       - name: Build
-        working-directory: frontend
         env:
           VITE_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
           VITE_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
           VITE_DEMO_EMAIL: ${{ secrets.DEMO_EMAIL }}
           VITE_DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
         run: |
-          npm ci
-          npm run build
+          npm ci --legacy-peer-deps
+          npm run build --workspace=frontend
       - name: Deploy
         run: |
           aws s3 sync frontend/dist/ s3://filterbrr-frontend --delete
