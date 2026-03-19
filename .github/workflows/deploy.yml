@@ -3,6 +3,28 @@ name: Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_infra:
+        description: "Deploy infrastructure"
+        type: boolean
+        default: false
+      deploy_backend:
+        description: "Deploy backend"
+        type: boolean
+        default: false
+      deploy_scraper:
+        description: "Deploy scraper"
+        type: boolean
+        default: false
+      deploy_analyzer:
+        description: "Deploy analyzer"
+        type: boolean
+        default: false
+      deploy_frontend:
+        description: "Deploy frontend"
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -39,7 +61,7 @@ jobs:
 
   infra:
     needs: changes
-    if: needs.changes.outputs.infra == 'true'
+    if: needs.changes.outputs.infra == 'true' || inputs.deploy_infra == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,7 +77,7 @@ jobs:
 
   backend:
     needs: [changes, infra]
-    if: "!failure() && !cancelled() && needs.changes.outputs.backend == 'true'"
+    if: "!failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || inputs.deploy_backend == true)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,23 +85,22 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: package-lock.json
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
       - name: Build
-        working-directory: backend
         run: |
-          npm ci
-          npm run build
+          npm ci --legacy-peer-deps
+          npm run build --workspace=backend
       - name: Package
-        working-directory: backend
         run: |
-          cp package.json package-lock.json dist/
-          cd dist && npm ci --omit=dev --legacy-peer-deps && rm package.json package-lock.json
-          cd ..
-          zip -rq ../backend.zip dist/ -x "dist/*.map"
+          mkdir -p lambda-pkg/dist
+          cp -r backend/dist/* lambda-pkg/dist/
+          cp backend/package.json backend/package-lock.json lambda-pkg/
+          cd lambda-pkg && npm ci --omit=dev --legacy-peer-deps
+          zip -rq ../backend.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
         run: |
           aws lambda update-function-code \
@@ -88,7 +109,7 @@ jobs:
 
   scraper:
     needs: [changes, infra]
-    if: "!failure() && !cancelled() && needs.changes.outputs.scraper == 'true'"
+    if: "!failure() && !cancelled() && (needs.changes.outputs.scraper == 'true' || inputs.deploy_scraper == true)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -107,12 +128,12 @@ jobs:
           npm ci
           npm run build
       - name: Package
-        working-directory: lambdas/scraper
         run: |
-          cp package.json package-lock.json dist/
-          cd dist && npm ci --omit=dev && rm package.json package-lock.json
-          cd ..
-          zip -rq ../../../scraper.zip dist/ -x "dist/*.map"
+          mkdir -p scraper-pkg/dist
+          cp -r lambdas/scraper/dist/* scraper-pkg/dist/
+          cp lambdas/scraper/package.json lambdas/scraper/package-lock.json scraper-pkg/
+          cd scraper-pkg && npm ci --omit=dev
+          zip -rq ../scraper.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
         run: |
           aws lambda update-function-code \
@@ -121,7 +142,7 @@ jobs:
 
   analyzer:
     needs: [changes, infra]
-    if: "!failure() && !cancelled() && needs.changes.outputs.analyzer == 'true'"
+    if: "!failure() && !cancelled() && (needs.changes.outputs.analyzer == 'true' || inputs.deploy_analyzer == true)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -140,12 +161,12 @@ jobs:
           npm ci
           npm run build
       - name: Package
-        working-directory: lambdas/analyzer
         run: |
-          cp package.json package-lock.json dist/
-          cd dist && npm ci --omit=dev && rm package.json package-lock.json
-          cd ..
-          zip -rq ../../../analyzer.zip dist/ -x "dist/*.map"
+          mkdir -p analyzer-pkg/dist
+          cp -r lambdas/analyzer/dist/* analyzer-pkg/dist/
+          cp lambdas/analyzer/package.json lambdas/analyzer/package-lock.json analyzer-pkg/
+          cd analyzer-pkg && npm ci --omit=dev
+          zip -rq ../analyzer.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
         run: |
           aws lambda update-function-code \
@@ -154,7 +175,7 @@ jobs:
 
   frontend:
     needs: [changes, infra]
-    if: "!failure() && !cancelled() && needs.changes.outputs.frontend == 'true'"
+    if: "!failure() && !cancelled() && (needs.changes.outputs.frontend == 'true' || inputs.deploy_frontend == true)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
