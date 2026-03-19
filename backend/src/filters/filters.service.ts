@@ -3,7 +3,7 @@ import { GetCommand, PutCommand, DeleteCommand, QueryCommand } from '@aws-sdk/li
 import { DynamoService } from '../dynamo/dynamo.service';
 import { CreateFilterDto } from './dto/create-filter.dto';
 import { UpdateFilterDto } from './dto/update-filter.dto';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const TABLE = 'Filters';
 
@@ -122,7 +122,7 @@ export class FiltersService {
   async create(userId: string, dto: CreateFilterDto): Promise<Record<string, unknown>> {
     const item = {
       user_id: userId,
-      filter_id: uuidv4(),
+      filter_id: randomUUID(),
       ...dto,
       created_at: new Date().toISOString(),
     };

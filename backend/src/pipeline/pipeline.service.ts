@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import axios from 'axios';
 import { LambdaClient, InvokeCommand, InvocationType } from '@aws-sdk/client-lambda';
 import { SettingsService } from '../settings/settings.service';
@@ -72,7 +72,7 @@ export class PipelineService {
     functionName: string,
     payload: Record<string, unknown>,
   ): Promise<{ job_id: string }> {
-    const jobId = uuidv4();
+    const jobId = randomUUID();
     const job: Job = {
       job_id: jobId,
       user_id: userId,
