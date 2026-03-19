@@ -14,9 +14,10 @@ import { SimulationModule } from './simulation/simulation.module';
 import { AutobrrModule } from './autobrr/autobrr.module';
 import { SyncModule } from './sync/sync.module';
 import { CryptoModule } from './crypto/crypto.module';
+import { DemoModule } from './demo/demo.module';
 
 @Module({
-  imports: [AuthModule, CryptoModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, SimulationModule, AutobrrModule, SyncModule],
+  imports: [AuthModule, CryptoModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, SimulationModule, AutobrrModule, SyncModule, DemoModule],
   providers: [
     { provide: APP_GUARD, useClass: CognitoAuthGuard },
     { provide: APP_GUARD, useClass: DemoWriteGuard },

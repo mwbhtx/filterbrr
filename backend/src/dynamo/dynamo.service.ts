@@ -33,6 +33,12 @@ const LOCAL_TABLES = [
     AttributeDefinitions: [{ AttributeName: 'job_id', AttributeType: 'S' }],
     BillingMode: 'PAY_PER_REQUEST',
   },
+  {
+    TableName: 'DemoSessions',
+    KeySchema: [{ AttributeName: 'pk', KeyType: 'HASH' }],
+    AttributeDefinitions: [{ AttributeName: 'pk', AttributeType: 'S' }],
+    BillingMode: 'PAY_PER_REQUEST',
+  },
 ];
 
 @Injectable()
