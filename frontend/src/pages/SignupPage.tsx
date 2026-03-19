@@ -13,7 +13,6 @@ export default function SignupPage() {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -22,7 +21,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signUp(email, password);
-      setDone(true);
+      navigate(`/verify?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       setError(err.message ?? 'Signup failed');
     } finally {
@@ -30,24 +29,12 @@ export default function SignupPage() {
     }
   }
 
-  if (done) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Check your email</CardTitle>
-            <CardDescription>We sent a confirmation link to {email}. Click it to activate your account, then sign in.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full" onClick={() => navigate('/login')}>Go to login</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+      <div className="flex items-center gap-2.5 mb-6">
+        <img src="/logo-solid.svg" alt="filterbrr" className="h-8 w-auto brightness-0 invert" />
+        <span className="text-lg font-semibold tracking-tight text-foreground">filterbrr</span>
+      </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Create account</CardTitle>

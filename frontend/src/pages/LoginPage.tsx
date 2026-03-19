@@ -45,6 +45,10 @@ export default function LoginPage() {
       await login(email, password);
       navigate('/');
     } catch (err: any) {
+      if (err.code === 'UserNotConfirmedException' || err.name === 'UserNotConfirmedException') {
+        navigate(`/verify?email=${encodeURIComponent(email)}`);
+        return;
+      }
       setError(err.message ?? 'Login failed');
     } finally {
       setLoading(false);
@@ -150,6 +154,9 @@ export default function LoginPage() {
                   <div className="space-y-1">
                     <Label htmlFor="password">Password</Label>
                     <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                    <div>
+                      <Link to="/forgot-password" className="text-xs text-muted-foreground underline">Forgot password?</Link>
+                    </div>
                   </div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
                   <Button type="submit" className="w-full" disabled={loading}>

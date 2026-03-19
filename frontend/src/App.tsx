@@ -7,6 +7,8 @@ import DatasetsPage from './pages/DatasetsPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import VerifyPage from './pages/VerifyPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import RequireAuth from './auth/RequireAuth';
 import { useIsDemo } from './auth/useIsDemo';
 
@@ -80,6 +82,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/verify" element={<VerifyPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/*" element={<RequireAuth><Dashboard /></RequireAuth>} />
     </Routes>
   );
