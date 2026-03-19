@@ -29,6 +29,7 @@ resource "aws_iam_role_policy" "backend_lambda" {
           aws_dynamodb_table.filters.arn,
           aws_dynamodb_table.jobs.arn,
           aws_dynamodb_table.sync_state.arn,
+          aws_dynamodb_table.demo_sessions.arn,
         ]
       },
       {

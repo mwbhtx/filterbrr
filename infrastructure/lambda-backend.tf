@@ -9,6 +9,11 @@ data "archive_file" "backend_placeholder" {
   }
 }
 
+resource "random_password" "demo_jwt_secret" {
+  length  = 64
+  special = false
+}
+
 resource "aws_lambda_function" "backend" {
   function_name = "${var.app_name}-backend"
   role          = aws_iam_role.backend_lambda.arn
@@ -29,6 +34,7 @@ resource "aws_lambda_function" "backend" {
       S3_BUCKET            = aws_s3_bucket.data.id
       DEMO_USER_SUB        = "b4f8a4e8-9091-709c-4e2e-ac3714c80c56"
       KMS_KEY_ID           = aws_kms_key.user_secrets.key_id
+      DEMO_JWT_SECRET      = random_password.demo_jwt_secret.result
     }
   }
 
