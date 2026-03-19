@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { api } from "../api/client";
 import { Button } from "@/components/ui/button";
 import type { JobStatus } from "../types";
-import { getIdToken } from "../auth/auth";
 
 interface JobRunnerProps {
   jobId: string | null;
@@ -15,7 +14,7 @@ function formatElapsed(seconds: number): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-interface SSEData {
+interface JobData {
   status: JobStatus["status"];
   progress: string;
   started_at?: string;
@@ -57,66 +56,43 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
       }
     }, 1000);
 
-    // SSE connection via fetch (supports auth headers unlike EventSource)
-    const controller = new AbortController();
+    // Poll job status every 2 seconds
+    let cancelled = false;
 
-    async function connectSSE() {
-      const token = getIdToken();
-      const headers: Record<string, string> = { 'Accept': 'text/event-stream' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+    async function pollJob() {
+      while (!cancelled) {
+        try {
+          const data = await api.getJob(jobId!) as unknown as JobData;
+          if (cancelled) break;
 
-      try {
-        const res = await fetch(`/api/pipeline/jobs/${jobId}/stream`, {
-          headers,
-          signal: controller.signal,
-        });
-        if (!res.ok || !res.body) return;
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() ?? '';
-
-          let eventType = '';
-          for (const line of lines) {
-            if (line.startsWith('event: ')) {
-              eventType = line.slice(7).trim();
-            } else if (line.startsWith('data: ')) {
-              const data: SSEData = JSON.parse(line.slice(6));
-              setStatus(data.status);
-              setProgress(data.progress ?? '');
-              if (data.error) setError(data.error);
-              if (data.started_at && !startTimeRef.current) {
-                startTimeRef.current = new Date(data.started_at).getTime();
-              }
-
-              if (eventType === 'complete') {
-                clearInterval(timer);
-                if (completedRef.current !== jobId) {
-                  completedRef.current = jobId;
-                  onComplete();
-                }
-                return;
-              }
-            }
+          setStatus(data.status);
+          setProgress(data.progress ?? "");
+          if (data.error) setError(data.error);
+          if (data.started_at && !startTimeRef.current) {
+            startTimeRef.current = new Date(data.started_at).getTime();
           }
+
+          const isTerminal = ["completed", "failed", "cancelled"].includes(data.status);
+          if (isTerminal) {
+            clearInterval(timer);
+            if (completedRef.current !== jobId) {
+              completedRef.current = jobId;
+              onComplete();
+            }
+            return;
+          }
+        } catch {
+          // Network error — keep polling
         }
-      } catch {
-        // Aborted or network error — ignore
+
+        await new Promise((r) => setTimeout(r, 2000));
       }
     }
 
-    connectSSE();
+    pollJob();
 
     return () => {
-      controller.abort();
+      cancelled = true;
       clearInterval(timer);
     };
   }, [jobId]); // intentionally exclude onComplete to avoid re-triggering

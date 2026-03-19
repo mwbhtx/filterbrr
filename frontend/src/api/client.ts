@@ -104,6 +104,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify(req),
     }),
+  getJob: (jobId: string) =>
+    fetchJSON<{ id: string; command: string; status: string; progress: string; started_at?: string; result?: Record<string, unknown>; error?: string }>(`/pipeline/jobs/${jobId}`),
   cancelJob: (jobId: string) =>
     fetchJSON<{ cancelled: string }>(`/pipeline/jobs/${jobId}`, { method: 'DELETE' }),
 
