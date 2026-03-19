@@ -97,12 +97,22 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
     };
   }, [jobId]); // intentionally exclude onComplete to avoid re-triggering
 
-  if (!status) return null;
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    if (status === "completed") {
+      const timeout = setTimeout(() => setVisible(false), 3000);
+      return () => clearTimeout(timeout);
+    }
+    setVisible(true);
+  }, [status]);
+
+  if (!status || !visible) return null;
 
   const isTerminal = ["completed", "failed", "cancelled"].includes(status);
 
   return (
-    <div className="bg-background border border-border rounded px-3 py-2 text-xs font-mono text-muted-foreground flex items-center gap-2 flex-1 min-w-0">
+    <div className={`bg-background border border-border rounded px-3 py-2 text-xs font-mono text-muted-foreground flex items-center gap-2 flex-1 min-w-0 transition-opacity duration-500 ${status === "completed" ? "animate-fade-out" : ""}`}>
       {!isTerminal && !error && (
         <svg className="size-3.5 shrink-0 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
