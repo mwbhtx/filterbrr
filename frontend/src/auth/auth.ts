@@ -88,6 +88,13 @@ export function confirmForgotPassword(email: string, code: string, newPassword: 
   });
 }
 
+export async function loginAsDemo(): Promise<void> {
+  const res = await fetch('/api/demo', { method: 'POST' });
+  if (!res.ok) throw new Error('Demo unavailable');
+  const { token } = await res.json();
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
 export function logout() {
   const user = pool.getCurrentUser();
   user?.signOut();

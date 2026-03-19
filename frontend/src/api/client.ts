@@ -11,7 +11,8 @@ import type {
   SyncFilterEntry,
   AnalysisResults,
 } from "../types";
-import { getIdToken, refreshSession, logout } from '../auth/auth';
+import { getIdToken, refreshSession, logout, clearSession } from '../auth/auth';
+import { isDemoUser } from '../auth/useIsDemo';
 
 const BASE = "/api";
 
@@ -23,6 +24,12 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${url}`, { ...init, headers });
 
   if (res.status === 401) {
+    // Demo tokens can't be refreshed — redirect to login
+    if (isDemoUser()) {
+      clearSession();
+      window.location.href = '/login';
+      throw new Error('Demo session expired');
+    }
     try {
       await refreshSession();
       const retryToken = getIdToken();
