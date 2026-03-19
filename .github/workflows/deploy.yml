@@ -244,8 +244,6 @@ jobs:
         env:
           VITE_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
           VITE_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
-          VITE_DEMO_EMAIL: ${{ secrets.DEMO_EMAIL }}
-          VITE_DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
         run: |
           npm ci --legacy-peer-deps
           npm run build --workspace=frontend
