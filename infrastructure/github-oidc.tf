@@ -89,6 +89,7 @@ resource "aws_iam_role_policy" "github_deploy" {
           "cloudfront:*",
           "route53:*",
           "acm:*",
+          "kms:*",
           "logs:*",
         ]
         Resource = "*"
