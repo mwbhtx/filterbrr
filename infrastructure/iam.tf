@@ -51,6 +51,11 @@ resource "aws_iam_role_policy" "backend_lambda" {
         Effect   = "Allow"
         Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["kms:Encrypt", "kms:Decrypt"]
+        Resource = [aws_kms_key.user_secrets.arn]
       }
     ]
   })

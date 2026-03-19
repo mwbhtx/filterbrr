@@ -28,6 +28,7 @@ resource "aws_lambda_function" "backend" {
       COGNITO_USER_POOL_ID = aws_cognito_user_pool.main.id
       S3_BUCKET            = aws_s3_bucket.data.id
       DEMO_USER_SUB        = "b4f8a4e8-9091-709c-4e2e-ac3714c80c56"
+      KMS_KEY_ID           = aws_kms_key.user_secrets.key_id
     }
   }
 
