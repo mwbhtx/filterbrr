@@ -15,6 +15,10 @@ async function bootstrap(): Promise<Handler> {
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.enableCors();
+  app.use((req: any, _res: any, next: any) => {
+    if (req.user?.userId) req.userId = req.user.userId;
+    next();
+  });
   await app.init();
   return serverlessExpress({ app: expressApp });
 }

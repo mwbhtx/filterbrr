@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Post, Body, Req, Logger } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, Req } from '@nestjs/common';
 import { IsString } from 'class-validator';
 import axios from 'axios';
 import { SettingsService } from './settings.service';
@@ -16,21 +16,16 @@ const TRACKER_LOGIN_URLS: Record<string, string> = {
 
 @Controller('settings')
 export class SettingsController {
-  private readonly logger = new Logger(SettingsController.name);
-
   constructor(private readonly settings: SettingsService) {}
 
   @Get()
   get(@Req() req: any) {
-    const userId = req.user?.userId ?? req.userId ?? 'dev-user';
-    return this.settings.get(userId);
+    return this.settings.get(req.userId ?? 'dev-user');
   }
 
   @Put()
   update(@Req() req: any, @Body() dto: UpdateSettingsDto) {
-    const userId = req.user?.userId ?? req.userId ?? 'dev-user';
-    this.logger.log(`PUT /settings userId=${userId} dto=${JSON.stringify(dto)}`);
-    return this.settings.update(userId, dto);
+    return this.settings.update(req.userId ?? 'dev-user', dto);
   }
 
   @Post('trackers/verify')
