@@ -49,3 +49,18 @@ resource "aws_lambda_function_url" "backend" {
     max_age       = 86400
   }
 }
+
+resource "aws_lambda_permission" "backend_url_public" {
+  statement_id  = "FunctionURLAllowPublicInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.backend.function_name
+  principal     = "*"
+}
+
+resource "aws_lambda_permission" "backend_url_public_furl" {
+  statement_id           = "FunctionURLAllowPublicAccess"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.backend.function_name
+  principal              = "*"
+  function_url_auth_type = "NONE"
+}
