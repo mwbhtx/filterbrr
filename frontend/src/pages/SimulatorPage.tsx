@@ -71,8 +71,8 @@ function datasetLabel(ds: Dataset): string {
 
 export default function SimulatorPage() {
   const isDemo = useIsDemo();
-  const { data: datasets = [] } = useDatasets();
-  const { data: persistedFilters = [], refetch: refetchFilters } = useFilters();
+  const { data: datasets = [], isLoading: datasetsLoading } = useDatasets();
+  const { data: persistedFilters = [], isLoading: filtersLoading, refetch: refetchFilters } = useFilters();
   const deleteFilterMutation = useDeleteFilter();
 
   // Data context state — restore from localStorage
@@ -433,6 +433,7 @@ export default function SimulatorPage() {
       selectedId={selectedFilterId}
       onSelect={(f) => { setSelectedFilterId(f._id); setMobileTab("detail"); }}
       onCreateNew={() => { handleCreateNew(); setMobileTab("detail"); }}
+      loading={filtersLoading}
       onClearTemp={handleClearTemp}
       onSaveAllTemp={handleSaveAllTemp}
       onDeleteFilter={handleDeleteTemp}
@@ -488,19 +489,26 @@ export default function SimulatorPage() {
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm">Select Dataset<HintIcon tip="Choose a scraped torrent dataset to analyze and simulate against" /></CardTitle></CardHeader>
         <CardContent className="pt-0">
-          <select
-            value={selectedDataset}
-            onChange={(e) => setSelectedDataset(e.target.value)}
-            disabled={sortedDatasets.length === 0}
-            className={selectCls}
-          >
-            {sortedDatasets.length === 0 && (
-              <option key="__empty" value="">No datasets — run a scrape first</option>
-            )}
-            {sortedDatasets.map((ds) => (
-              <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
-            ))}
-          </select>
+          {datasetsLoading ? (
+            <div className="flex items-center gap-2 py-1.5">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
+              <span className="text-sm text-muted-foreground">Loading datasets…</span>
+            </div>
+          ) : (
+            <select
+              value={selectedDataset}
+              onChange={(e) => setSelectedDataset(e.target.value)}
+              disabled={sortedDatasets.length === 0}
+              className={selectCls}
+            >
+              {sortedDatasets.length === 0 && (
+                <option key="__empty" value="">No datasets — run a scrape first</option>
+              )}
+              {sortedDatasets.map((ds) => (
+                <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
+              ))}
+            </select>
+          )}
         </CardContent>
       </Card>
 

@@ -1,4 +1,4 @@
-import { Controller, Post, Req } from '@nestjs/common';
+import { Controller, Delete, Post, Req } from '@nestjs/common';
 import { DemoService } from './demo.service';
 import { Public } from '../auth/public.decorator';
 
@@ -11,5 +11,12 @@ export class DemoController {
   create(@Req() req: any) {
     const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
     return this.demo.getOrCreateSession(ip);
+  }
+
+  @Public()
+  @Delete()
+  reset(@Req() req: any) {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
+    return this.demo.deleteSession(ip);
   }
 }

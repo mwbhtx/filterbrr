@@ -147,4 +147,8 @@ export const api = {
   // Analysis
   getAnalysisResults: (source: string) =>
     fetchJSON<AnalysisResults>(`/analysis/${source}`),
+
+  // Demo
+  resetDemo: () =>
+    fetchJSON<void>("/demo", { method: "DELETE" }),
 };

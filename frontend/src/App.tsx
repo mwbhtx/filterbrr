@@ -3,6 +3,7 @@ import { Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import { useThemeStore } from './store/theme.store';
 import { Moon, Sun, LogOut, Menu, X } from 'lucide-react';
 import { logout } from './auth/auth';
+import { api } from './api/client';
 import SimulatorPage from './pages/SimulatorPage';
 import DatasetsPage from './pages/DatasetsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -29,7 +30,8 @@ function Dashboard() {
     ? TABS.filter(t => t.path === '/simulator')
     : TABS;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isDemo) await api.resetDemo().catch(() => {});
     logout();
     navigate('/login');
   };
@@ -65,7 +67,7 @@ function Dashboard() {
           <button onClick={toggleTheme} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
             {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </button>
-          <button onClick={handleLogout} className="hidden md:inline-flex p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+          <button onClick={handleLogout} className="hidden md:inline-flex p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title="Log out">
             <LogOut className="size-4" />
           </button>
           {/* Hamburger button — mobile only */}

@@ -18,6 +18,7 @@ interface FilterListProps {
   onCheckConnection?: () => void;
   connectionStatus?: AutobrrConnectionStatus | null;
   checkingConnection?: boolean;
+  loading?: boolean;
 }
 
 export default function FilterList({
@@ -38,6 +39,7 @@ export default function FilterList({
   onCheckConnection,
   connectionStatus,
   checkingConnection,
+  loading,
 }: FilterListProps) {
   const generatedAndTemp = filters.filter((f) => f._source === "generated" || f._source === "temp");
   const user = filters.filter((f) => f._source === "saved");
@@ -167,7 +169,13 @@ export default function FilterList({
       </div>
 
       <div className="flex-1 overflow-y-auto py-1">
-        {filters.length === 0 && (
+        {loading && filters.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary" />
+            <p className="text-xs text-muted-foreground">Loading filters…</p>
+          </div>
+        )}
+        {!loading && filters.length === 0 && (
           <p className="px-3 py-4 text-sm text-muted-foreground text-center">
             No filters yet
           </p>

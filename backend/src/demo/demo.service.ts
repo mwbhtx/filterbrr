@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteCommand, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { DynamoService } from '../dynamo/dynamo.service';
 import * as jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
@@ -47,6 +47,13 @@ export class DemoService {
     await this.seedDemoData(userId, expiresAt);
 
     return { token, role: 'demo' };
+  }
+
+  async deleteSession(ip: string): Promise<void> {
+    const sessionKey = `demo-session:${ip}`;
+    await this.dynamo.client.send(
+      new DeleteCommand({ TableName: SESSION_TABLE, Key: { pk: sessionKey } })
+    );
   }
 
   private async seedDemoData(userId: string, ttl: number): Promise<void> {
