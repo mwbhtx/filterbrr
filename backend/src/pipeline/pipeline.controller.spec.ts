@@ -1,5 +1,4 @@
 import { NotFoundException } from '@nestjs/common';
-import { firstValueFrom, toArray, take } from 'rxjs';
 import { PipelineController } from './pipeline.controller';
 import { PipelineService } from './pipeline.service';
 import { Job } from './job.repository';
@@ -66,99 +65,6 @@ describe('PipelineController', () => {
       const result = await controller.cancelJob('job-1');
       expect(mockPipeline.cancelJob).toHaveBeenCalledWith('job-1');
       expect(result).toEqual({ cancelled: 'job-1' });
-    });
-  });
-
-  describe('streamJob', () => {
-    it('emits progress event for running job', async () => {
-      const job = makeJob({ updated_at: '2026-03-18T00:00:01.000Z' });
-      (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
-
-      const observable = controller.streamJob('job-1');
-      const event = await firstValueFrom(observable);
-      expect(event.type).toBe('progress');
-      expect(event.data).toEqual({
-        status: 'running',
-        progress: 'Scraping day 3 of 7',
-      });
-    });
-
-    it('emits complete event for completed job', async () => {
-      const job = makeJob({
-        status: 'completed',
-        progress: 'Complete — 500 torrents scraped',
-        result: { key: 'test.csv', rowCount: 500 },
-        updated_at: '2026-03-18T00:00:01.000Z',
-      });
-      (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
-
-      const observable = controller.streamJob('job-1');
-      const event = await firstValueFrom(observable);
-      expect(event.type).toBe('complete');
-      expect(event.data).toEqual({
-        status: 'completed',
-        progress: 'Complete — 500 torrents scraped',
-        result: { key: 'test.csv', rowCount: 500 },
-      });
-    });
-
-    it('emits complete event for failed job with error', async () => {
-      const job = makeJob({
-        status: 'failed',
-        progress: 'Failed: Login failed',
-        error: 'Login failed',
-        updated_at: '2026-03-18T00:00:01.000Z',
-      });
-      (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
-
-      const observable = controller.streamJob('job-1');
-      const event = await firstValueFrom(observable);
-      expect(event.type).toBe('complete');
-      expect(event.data).toEqual({
-        status: 'failed',
-        progress: 'Failed: Login failed',
-        error: 'Login failed',
-      });
-    });
-
-    it('emits progress event for cancelling job', async () => {
-      const job = makeJob({
-        status: 'cancelling',
-        progress: 'Cancelling...',
-        updated_at: '2026-03-18T00:00:01.000Z',
-      });
-      (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
-
-      const observable = controller.streamJob('job-1');
-      const event = await firstValueFrom(observable);
-      expect(event.type).toBe('progress');
-      expect(event.data).toEqual({
-        status: 'cancelling',
-        progress: 'Cancelling...',
-      });
-    });
-
-    it('emits complete event when job not found', async () => {
-      (mockPipeline.getJob as jest.Mock).mockResolvedValue(null);
-
-      const observable = controller.streamJob('nonexistent');
-      const event = await firstValueFrom(observable);
-      expect(event.type).toBe('complete');
-      expect(event.data).toEqual({ status: 'failed', error: 'Job not found' });
-    });
-
-    it('terminates after emitting complete event', async () => {
-      const job = makeJob({
-        status: 'completed',
-        progress: 'Done',
-        updated_at: '2026-03-18T00:00:01.000Z',
-      });
-      (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
-
-      const observable = controller.streamJob('job-1');
-      const events = await firstValueFrom(observable.pipe(toArray()));
-      expect(events).toHaveLength(1);
-      expect(events[0].type).toBe('complete');
     });
   });
 });

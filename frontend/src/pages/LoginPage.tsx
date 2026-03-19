@@ -70,7 +70,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="min-h-screen flex bg-background force-dark">
       {/* Left: Splash (desktop) */}
       <div className="hidden lg:flex flex-col justify-center items-end flex-1 pr-16 xl:pr-24 relative overflow-hidden">
         {/* Subtle radial glow */}
@@ -81,7 +81,7 @@ export default function LoginPage() {
             <img
               src="/logo-solid.svg"
               alt="filterbrr"
-              className="h-12 w-auto brightness-0 invert .light:brightness-100 .light:invert-0"
+              className="h-12 w-auto logo-themed"
             />
             <span className="text-2xl font-bold tracking-tight text-foreground">filterbrr</span>
           </div>
@@ -120,7 +120,7 @@ export default function LoginPage() {
             <img
               src="/logo-solid.svg"
               alt="filterbrr"
-              className="h-10 w-auto brightness-0 invert"
+              className="h-10 w-auto logo-themed"
             />
             <span className="text-xl font-bold tracking-tight text-foreground">filterbrr</span>
           </div>

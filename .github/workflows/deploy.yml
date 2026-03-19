@@ -59,8 +59,20 @@ jobs:
             infra:
               - 'infrastructure/**'
 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - run: npm test --workspace=backend
+
   infra:
-    needs: changes
+    needs: [changes, test]
     if: needs.changes.outputs.infra == 'true' || inputs.deploy_infra == true
     runs-on: ubuntu-latest
     steps:
@@ -76,7 +88,7 @@ jobs:
         working-directory: infrastructure
 
   backend:
-    needs: [changes, infra]
+    needs: [changes, test, infra]
     if: "!failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || inputs.deploy_backend == true)"
     runs-on: ubuntu-latest
     steps:
@@ -108,7 +120,7 @@ jobs:
             --zip-file fileb://backend.zip
 
   scraper:
-    needs: [changes, infra]
+    needs: [changes, test, infra]
     if: "!failure() && !cancelled() && (needs.changes.outputs.scraper == 'true' || inputs.deploy_scraper == true)"
     runs-on: ubuntu-latest
     steps:
@@ -141,7 +153,7 @@ jobs:
             --zip-file fileb://scraper.zip
 
   analyzer:
-    needs: [changes, infra]
+    needs: [changes, test, infra]
     if: "!failure() && !cancelled() && (needs.changes.outputs.analyzer == 'true' || inputs.deploy_analyzer == true)"
     runs-on: ubuntu-latest
     steps:
@@ -174,7 +186,7 @@ jobs:
             --zip-file fileb://analyzer.zip
 
   frontend:
-    needs: [changes, infra]
+    needs: [changes, test, infra]
     if: "!failure() && !cancelled() && (needs.changes.outputs.frontend == 'true' || inputs.deploy_frontend == true)"
     runs-on: ubuntu-latest
     steps:

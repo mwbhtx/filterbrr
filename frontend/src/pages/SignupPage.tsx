@@ -30,9 +30,9 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background force-dark">
       <div className="flex items-center gap-2.5 mb-6">
-        <img src="/logo-solid.svg" alt="filterbrr" className="h-8 w-auto brightness-0 invert" />
+        <img src="/logo-solid.svg" alt="filterbrr" className="h-8 w-auto logo-themed" />
         <span className="text-lg font-semibold tracking-tight text-foreground">filterbrr</span>
       </div>
       <Card className="w-full max-w-sm">

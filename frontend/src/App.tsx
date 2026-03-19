@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
+import { Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom';
 import { useThemeStore } from './store/theme.store';
 import { Moon, Sun, LogOut, Menu, X } from 'lucide-react';
 import { logout } from './auth/auth';
@@ -38,7 +38,7 @@ function Dashboard() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="border-b px-4 md:px-6 py-3 shrink-0 flex items-center gap-4 md:gap-6 relative">
         <div className="flex items-center gap-2">
-          <img src="/logo-solid.svg" alt="filterbrr" className="h-9 w-auto brightness-0 invert" />
+          <img src="/logo-solid.svg" alt="filterbrr" className="h-9 w-auto logo-themed" />
           <span className="text-base font-semibold tracking-tight">filterbrr</span>
         </div>
 
@@ -110,7 +110,7 @@ function Dashboard() {
           <Route path="/simulator" element={<SimulatorPage />} />
           {!isDemo && <Route path="/datasets" element={<DatasetsPage />} />}
           {!isDemo && <Route path="/settings" element={<SettingsPage />} />}
-          <Route path="*" element={<SimulatorPage />} />
+          <Route path="*" element={<Navigate to="/simulator" replace />} />
         </Routes>
       </main>
     </div>

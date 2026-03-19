@@ -63,8 +63,9 @@ describe('JobRepository', () => {
     it('updates status only when no optional params given', async () => {
       await repo.updateStatus('job-1', 'completed');
       const cmd = mockSend.mock.calls[0][0];
-      expect(cmd.input.UpdateExpression).toBe('SET #s = :s, updated_at = :u');
+      expect(cmd.input.UpdateExpression).toBe('SET #s = :s, updated_at = :u, completed_at = :ca');
       expect(cmd.input.ExpressionAttributeValues[':s']).toBe('completed');
+      expect(cmd.input.ExpressionAttributeValues[':ca']).toBeDefined();
     });
 
     it('includes progress when provided', async () => {
