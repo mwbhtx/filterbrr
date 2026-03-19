@@ -9,22 +9,22 @@ export class PipelineController {
 
   @Post('scrape')
   scrape(@Req() req: any, @Body() dto: ScrapeRequestDto) {
-    return this.pipeline.startScrape(req.userId ?? 'dev-user', dto as unknown as Record<string, unknown>);
+    return this.pipeline.startScrape(req.user.userId, dto as unknown as Record<string, unknown>);
   }
 
   @Post('analyze')
   analyze(@Req() req: any, @Body() dto: AnalyzeRequestDto) {
-    return this.pipeline.startAnalyze(req.userId ?? 'dev-user', dto as unknown as Record<string, unknown>);
+    return this.pipeline.startAnalyze(req.user.userId, dto as unknown as Record<string, unknown>);
   }
 
   @Post('parse')
   parse(@Req() req: any, @Body() dto: AnalyzeRequestDto) {
-    return this.pipeline.startAnalyze(req.userId ?? 'dev-user', dto as unknown as Record<string, unknown>);
+    return this.pipeline.startAnalyze(req.user.userId, dto as unknown as Record<string, unknown>);
   }
 
   @Post('report-only')
   reportOnly(@Req() req: any, @Body() dto: AnalyzeRequestDto) {
-    return this.pipeline.startAnalyze(req.userId ?? 'dev-user', dto as unknown as Record<string, unknown>);
+    return this.pipeline.startAnalyze(req.user.userId, dto as unknown as Record<string, unknown>);
   }
 
   @Post('clear-temp')

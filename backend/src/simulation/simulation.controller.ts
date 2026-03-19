@@ -25,6 +25,6 @@ export class SimulationController {
       avgRatio: dto.avg_ratio,
       filtersInline: dto.filters_inline,
     };
-    return this.simulation.run(req.userId ?? 'dev-user', simReq);
+    return this.simulation.run(req.user.userId, simReq);
   }
 }

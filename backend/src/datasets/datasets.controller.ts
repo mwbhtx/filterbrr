@@ -7,12 +7,12 @@ export class DatasetsController {
 
   @Get()
   list(@Req() req: any) {
-    return this.datasets.list(req.userId ?? 'dev-user');
+    return this.datasets.list(req.user.userId);
   }
 
   @Delete(':filename')
   @HttpCode(204)
   delete(@Req() req: any, @Param('filename') filename: string) {
-    return this.datasets.delete(req.userId ?? 'dev-user', filename);
+    return this.datasets.delete(req.user.userId, filename);
   }
 }

@@ -20,12 +20,12 @@ export class SettingsController {
 
   @Get()
   get(@Req() req: any) {
-    return this.settings.get(req.userId ?? 'dev-user');
+    return this.settings.get(req.user.userId);
   }
 
   @Put()
   update(@Req() req: any, @Body() dto: UpdateSettingsDto) {
-    return this.settings.update(req.userId ?? 'dev-user', dto);
+    return this.settings.update(req.user.userId, dto);
   }
 
   @Post('trackers/verify')

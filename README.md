@@ -4,7 +4,7 @@
 
 A SaaS platform for managing and optimising torrent filters on private trackers. Filterbrr scrapes tracker listings, analyses seeding trends, and automatically generates and synchronises intelligent filter configurations to [autobrr](https://autobrr.com).
 
-**Stack:** React 19 · NestJS · AWS Lambda · DynamoDB · S3 · Terraform · TypeScript end-to-end
+**Stack:** React 19 · NestJS · AWS Lambda · DynamoDB · S3 · Cognito · Terraform · TypeScript end-to-end
 
 ---
 
@@ -14,9 +14,10 @@ A SaaS platform for managing and optimising torrent filters on private trackers.
 - **Analyser** — Calculates percentile-based filter tiers from scrape data to maximise seeding efficiency
 - **Simulator** — Back-tests filter configurations against historical datasets with toggleable filter chips before deploying
 - **Sync** — Pushes validated filters directly to autobrr via API
-- **Demo mode** — Read-only demo login to explore the simulator without credentials
-- **Real-time progress** — SSE streaming for long-running scrape and analysis jobs
+- **Demo mode** — Ephemeral per-user demo sessions with pre-seeded data, no signup required
+- **Role-based access** — JWT role claims (`user`, `demo`, `admin`) with a strict ACL guard
 - **Multi-user** — Per-user data isolation via AWS Cognito + DynamoDB partition keys
+- **KMS encryption** — Sensitive fields (API keys, tracker passwords) encrypted at rest via AWS KMS
 
 ---
 
@@ -26,23 +27,27 @@ A SaaS platform for managing and optimising torrent filters on private trackers.
 Browser (React + Vite)
     │
     ▼
-API Gateway → NestJS (Lambda)
+Lambda Function URL → NestJS (Lambda)
     │
-    ├── DynamoDB   (settings, filters, sync state, jobs)
-    └── S3         (scrape datasets, generated filters)
+    ├── DynamoDB   (settings, filters, sync state, jobs, demo sessions)
+    ├── S3         (scrape datasets, analysis reports)
+    └── KMS        (field-level encryption for user secrets)
 
 Async Lambdas:
-    Scraper Lambda → S3 CSV
-    Analyser Lambda → S3 JSON filters
+    Scraper Lambda → S3 JSON dataset
+    Analyser Lambda → S3 report + DynamoDB filters
+
+Cognito:
+    Pre-token trigger Lambda → injects role claim into JWTs
 ```
 
 ---
 
-**Local Development**
+## Local Development
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - Docker (for local AWS services)
 
 ### Setup
@@ -54,7 +59,27 @@ cp backend/.env.example backend/.env.local
 cp frontend/.env.example frontend/.env.local
 ```
 
-The backend runs with `NODE_ENV=local` which bypasses Cognito auth. The frontend `.env.local` needs real Cognito values to load — fill in `VITE_COGNITO_USER_POOL_ID` and `VITE_COGNITO_CLIENT_ID` from your AWS Cognito User Pool, otherwise the app will show a white screen.
+**Backend env vars** (`backend/.env.local`):
+
+| Variable | Description |
+|----------|-------------|
+| `NODE_ENV` | Set to `local` to bypass Cognito auth |
+| `COGNITO_REGION` | AWS region for Cognito |
+| `COGNITO_USER_POOL_ID` | Cognito User Pool ID |
+| `AWS_REGION` | AWS region for DynamoDB/S3 |
+| `S3_BUCKET` | S3 bucket name for datasets |
+| `KMS_KEY_ID` | KMS key alias for field encryption |
+| `DEMO_JWT_SECRET` | Secret for signing demo JWTs (any string locally) |
+| `LOCAL_ROLE` | Role for local dev user — `user`, `demo`, or `admin` |
+
+**Frontend env vars** (`frontend/.env.local`):
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_COGNITO_USER_POOL_ID` | Cognito User Pool ID |
+| `VITE_COGNITO_CLIENT_ID` | Cognito App Client ID |
+
+The frontend needs real Cognito values to load — fill in `VITE_COGNITO_USER_POOL_ID` and `VITE_COGNITO_CLIENT_ID` from your AWS Cognito User Pool.
 
 **2. Start services**
 
@@ -63,7 +88,7 @@ The backend runs with `NODE_ENV=local` which bypasses Cognito auth. The frontend
 docker compose up -d
 ```
 
-On first run, LocalStack will automatically create the `filterbrr-userdata` S3 bucket via the init script in `localstack-init/`. DynamoDB tables (`UserSettings`, `Filters`, `SyncState`, `Jobs`) are created automatically by the backend on startup. Data persists across restarts via Docker named volumes.
+On first run, LocalStack will automatically create the `filterbrr-userdata` S3 bucket via the init script in `localstack-init/`. DynamoDB tables are created automatically by the backend on startup. Data persists across restarts via Docker named volumes.
 
 ```bash
 # Backend (port 3000)
@@ -82,24 +107,22 @@ Open [http://localhost:5173](http://localhost:5173).
 ### Running Tests
 
 ```bash
-# Backend
 cd backend && npm test
-
-# Frontend
-cd frontend && npm test
 ```
 
+---
 
+## Deployment
 
-**Deployment**
+Deployed to AWS via Terraform and GitHub Actions CI/CD. Infrastructure includes:
 
-Filterbrr is deployed to AWS using Terraform. Infrastructure includes:
-
-- **API Gateway + Lambda** — NestJS backend via serverless-express
-- **S3** — Dataset and filter storage
-- **DynamoDB** — User data with per-user partition keys
-- **Cognito** — Email/password auth with JWT validation
-- **CloudFront + S3** — Frontend CDN hosting
+- **Lambda Function URLs** — NestJS backend via serverless-express
+- **S3** — Dataset and filter storage, frontend static hosting
+- **DynamoDB** — User data with per-user partition keys + TTL for demo sessions
+- **Cognito** — Email/password auth with pre-token trigger for role injection
+- **KMS** — Field-level encryption for sensitive user settings
+- **CloudFront** — Frontend CDN
+- **GitHub OIDC** — Keyless deploys from GitHub Actions
 
 ```bash
 cd infrastructure
@@ -107,5 +130,4 @@ terraform init
 terraform apply
 ```
 
-> Requires AWS credentials with appropriate IAM permissions.
-
+CI runs tests before any deploy. Failing tests block all deployments.

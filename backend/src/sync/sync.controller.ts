@@ -7,11 +7,11 @@ export class SyncController {
 
   @Get('state')
   getState(@Req() req: any) {
-    return this.sync.getSyncState(req.userId ?? 'dev-user');
+    return this.sync.getSyncState(req.user.userId);
   }
 
   @Post('push/:filterId')
   pushFilter(@Req() req: any, @Param('filterId') filterId: string) {
-    return this.sync.pushFilter(req.userId ?? 'dev-user', filterId);
+    return this.sync.pushFilter(req.user.userId, filterId);
   }
 }
