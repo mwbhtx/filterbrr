@@ -63,14 +63,14 @@ cp frontend/.env.example frontend/.env.local
 
 | Variable | Description |
 |----------|-------------|
-| `NODE_ENV` | Set to `local` to bypass Cognito auth |
+| `NODE_ENV` | Set to `local` to enable local login endpoint |
 | `COGNITO_REGION` | AWS region for Cognito |
 | `COGNITO_USER_POOL_ID` | Cognito User Pool ID |
 | `AWS_REGION` | AWS region for DynamoDB/S3 |
 | `S3_BUCKET` | S3 bucket name for datasets |
 | `KMS_KEY_ID` | KMS key alias for field encryption |
-| `DEMO_JWT_SECRET` | Secret for signing demo JWTs (any string locally) |
-| `LOCAL_ROLE` | Role for local dev user — `user`, `demo`, or `admin` |
+| `DEMO_JWT_SECRET` | Secret for signing demo/local JWTs (any string locally) |
+| `LOCAL_ROLE` | Role assigned to local login — `user`, `demo`, or `admin` |
 
 **Frontend env vars** (`frontend/.env.local`):
 
@@ -80,6 +80,10 @@ cp frontend/.env.example frontend/.env.local
 | `VITE_COGNITO_CLIENT_ID` | Cognito App Client ID |
 
 The frontend needs real Cognito values to load — fill in `VITE_COGNITO_USER_POOL_ID` and `VITE_COGNITO_CLIENT_ID` from your AWS Cognito User Pool.
+
+### Local Login
+
+When running locally, sign in with `local@filterbrr.com` and password `sCqGfiq4VoVmF&jd`. This creates a local JWT with the role from `LOCAL_ROLE` — no Cognito required. You can also click "Try Demo" to test the demo experience.
 
 **2. Start services**
 
