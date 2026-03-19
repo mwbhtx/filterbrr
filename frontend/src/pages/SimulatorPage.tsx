@@ -245,17 +245,21 @@ export default function SimulatorPage() {
     setSimError(null);
     setGenerateJobId(null);
     localStorage.removeItem('active-generate-job');
+    const minSpin = new Promise(r => setTimeout(r, 1000));
     try {
       const activeFilterIds = allFilters
         .filter(f => enabledFilterIds.has(f._id))
         .map(f => f._id);
-      const result = await api.runSimulation({
-        dataset_path: selectedDataset,
-        filter_ids: activeFilterIds.length > 0 ? activeFilterIds : undefined,
-        storage_tb: storageTb,
-        max_seed_days: maxSeedDays,
-        avg_ratio: avgRatio,
-      });
+      const [result] = await Promise.all([
+        api.runSimulation({
+          dataset_path: selectedDataset,
+          filter_ids: activeFilterIds.length > 0 ? activeFilterIds : undefined,
+          storage_tb: storageTb,
+          max_seed_days: maxSeedDays,
+          avg_ratio: avgRatio,
+        }),
+        minSpin,
+      ]);
       setSimResult(result);
     } catch (err: unknown) {
       setSimError(err instanceof Error ? err.message : "Simulation failed");
@@ -619,7 +623,7 @@ export default function SimulatorPage() {
         const r = simResult ?? EMPTY_RESULT;
         return (
           <>
-            <MetricsBar result={r} />
+            <MetricsBar result={r} loading={running} />
             <GrabbedList torrents={r.grabbed_torrents} />
             <SkippedList torrents={r.skipped_torrents} />
             <Card>
