@@ -39,6 +39,12 @@ describe('CryptoService', () => {
       expect(result).toBe('');
       expect(mockKms.send).not.toHaveBeenCalled();
     });
+
+    it('returns already-encrypted strings as-is (idempotency guard)', async () => {
+      const result = await service.encrypt('enc:already-encrypted');
+      expect(result).toBe('enc:already-encrypted');
+      expect(mockKms.send).not.toHaveBeenCalled();
+    });
   });
 
   describe('decrypt', () => {

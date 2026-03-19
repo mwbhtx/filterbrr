@@ -9,7 +9,7 @@ export class CryptoService {
   private readonly keyId = process.env.KMS_KEY_ID;
 
   async encrypt(plaintext: string): Promise<string> {
-    if (!plaintext) return '';
+    if (!plaintext || plaintext.startsWith(ENC_PREFIX)) return plaintext;
     const result = await this.kms.send(new EncryptCommand({
       KeyId: this.keyId,
       Plaintext: Buffer.from(plaintext),
