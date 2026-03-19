@@ -25,6 +25,10 @@ on:
         description: "Deploy frontend"
         type: boolean
         default: false
+      deploy_cognito_trigger:
+        description: "Deploy cognito trigger"
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -41,6 +45,7 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
       scraper: ${{ steps.filter.outputs.scraper }}
       analyzer: ${{ steps.filter.outputs.analyzer }}
+      cognito_trigger: ${{ steps.filter.outputs.cognito_trigger }}
       infra: ${{ steps.filter.outputs.infra }}
     steps:
       - uses: actions/checkout@v4
@@ -56,6 +61,8 @@ jobs:
               - 'lambdas/scraper/**'
             analyzer:
               - 'lambdas/analyzer/**'
+            cognito_trigger:
+              - 'lambdas/cognito-trigger/**'
             infra:
               - 'infrastructure/**'
 
@@ -184,6 +191,39 @@ jobs:
           aws lambda update-function-code \
             --function-name filterbrr-analyzer \
             --zip-file fileb://analyzer.zip
+
+  cognito-trigger:
+    needs: [changes, test, infra]
+    if: "!failure() && !cancelled() && (needs.changes.outputs.cognito_trigger == 'true' || inputs.deploy_cognito_trigger == true)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: lambdas/cognito-trigger/package-lock.json
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Build
+        working-directory: lambdas/cognito-trigger
+        run: |
+          npm ci
+          npm run build
+      - name: Package
+        run: |
+          mkdir -p trigger-pkg/dist
+          cp -r lambdas/cognito-trigger/dist/* trigger-pkg/dist/
+          cp lambdas/cognito-trigger/package.json lambdas/cognito-trigger/package-lock.json trigger-pkg/
+          cd trigger-pkg && npm ci --omit=dev
+          zip -rq ../cognito-trigger.zip dist/ node_modules/ -x "dist/*.map"
+      - name: Deploy
+        run: |
+          aws lambda update-function-code \
+            --function-name filterbrr-cognito-trigger \
+            --zip-file fileb://cognito-trigger.zip
 
   frontend:
     needs: [changes, test, infra]

@@ -42,6 +42,13 @@ resource "aws_cognito_user_pool" "main" {
       priority = 1
     }
   }
+
+  lambda_config {
+    pre_token_generation_config {
+      lambda_arn     = aws_lambda_function.cognito_trigger.arn
+      lambda_version = "V2_0"
+    }
+  }
 }
 
 resource "aws_cognito_user_pool_client" "web" {
