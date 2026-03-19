@@ -191,6 +191,8 @@ export default function SimulatorPage() {
     if (!selectedDataset) return;
     setRunning(true);
     setSimError(null);
+    setGenerateJobId(null);
+    localStorage.removeItem('active-generate-job');
     try {
       const activeFilterIds = allFilters
         .filter(f => enabledFilterIds.has(f._id))
