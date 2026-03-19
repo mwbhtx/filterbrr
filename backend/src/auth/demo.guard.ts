@@ -5,8 +5,8 @@ export class DemoWriteGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
     // req.user is set by Passport via CognitoAuthGuard (runs before this guard)
-    const userId = req.user?.userId ?? req.userId;
-    if (userId === 'demo') {
+    const role = req.user?.role;
+    if (role === 'demo') {
       const method = req.method.toUpperCase();
       if (method === 'GET') return true;
       // Allow simulation, filter generation, and filter CRUD for demo

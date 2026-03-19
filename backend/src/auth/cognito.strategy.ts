@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { passportJwtSecret } from 'jwks-rsa';
@@ -19,9 +19,8 @@ export class CognitoStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: { sub: string; email?: string }) {
-    const DEMO_SUB = process.env.DEMO_USER_SUB;
-    const userId = DEMO_SUB && payload.sub === DEMO_SUB ? 'demo' : payload.sub;
-    return { userId, email: payload.email };
+  validate(payload: { sub: string; role?: string }) {
+    if (!payload.role) throw new UnauthorizedException('Missing role claim');
+    return { userId: payload.sub, role: payload.role };
   }
 }
