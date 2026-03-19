@@ -4,7 +4,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, UpdateCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import type { AnalyzeEvent, NormalizedTorrent, ScoredTorrent, GeneratedFilter } from './types';
 import { scoreTorrents, analyzeAllAttributes } from './scoring';
-import { assignTiers, calculateDailyVolume, calculateRateLimits, MIN_TORRENT_AGE_DAYS } from './tiers';
+import { assignTiers, calculateDailyVolume, calculateRateLimits } from './tiers';
 import { generateFilter, EXCEPT_RELEASES } from './filters';
 import { runSimulation, calibrateLowTier, matchExceptReleases } from './simulation';
 import { generateReport } from './report';
@@ -130,7 +130,7 @@ export const handler: Handler<AnalyzeEvent> = async (event) => {
     if (jobId) await updateProgress(jobId, 'Filtering and scoring...');
 
     const matureTorrents = allScored.filter(
-      t => t.age_days >= MIN_TORRENT_AGE_DAYS && !matchExceptReleases(t.name, EXCEPT_RELEASES),
+      t => !matchExceptReleases(t.name, EXCEPT_RELEASES),
     );
 
     // ------------------------------------------------------------------

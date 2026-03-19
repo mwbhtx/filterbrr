@@ -80,6 +80,32 @@ html, body {
   animation: fade-out 3s ease-out forwards;
 }
 
+@keyframes shimmer-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.btn-glow {
+  background: linear-gradient(135deg, #7c3aed, #db2777, #7c3aed, #db2777);
+  background-size: 300% 300%;
+  animation: shimmer-shift 4s ease infinite;
+  color: white;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: filter 0.2s;
+}
+.btn-glow:hover {
+  filter: brightness(1.15);
+}
+.btn-glow:disabled {
+  animation: none;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  filter: none;
+}
+
 .logo-themed {
   filter: brightness(0) invert(1);
 }

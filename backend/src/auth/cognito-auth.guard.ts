@@ -17,12 +17,6 @@ export class CognitoAuthGuard extends AuthGuard('jwt') {
     ]);
     if (isPublic) return true;
 
-    if (process.env.NODE_ENV === 'local') {
-      const req = context.switchToHttp().getRequest();
-      req.user = { userId: 'dev-user', role: process.env.LOCAL_ROLE ?? 'user' };
-      return true;
-    }
-
     const req = context.switchToHttp().getRequest();
     const authHeader = req.headers?.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
@@ -30,19 +24,19 @@ export class CognitoAuthGuard extends AuthGuard('jwt') {
     }
     const token = authHeader.slice(7);
 
-    // Try demo JWT first (cheap local secret verification)
-    const demoSecret = process.env.DEMO_JWT_SECRET;
-    if (demoSecret) {
+    // Try self-signed JWT first (demo + local tokens, cheap local secret verification)
+    const jwtSecret = process.env.DEMO_JWT_SECRET;
+    if (jwtSecret) {
       try {
-        const payload = jwt.verify(token, demoSecret, { issuer: 'filterbrr-demo' }) as { sub: string; role: string };
+        const payload = jwt.verify(token, jwtSecret) as { sub: string; role: string; iss: string };
         if (!payload.role) throw new UnauthorizedException('Missing role claim');
         req.user = { userId: payload.sub, role: payload.role };
         return true;
       } catch (err) {
         if (err instanceof jwt.TokenExpiredError) {
-          throw new UnauthorizedException('Demo session expired');
+          throw new UnauthorizedException('Session expired');
         }
-        // Not a demo token — fall through to Cognito
+        // Not a self-signed token — fall through to Cognito
       }
     }
 

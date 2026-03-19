@@ -7,7 +7,6 @@ import type {
   SimulationResult,
 } from './types';
 import {
-  MIN_TORRENT_AGE_DAYS,
   MAX_SEED_DAYS,
   BURST_FACTOR,
   TARGET_UTILIZATION_PCT,
@@ -79,8 +78,7 @@ export function generateReport(
   add();
   add('This is the primary ranking metric. Tier assignment is based on Score/GB percentiles.');
   add();
-  add(`Torrents younger than **${MIN_TORRENT_AGE_DAYS} days** are excluded to ensure representative snatch counts.`);
-  add();
+  add(`Torrents matching the global except_releases pattern are excluded.`);
 
   // -----------------------------------------------------------------------
   // 3. Attribute Rankings

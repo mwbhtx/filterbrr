@@ -27,14 +27,34 @@ export function clearSession() {
   localStorage.removeItem(REFRESH_KEY);
 }
 
-export function login(email: string, password: string): Promise<void> {
+export async function login(email: string, password: string): Promise<void> {
+  // In local dev, try the local login endpoint first
+  if (import.meta.env.DEV) {
+    try {
+      const res = await fetch('/api/auth/local-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        const { token } = await res.json();
+        localStorage.setItem(TOKEN_KEY, token);
+        const { queryClient } = await import('../queryClient');
+        queryClient.clear();
+        return;
+      }
+    } catch {
+      // Local endpoint unavailable — fall through to Cognito
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const user = new CognitoUser({ Username: email, Pool: pool });
     const auth = new AuthenticationDetails({ Username: email, Password: password });
     user.authenticateUser(auth, {
       onSuccess: (session) => { storeSession(session); resolve(); },
       onFailure: reject,
-      newPasswordRequired: () => reject(new Error('Password reset required. Run: aws cognito-idp admin-set-user-password --user-pool-id ' + import.meta.env.VITE_COGNITO_USER_POOL_ID + ' --username ' + email + ' --password \'NewPassword1!\' --permanent --region us-east-1')),
+      newPasswordRequired: () => reject(new Error('Password reset required')),
     });
   });
 }
@@ -93,6 +113,8 @@ export async function loginAsDemo(): Promise<void> {
   if (!res.ok) throw new Error('Demo unavailable');
   const { token } = await res.json();
   localStorage.setItem(TOKEN_KEY, token);
+  const { queryClient } = await import('../queryClient');
+  queryClient.clear();
 }
 
 export function logout() {

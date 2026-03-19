@@ -68,7 +68,7 @@ export default function FilterList({
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm text-foreground truncate font-medium">
             {filter._source === "temp" && <span className="inline-block w-2 h-2 rounded-full bg-accent mr-1.5 align-middle" />}
-            {isDirty && filter._source !== "temp" && <span className="inline-block w-2 h-2 rounded-full bg-accent mr-1.5 align-middle" title="Unsaved changes" />}
+            {isDirty && filter._source !== "temp" && <span className="inline-block w-2 h-2 rounded-full bg-yellow-500 mr-1.5 align-middle" title="Unsaved changes" />}
             {filter.name}
           </span>
           <div className="flex items-center gap-1.5 shrink-0">

@@ -5,7 +5,6 @@ import { median, quantiles, sizeBucket } from './scoring';
 // Constants (configurable via env vars, matching Python defaults)
 // ---------------------------------------------------------------------------
 
-export const MIN_TORRENT_AGE_DAYS = parseInt(process.env.MIN_TORRENT_AGE_DAYS ?? '3', 10);
 export const MAX_SEED_DAYS = parseInt(process.env.MAX_SEED_DAYS ?? '10', 10);
 export const BURST_FACTOR = parseInt(process.env.BURST_FACTOR ?? '8', 10);
 export const TARGET_UTILIZATION_PCT = parseFloat(process.env.TARGET_UTILIZATION_PCT ?? '85');

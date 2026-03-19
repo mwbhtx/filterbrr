@@ -79,31 +79,7 @@ function uploadHint(result: SimulationResult): string {
 export default function MetricsBar({ result }: MetricsBarProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-      {/* Grabbed */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <p className="text-sm text-muted-foreground">Grabbed</p>
-        <p className="text-2xl font-bold text-foreground">
-          {result.total_grabbed.toLocaleString()} / {result.total_seen.toLocaleString()}
-        </p>
-        <p className="text-sm text-muted-foreground">{result.grab_rate_pct.toFixed(1)}% grab rate</p>
-        <TuningHint text={grabHint(result)} />
-      </div>
-
-      {/* Monthly Download */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <p className="text-sm text-muted-foreground">Monthly Download</p>
-        <p className="text-2xl font-bold text-foreground">
-          {result.total_days > 0
-            ? `${((result.total_grabbed_gb / result.total_days) * 30).toFixed(1)} GB`
-            : "0 GB"}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {result.total_grabbed_gb.toFixed(1)} GB over {result.total_days} days
-        </p>
-        <TuningHint text={downloadHint(result)} />
-      </div>
-
-      {/* Avg. Disk Utilization */}
+      {/* 1. Avg. Disk Utilization */}
       <div className={`rounded-lg p-4 ${
         result.steady_state_avg_utilization > 100
           ? "bg-destructive/20 border border-destructive"
@@ -121,7 +97,48 @@ export default function MetricsBar({ result }: MetricsBarProps) {
         <TuningHint text={utilizationHint(result)} />
       </div>
 
-      {/* Missed Torrents */}
+      {/* 2. Monthly Upload */}
+      <div className="bg-card border border-border rounded-lg p-4">
+        <p className="text-sm text-muted-foreground">Monthly Upload</p>
+        <p className="text-2xl font-bold text-foreground">
+          {(() => {
+            const monthlyGb = result.steady_state_daily_upload_gb * 30;
+            return monthlyGb >= 1024
+              ? `${(monthlyGb / 1024).toFixed(1)} TB`
+              : `${monthlyGb.toFixed(1)} GB`;
+          })()}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {result.steady_state_daily_upload_gb.toFixed(1)} GB/day (ratio {result.avg_ratio})
+        </p>
+        <TuningHint text={uploadHint(result)} />
+      </div>
+
+      {/* 3. Monthly Download */}
+      <div className="bg-card border border-border rounded-lg p-4">
+        <p className="text-sm text-muted-foreground">Monthly Download</p>
+        <p className="text-2xl font-bold text-foreground">
+          {result.total_days > 0
+            ? `${((result.total_grabbed_gb / result.total_days) * 30).toFixed(1)} GB`
+            : "0 GB"}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {result.total_grabbed_gb.toFixed(1)} GB over {result.total_days} days
+        </p>
+        <TuningHint text={downloadHint(result)} />
+      </div>
+
+      {/* 4. Grabbed */}
+      <div className="bg-card border border-border rounded-lg p-4">
+        <p className="text-sm text-muted-foreground">Grabbed</p>
+        <p className="text-2xl font-bold text-foreground">
+          {result.total_grabbed.toLocaleString()} / {result.total_seen.toLocaleString()}
+        </p>
+        <p className="text-sm text-muted-foreground">{result.grab_rate_pct.toFixed(1)}% grab rate</p>
+        <TuningHint text={grabHint(result)} />
+      </div>
+
+      {/* 5. Missed Torrents */}
       {(() => {
         const rateLimited = result.skip_reasons["rate_limited"] ?? 0;
         const storageFull = result.skip_reasons["storage_full"] ?? 0;
@@ -153,24 +170,6 @@ export default function MetricsBar({ result }: MetricsBarProps) {
         );
       })()}
 
-      {/* Estimated Monthly Upload */}
-      {result.avg_ratio > 0 && (
-        <div className="bg-card border border-border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Monthly Upload</p>
-          <p className="text-2xl font-bold text-foreground">
-            {(() => {
-              const monthlyGb = result.steady_state_daily_upload_gb * 30;
-              return monthlyGb >= 1024
-                ? `${(monthlyGb / 1024).toFixed(1)} TB`
-                : `${monthlyGb.toFixed(1)} GB`;
-            })()}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {result.steady_state_daily_upload_gb.toFixed(1)} GB/day (ratio {result.avg_ratio})
-          </p>
-          <TuningHint text={uploadHint(result)} />
-        </div>
-      )}
     </div>
   );
 }

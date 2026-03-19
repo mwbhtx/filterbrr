@@ -31,6 +31,27 @@ const selectCls =
 
 const genTempId = () => `temp_${Math.random().toString(36).slice(2, 10)}`;
 
+const EMPTY_RESULT: SimulationResult = {
+  total_seen: 0,
+  total_grabbed: 0,
+  total_grabbed_gb: 0,
+  grab_rate_pct: 0,
+  total_days: 0,
+  skip_reasons: { no_match: 0, storage_full: 0, rate_limited: 0 },
+  daily_stats: [],
+  per_filter_stats: {},
+  steady_state_avg_utilization: 0,
+  steady_state_avg_disk_gb: 0,
+  max_storage_gb: 0,
+  filters_used: [],
+  blackout_days: 0,
+  total_upload_gb: 0,
+  steady_state_daily_upload_gb: 0,
+  avg_ratio: 0,
+  grabbed_torrents: [],
+  skipped_torrents: [],
+};
+
 function datasetLabel(ds: Dataset): string {
   let label = ds.scraped_at ?? ds.category;
   if (ds.min_date && ds.max_date) {
@@ -77,7 +98,6 @@ export default function SimulatorPage() {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
   const [running, setRunning] = useState(false);
   const [simError, setSimError] = useState<string | null>(null);
-  const [activeChart, setActiveChart] = useState<"utilization" | "grabs" | "flow" | "upload">("utilization");
 
   // Persist simulation result to localStorage on change
   useEffect(() => {
@@ -118,16 +138,23 @@ export default function SimulatorPage() {
     } catch { return new Set(); }
   });
 
-  // Keep enabledFilterIds in sync — enable new filters by default
+  // Keep enabledFilterIds in sync — mirror each filter's data.enabled field for new filters
   useEffect(() => {
     setEnabledFilterIds(prev => {
-      const next = new Set(prev);
+      const currentIds = new Set(allFilters.map(f => f._id));
+      const next = new Set<string>();
       for (const f of allFilters) {
-        if (!prev.has(f._id) && !next.has(f._id)) next.add(f._id);
+        if (prev.has(f._id)) {
+          // Already tracked — keep user's toggle choice
+          next.add(f._id);
+        } else if (f.data.enabled) {
+          // New filter — mirror its enabled state
+          next.add(f._id);
+        }
       }
       // Remove IDs that no longer exist
-      for (const id of next) {
-        if (!allFilters.some(f => f._id === id)) next.delete(id);
+      for (const id of prev) {
+        if (!currentIds.has(id)) next.delete(id);
       }
       return next;
     });
@@ -177,13 +204,35 @@ export default function SimulatorPage() {
     }
   };
 
-  const handleGenerateComplete = () => {
+  const handleGenerateComplete = async () => {
     setGenerating(false);
     localStorage.removeItem('active-generate-job');
-    refetchFilters();
+
+    // Snapshot what filters looked like before re-generate (including unsaved edits)
+    const beforeMap = new Map<string, Filter>();
+    for (const f of allFilters) {
+      beforeMap.set(f._id, f);
+    }
+
+    const { data: freshFilters } = await refetchFilters();
     if (selectedDs) {
       api.getAnalysisResults(selectedDs.category).then(setAnalysisResults).catch(() => {});
     }
+    if (!freshFilters) return;
+
+    // For re-generated filters (same gen-* ID already existed), mark as dirty
+    // so the user must explicitly save. This preserves unsaved edits.
+    const newDirty = new Map(dirtyMap);
+    for (const gen of freshFilters) {
+      if (!gen._id.startsWith('gen-')) continue;
+      const before = beforeMap.get(gen._id);
+      if (before) {
+        // Filter existed before — use the new generated data as a dirty change
+        // but keep the filter's identity (id, name, source)
+        newDirty.set(gen._id, { ...before, data: gen.data });
+      }
+    }
+    setDirtyMap(newDirty);
   };
 
   // Simulation
@@ -411,10 +460,7 @@ export default function SimulatorPage() {
           <FilterForm
             filter={selectedFilter}
             analysisResults={analysisResults}
-            readOnly={
-              selectedFilter._source === "generated" &&
-              !tempFilters.some((f) => f._id === selectedFilter._id)
-            }
+            readOnly={false}
             onSave={handleFilterSave}
             onDelete={selectedFilter._source !== "generated" ? handleFilterDelete : undefined}
             onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
@@ -434,26 +480,32 @@ export default function SimulatorPage() {
   );
 
   const simulationContent = (
-    <div className="overflow-y-auto px-4 md:px-6 py-4 space-y-6 flex-1">
+    <div className="overflow-y-auto px-4 md:px-6 py-4 space-y-4 flex-1">
+      {/* Section 1: Dataset Selection */}
       <Card>
-        <CardContent className="py-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">Scrape Dataset<HintIcon tip="The scraped torrent dataset to run the simulation against" /></label>
-              <select
-                value={selectedDataset}
-                onChange={(e) => setSelectedDataset(e.target.value)}
-                disabled={sortedDatasets.length === 0}
-                className={selectCls}
-              >
-                {sortedDatasets.length === 0 && (
-                  <option key="__empty" value="">No datasets — run a scrape first</option>
-                )}
-                {sortedDatasets.map((ds) => (
-                  <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
-                ))}
-              </select>
-            </div>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Select Dataset</CardTitle></CardHeader>
+        <CardContent className="pt-0">
+          <select
+            value={selectedDataset}
+            onChange={(e) => setSelectedDataset(e.target.value)}
+            disabled={sortedDatasets.length === 0}
+            className={selectCls}
+          >
+            {sortedDatasets.length === 0 && (
+              <option key="__empty" value="">No datasets — run a scrape first</option>
+            )}
+            {sortedDatasets.map((ds) => (
+              <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
+            ))}
+          </select>
+        </CardContent>
+      </Card>
+
+      {/* Section 2: Generate Filters */}
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Generate Filters</CardTitle></CardHeader>
+        <CardContent className="pt-0 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-muted-foreground mb-1">Storage (TB)<HintIcon tip="Total disk space available for storing downloaded torrents" /></label>
               <input
@@ -475,6 +527,26 @@ export default function SimulatorPage() {
                 className={selectCls}
               />
             </div>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap pt-3 border-t border-border">
+            <Button
+              onClick={handleGenerate}
+              disabled={generating || !selectedDataset}
+              size="sm"
+              className="shrink-0 btn-glow"
+            >
+              {generating ? "Generating..." : "Generate Filters"}
+            </Button>
+            <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 3: Simulation */}
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Simulation</CardTitle></CardHeader>
+        <CardContent className="pt-0 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-muted-foreground mb-1">Avg Ratio<HintIcon tip="Average upload-to-download ratio achieved per torrent" /></label>
               <input
@@ -491,7 +563,7 @@ export default function SimulatorPage() {
           {allFilters.length > 0 && (
             <div>
               <label className="block text-xs text-muted-foreground mb-1.5">
-                Simulation Filters<HintIcon tip="Toggle which filters are included in the simulation" />
+                Filters<HintIcon tip="Toggle which filters are included in the simulation" />
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {allFilters.map(f => {
@@ -518,69 +590,55 @@ export default function SimulatorPage() {
               </div>
             </div>
           )}
-
-          <div className="flex items-center gap-3 flex-wrap">
-            <Button
-              onClick={handleGenerate}
-              disabled={generating || !selectedDataset}
-              size="sm"
-              variant="outline"
-              className="shrink-0"
-            >
-              {generating ? "Generating..." : "Generate Filters"}
-            </Button>
-            <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm" className="shrink-0">
+          <div className="flex items-center gap-3 flex-wrap pt-3 border-t border-border">
+            <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm" className="shrink-0 btn-glow">
               {running ? "Running..." : "Run Simulation"}
             </Button>
-            <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
             {simError && <span className="text-sm text-destructive shrink-0">{simError}</span>}
           </div>
         </CardContent>
       </Card>
 
-      {simResult && (
-        <>
-          <MetricsBar result={simResult} />
-          <GrabbedList torrents={simResult.grabbed_torrents} />
-          <SkippedList torrents={simResult.skipped_torrents} />
-          <Card>
-            <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
-            <CardContent>
-              <FilterBreakdownTable result={simResult} />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2 flex-wrap">
-                {([
-                  { key: "utilization", label: "Disk Utilization" },
-                  { key: "grabs", label: "Daily Grabs" },
-                  { key: "flow", label: "GB Flow" },
-                  { key: "upload", label: "Upload" },
-                ] as const).map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveChart(tab.key)}
-                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                      activeChart === tab.key
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {activeChart === "utilization" && <UtilizationChart dailyStats={simResult.daily_stats} targetPct={80} />}
-              {activeChart === "grabs" && <DailyGrabsChart dailyStats={simResult.daily_stats} />}
-              {activeChart === "flow" && <GBFlowChart dailyStats={simResult.daily_stats} />}
-              {activeChart === "upload" && <UploadChart dailyStats={simResult.daily_stats} />}
-            </CardContent>
-          </Card>
-        </>
-      )}
+      {(() => {
+        const r = simResult ?? EMPTY_RESULT;
+        return (
+          <>
+            <MetricsBar result={r} />
+            <GrabbedList torrents={r.grabbed_torrents} />
+            <SkippedList torrents={r.skipped_torrents} />
+            <Card>
+              <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
+              <CardContent>
+                <FilterBreakdownTable result={r} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Disk Utilization</CardTitle></CardHeader>
+              <CardContent>
+                <UtilizationChart dailyStats={r.daily_stats} targetPct={80} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Daily Grabs</CardTitle></CardHeader>
+              <CardContent>
+                <DailyGrabsChart dailyStats={r.daily_stats} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>GB Flow</CardTitle></CardHeader>
+              <CardContent>
+                <GBFlowChart dailyStats={r.daily_stats} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Upload</CardTitle></CardHeader>
+              <CardContent>
+                <UploadChart dailyStats={r.daily_stats} />
+              </CardContent>
+            </Card>
+          </>
+        );
+      })()}
     </div>
   );
 
