@@ -7,7 +7,7 @@ export class DatasetsController {
 
   @Get()
   list(@Req() req: any) {
-    return this.datasets.list(req.user.userId);
+    return this.datasets.list(req.user.userId, req.user.role);
   }
 
   @Delete(':filename')

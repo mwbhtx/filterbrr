@@ -7,86 +7,11 @@ import { randomUUID } from 'crypto';
 
 const TABLE = 'Filters';
 
-const DEMO_FILTERS = [
-  {
-    name: 'Small Freeleech',
-    version: '1',
-    data: {
-      enabled: true,
-      min_size: '100 MB',
-      max_size: '2 GB',
-      delay: 0,
-      priority: 1,
-      max_downloads: 20,
-      max_downloads_unit: 'DAY',
-      except_releases: '',
-      announce_types: [],
-      freeleech: true,
-      resolutions: [],
-      sources: [],
-      match_categories: '',
-      is_auto_updated: false,
-      release_profile_duplicate: null,
-      match_release_groups: '',
-      except_release_groups: '',
-    },
-  },
-  {
-    name: 'Medium Freeleech',
-    version: '1',
-    data: {
-      enabled: true,
-      min_size: '2 GB',
-      max_size: '10 GB',
-      delay: 0,
-      priority: 2,
-      max_downloads: 10,
-      max_downloads_unit: 'DAY',
-      except_releases: '',
-      announce_types: [],
-      freeleech: true,
-      resolutions: [],
-      sources: [],
-      match_categories: '',
-      is_auto_updated: false,
-      release_profile_duplicate: null,
-      match_release_groups: '',
-      except_release_groups: '',
-    },
-  },
-  {
-    name: 'Large Freeleech',
-    version: '1',
-    data: {
-      enabled: true,
-      min_size: '10 GB',
-      max_size: '50 GB',
-      delay: 0,
-      priority: 3,
-      max_downloads: 3,
-      max_downloads_unit: 'DAY',
-      except_releases: '',
-      announce_types: [],
-      freeleech: true,
-      resolutions: [],
-      sources: [],
-      match_categories: '',
-      is_auto_updated: false,
-      release_profile_duplicate: null,
-      match_release_groups: '',
-      except_release_groups: '',
-    },
-  },
-];
-
 @Injectable()
 export class FiltersService {
   constructor(private readonly dynamo: DynamoService) {}
 
   async list(userId: string): Promise<Record<string, unknown>[]> {
-    if (userId === 'demo') {
-      await this.ensureDemoFilters();
-    }
     const result = await this.dynamo.client.send(
       new QueryCommand({
         TableName: TABLE,
@@ -95,20 +20,6 @@ export class FiltersService {
       })
     );
     return (result.Items ?? []) as Record<string, unknown>[];
-  }
-
-  private async ensureDemoFilters(): Promise<void> {
-    const result = await this.dynamo.client.send(
-      new QueryCommand({
-        TableName: TABLE,
-        KeyConditionExpression: 'user_id = :uid',
-        ExpressionAttributeValues: { ':uid': 'demo' },
-      })
-    );
-    if ((result.Items ?? []).length > 0) return;
-    for (const filter of DEMO_FILTERS) {
-      await this.create('demo', filter as CreateFilterDto);
-    }
   }
 
   async get(userId: string, filterId: string): Promise<Record<string, unknown>> {

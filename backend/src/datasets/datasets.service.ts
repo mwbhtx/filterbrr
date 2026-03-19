@@ -27,12 +27,13 @@ export class DatasetsService {
     }
   }
 
-  async list(userId: string): Promise<Record<string, unknown>[]> {
-    if (userId === 'demo') {
+  async list(userId: string, role?: string): Promise<Record<string, unknown>[]> {
+    const prefix = role === 'demo' ? 'demo/datasets/' : `${userId}/datasets/`;
+    if (role === 'demo') {
       await this.ensureDemoDataset();
     }
     const result = await this.s3.client.send(
-      new ListObjectsV2Command({ Bucket: this.s3.bucket, Prefix: `${userId}/datasets/` })
+      new ListObjectsV2Command({ Bucket: this.s3.bucket, Prefix: prefix })
     );
     const items = await Promise.all((result.Contents ?? []).map(async (obj) => {
       const filename = obj.Key?.split('/').pop() ?? '';

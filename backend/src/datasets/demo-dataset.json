@@ -1,1486 +1,1108 @@
 {
   "meta": {
-    "torrentCount": 246,
+    "torrentCount": 183,
     "durationSec": 0,
     "category": "freeleech",
     "source": "demo"
   },
   "torrents": [
     {
-      "name": "Wild.Frontier.2025.1080p.BluRay.x264-RARBG",
+      "name": "Threadbare.S02E04.720p.BluRay.x264-HELIX",
       "date": "2026-02-16",
-      "size_bytes": 8010563157,
-      "seeders": 15
+      "size_bytes": 4968366722,
+      "seeders": 57
     },
     {
-      "name": "Deep.State.S02E03.1080p.HMAX.WEB-DL.DDP5.1-GGEZ",
+      "name": "Fractured.Grid.S02E04.2160p.DSNP.WEB-DL.DDP5.1-VERTEX",
       "date": "2026-02-16",
-      "size_bytes": 9914148409,
-      "seeders": 143
+      "size_bytes": 2710529190,
+      "seeders": 72
     },
     {
-      "name": "Flashpoint.S04E03.1080p.BluRay.x264-APEX",
+      "name": "Wayward.Tide.2025.720p.BluRay.Remux.AVC.DTS-HD.MA-STRATUM",
       "date": "2026-02-16",
-      "size_bytes": 3543516424,
-      "seeders": 40
-    },
-    {
-      "name": "Dark.Waters.Rising.2025.2160p.BluRay.REMUX-BTN",
-      "date": "2026-02-16",
-      "size_bytes": 41157516516,
-      "seeders": 24
-    },
-    {
-      "name": "The.Final.Stand.2025.1080p.BluRay.Remux-NTFY",
-      "date": "2026-02-16",
-      "size_bytes": 9089946605,
-      "seeders": 131
-    },
-    {
-      "name": "Silver.Lining.2025.720p.WEB-DL.x264-ROVERS",
-      "date": "2026-02-16",
-      "size_bytes": 14856390210,
-      "seeders": 13
-    },
-    {
-      "name": "Quantum.Leap.2025.2160p.BluRay.REMUX.HEVC-ROVERS",
-      "date": "2026-02-16",
-      "size_bytes": 4894689066,
-      "seeders": 154
-    },
-    {
-      "name": "Wild.Frontier.2025.1080p.BluRay.x264-EDITH",
-      "date": "2026-02-16",
-      "size_bytes": 5497889230,
-      "seeders": 197
-    },
-    {
-      "name": "Echo.Chamber.2025.720p.WEB-DL.x264-EDITH",
-      "date": "2026-02-17",
-      "size_bytes": 20160089289,
-      "seeders": 110
-    },
-    {
-      "name": "Echo.Chamber.2025.720p.WEB-DL.x264-HANDJOB",
-      "date": "2026-02-17",
-      "size_bytes": 27261526798,
-      "seeders": 111
-    },
-    {
-      "name": "Midnight.Protocol.2024.COMPLETE.BLURAY-KODO",
-      "date": "2026-02-17",
-      "size_bytes": 8125857840,
-      "seeders": 183
-    },
-    {
-      "name": "Tidal.Wave.2025.1080p.BluRay.x264-MIXED",
-      "date": "2026-02-17",
-      "size_bytes": 1379388113,
-      "seeders": 128
-    },
-    {
-      "name": "Phantom.Thread.Remastered.2025.1080p.BluRay-PHOENiX",
-      "date": "2026-02-17",
-      "size_bytes": 1701752011,
-      "seeders": 124
-    },
-    {
-      "name": "The.Forge.S01E04.1080p.BluRay.x264-GECKOS",
-      "date": "2026-02-17",
-      "size_bytes": 3897490499,
-      "seeders": 8
-    },
-    {
-      "name": "Broken.Compass.2025.1080p.AMZN.WEB-DL.DDP5.1-SMURF",
-      "date": "2026-02-17",
-      "size_bytes": 851732938,
-      "seeders": 197
-    },
-    {
-      "name": "Cold.Front.2025.1080p.WEB-DL.DD5.1-CMRG",
-      "date": "2026-02-17",
-      "size_bytes": 1550923181,
-      "seeders": 129
-    },
-    {
-      "name": "Shadow.Play.2025.2160p.WEB-DL.DDP5.1-HONE",
-      "date": "2026-02-17",
-      "size_bytes": 22252571290,
-      "seeders": 54
-    },
-    {
-      "name": "Silver.Lining.2025.720p.WEB-DL.x264-LAZYCUNTS",
-      "date": "2026-02-18",
-      "size_bytes": 29762980761,
-      "seeders": 173
-    },
-    {
-      "name": "The.Quiet.Ones.2025.1080p.WEB-DL.DD5.1.H.264-RARBG",
-      "date": "2026-02-18",
-      "size_bytes": 9659699328,
-      "seeders": 122
-    },
-    {
-      "name": "Zero.Hour.2024.2160p.WEB.H265-SIGMA",
-      "date": "2026-02-18",
-      "size_bytes": 9838225130,
-      "seeders": 138
-    },
-    {
-      "name": "The.Circuit.S01E12.720p.NF.WEB-DL-EDITH",
-      "date": "2026-02-18",
-      "size_bytes": 2480545771,
-      "seeders": 108
-    },
-    {
-      "name": "Ember.S04E05.1080p.AMZN.WEB-DL.DDP5.1-SPARKS",
-      "date": "2026-02-18",
-      "size_bytes": 1493389049,
-      "seeders": 190
-    },
-    {
-      "name": "The.Divide.2025.1080p.AMZN.WEB-DL.DDP5.1-FLUX",
-      "date": "2026-02-18",
-      "size_bytes": 2844645698,
-      "seeders": 45
-    },
-    {
-      "name": "Firewall.2025.2160p.BluRay.x265-MIXED",
-      "date": "2026-02-18",
-      "size_bytes": 44879452081,
-      "seeders": 97
-    },
-    {
-      "name": "Deep.State.S02E03.1080p.HMAX.WEB-DL.DDP5.1-RARBG",
-      "date": "2026-02-19",
-      "size_bytes": 12028687784,
-      "seeders": 105
-    },
-    {
-      "name": "Crimson.Tide.Remastered.2025.1080p.BluRay.x264-SPARKS",
-      "date": "2026-02-19",
-      "size_bytes": 48393558375,
-      "seeders": 86
-    },
-    {
-      "name": "Echo.Valley.S03E02.1080p.AMZN.WEB-DL.DDP5.1-HANDJOB",
-      "date": "2026-02-19",
-      "size_bytes": 804662407,
-      "seeders": 24
-    },
-    {
-      "name": "The.Watchers.S02E06.720p.WEB-DL.x264-BTN",
-      "date": "2026-02-19",
-      "size_bytes": 9557310849,
-      "seeders": 20
-    },
-    {
-      "name": "Fast.Track.2025.720p.BluRay.x264-HANDJOB",
-      "date": "2026-02-19",
-      "size_bytes": 738218579,
-      "seeders": 188
-    },
-    {
-      "name": "The.Divide.2025.1080p.AMZN.WEB-DL.DDP5.1-CMRG",
-      "date": "2026-02-19",
-      "size_bytes": 230219920,
-      "seeders": 140
-    },
-    {
-      "name": "Firewall.2025.2160p.BluRay.x265-JETSET",
-      "date": "2026-02-19",
-      "size_bytes": 2590787262,
-      "seeders": 199
-    },
-    {
-      "name": "Riptide.S02E01.1080p.DSNP.WEB-DL.DDP5.1-GGEZ",
-      "date": "2026-02-19",
-      "size_bytes": 2873304349,
-      "seeders": 22
-    },
-    {
-      "name": "Broken.Compass.2025.1080p.AMZN.WEB-DL.DDP5.1-SMURF",
-      "date": "2026-02-19",
-      "size_bytes": 2385087200,
-      "seeders": 177
-    },
-    {
-      "name": "Code.Black.S03E09.720p.WEB-DL.x265-RARBG",
-      "date": "2026-02-20",
-      "size_bytes": 216388911,
-      "seeders": 164
-    },
-    {
-      "name": "Wild.Frontier.2025.1080p.BluRay.x264-RARBG",
-      "date": "2026-02-20",
-      "size_bytes": 510126779,
-      "seeders": 105
-    },
-    {
-      "name": "Solar.Winds.S02E12.PROPER.720p.WEB.H264-NTFY",
-      "date": "2026-02-20",
-      "size_bytes": 47984743173,
-      "seeders": 71
-    },
-    {
-      "name": "Razor.Edge.2024.1080p.BluRay.x264-NOGROUP",
-      "date": "2026-02-20",
-      "size_bytes": 6476661435,
-      "seeders": 167
-    },
-    {
-      "name": "Deadlock.S03E01.720p.AMZN.WEB-DL-NTFY",
-      "date": "2026-02-20",
-      "size_bytes": 1044316874,
-      "seeders": 40
-    },
-    {
-      "name": "Deep.Currents.S01E01-E03.1080p.AMZN.WEB-DL-APEX",
-      "date": "2026-02-20",
-      "size_bytes": 3652114388,
-      "seeders": 139
-    },
-    {
-      "name": "Skybound.S05E07.720p.AMZN.WEB-DL-KODO",
-      "date": "2026-02-20",
-      "size_bytes": 1343743478,
-      "seeders": 119
-    },
-    {
-      "name": "Tidal.Wave.2025.1080p.BluRay.x264-TEPES",
-      "date": "2026-02-20",
-      "size_bytes": 5689064806,
-      "seeders": 14
-    },
-    {
-      "name": "The.Divide.2025.1080p.AMZN.WEB-DL.DDP5.1-EDITH",
-      "date": "2026-02-20",
-      "size_bytes": 6844483318,
-      "seeders": 185
-    },
-    {
-      "name": "Deadlock.S03E01.720p.AMZN.WEB-DL-EPSiLON",
-      "date": "2026-02-21",
-      "size_bytes": 162438145,
-      "seeders": 82
-    },
-    {
-      "name": "Neon.Horizons.2025.2160p.WEB-DL.DDP5.1.H.265-HAiKU",
-      "date": "2026-02-21",
-      "size_bytes": 1346676901,
-      "seeders": 94
-    },
-    {
-      "name": "The.Expanse.Reboot.S01E01.1080p.PMTP.WEB-DL-PHOENiX",
-      "date": "2026-02-21",
-      "size_bytes": 499719712,
-      "seeders": 51
-    },
-    {
-      "name": "Flashpoint.S04E03.1080p.BluRay.x264-RARBG",
-      "date": "2026-02-21",
-      "size_bytes": 21589704813,
-      "seeders": 65
-    },
-    {
-      "name": "Echo.Valley.S03E02.1080p.AMZN.WEB-DL.DDP5.1-PHOENiX",
-      "date": "2026-02-21",
-      "size_bytes": 3901880600,
-      "seeders": 92
-    },
-    {
-      "name": "Solar.Winds.S02E12.PROPER.720p.WEB.H264-MIXED",
-      "date": "2026-02-21",
-      "size_bytes": 7719794950,
-      "seeders": 40
-    },
-    {
-      "name": "The.Final.Stand.2025.1080p.BluRay.Remux-TEPES",
-      "date": "2026-02-21",
-      "size_bytes": 389111061,
-      "seeders": 158
-    },
-    {
-      "name": "Blackout.2025.2160p.WEB.H265-GGWP",
-      "date": "2026-02-21",
-      "size_bytes": 32678686223,
-      "seeders": 98
-    },
-    {
-      "name": "Echo.Chamber.2025.720p.WEB-DL.x264-SMURF",
-      "date": "2026-02-22",
-      "size_bytes": 1709951927,
-      "seeders": 59
-    },
-    {
-      "name": "Ghost.Signal.S05E01.1080p.DSNP.WEB-DL.DDP5.1-EDITH",
-      "date": "2026-02-22",
-      "size_bytes": 5685134010,
-      "seeders": 40
-    },
-    {
-      "name": "Echo.Valley.S03E02.1080p.AMZN.WEB-DL.DDP5.1-PHOENiX",
-      "date": "2026-02-22",
-      "size_bytes": 44712215809,
-      "seeders": 53
-    },
-    {
-      "name": "Razor.Edge.2024.1080p.BluRay.x264-HONE",
-      "date": "2026-02-22",
-      "size_bytes": 9177392777,
-      "seeders": 41
-    },
-    {
-      "name": "The.Bureau.S01E07.720p.HMAX.WEB-DL-CMRG",
-      "date": "2026-02-22",
-      "size_bytes": 5708058214,
-      "seeders": 185
-    },
-    {
-      "name": "Blackout.2025.2160p.WEB.H265-SWTYBLZ",
-      "date": "2026-02-22",
-      "size_bytes": 4941985936,
-      "seeders": 125
-    },
-    {
-      "name": "Crimson.Sky.S04E11.1080p.WEB-DL.DDP5.1-TEPES",
-      "date": "2026-02-22",
-      "size_bytes": 9399038776,
-      "seeders": 24
-    },
-    {
-      "name": "Solar.Winds.S02E12.PROPER.720p.WEB.H264-HAiKU",
-      "date": "2026-02-22",
-      "size_bytes": 13271826246,
-      "seeders": 80
-    },
-    {
-      "name": "Echo.Chamber.2025.720p.WEB-DL.x264-SMURF",
-      "date": "2026-02-22",
-      "size_bytes": 6141968420,
-      "seeders": 146
-    },
-    {
-      "name": "The.Architects.2025.1080p.BluRay.Remux.AVC-ROVERS",
-      "date": "2026-02-23",
-      "size_bytes": 1005857770,
-      "seeders": 97
-    },
-    {
-      "name": "The.Final.Stand.2025.1080p.BluRay.Remux-SIGMA",
-      "date": "2026-02-23",
-      "size_bytes": 30766222524,
-      "seeders": 178
-    },
-    {
-      "name": "Neon.Horizons.2025.2160p.WEB-DL.DDP5.1.H.265-GECKOS",
-      "date": "2026-02-23",
-      "size_bytes": 335243231,
-      "seeders": 8
-    },
-    {
-      "name": "Storm.Chaser.2025.1080p.BluRay.x264-LAZYCUNTS",
-      "date": "2026-02-23",
-      "size_bytes": 8146643805,
-      "seeders": 153
-    },
-    {
-      "name": "Wild.Frontier.2025.1080p.BluRay.x264-KODO",
-      "date": "2026-02-23",
-      "size_bytes": 46038818358,
-      "seeders": 68
-    },
-    {
-      "name": "The.Long.Road.2025.1080p.WEB-DL.DD5.1-LAZYCUNTS",
-      "date": "2026-02-23",
-      "size_bytes": 5303799295,
-      "seeders": 110
-    },
-    {
-      "name": "The.Quiet.Ones.2025.1080p.WEB-DL.DD5.1.H.264-FLUX",
-      "date": "2026-02-23",
-      "size_bytes": 892675937,
-      "seeders": 150
-    },
-    {
-      "name": "The.Long.Road.2025.1080p.WEB-DL.DD5.1-KODO",
-      "date": "2026-02-23",
-      "size_bytes": 30592896650,
-      "seeders": 54
-    },
-    {
-      "name": "Rising.Tides.S02E04.1080p.DSNP.WEB-DL-SPARKS",
-      "date": "2026-02-24",
-      "size_bytes": 5521685088,
-      "seeders": 20
-    },
-    {
-      "name": "Quantum.Leap.2025.2160p.BluRay.REMUX.HEVC-GGWP",
-      "date": "2026-02-24",
-      "size_bytes": 9547860987,
-      "seeders": 178
-    },
-    {
-      "name": "Crimson.Sky.S04E11.1080p.WEB-DL.DDP5.1-SIGMA",
-      "date": "2026-02-24",
-      "size_bytes": 1521695796,
-      "seeders": 107
-    },
-    {
-      "name": "Echo.Chamber.2025.720p.WEB-DL.x264-EPSiLON",
-      "date": "2026-02-24",
-      "size_bytes": 877282351,
-      "seeders": 190
-    },
-    {
-      "name": "Breaking.Limits.S03E08.720p.WEB-DL.x265-LAZYCUNTS",
-      "date": "2026-02-24",
-      "size_bytes": 31790012616,
-      "seeders": 199
-    },
-    {
-      "name": "The.Architects.2025.1080p.BluRay.Remux.AVC-ROVERS",
-      "date": "2026-02-24",
-      "size_bytes": 8261203966,
-      "seeders": 159
-    },
-    {
-      "name": "Wild.Frontier.2025.1080p.BluRay.x264-CMRG",
-      "date": "2026-02-24",
-      "size_bytes": 1268710722,
-      "seeders": 191
-    },
-    {
-      "name": "Steel.Rain.2025.720p.BluRay.x264-GECKOS",
-      "date": "2026-02-25",
-      "size_bytes": 9840015095,
-      "seeders": 26
-    },
-    {
-      "name": "Storm.Chaser.2025.1080p.BluRay.x264-FraMeSToR",
-      "date": "2026-02-25",
-      "size_bytes": 8435663006,
-      "seeders": 145
-    },
-    {
-      "name": "The.Expanse.Reboot.S01E01.1080p.PMTP.WEB-DL-HONE",
-      "date": "2026-02-25",
-      "size_bytes": 1214718509,
-      "seeders": 48
-    },
-    {
-      "name": "Silver.Lining.2025.720p.WEB-DL.x264-APEX",
-      "date": "2026-02-25",
-      "size_bytes": 1008179424,
-      "seeders": 82
-    },
-    {
-      "name": "Starfall.S02E01.720p.AMZN.WEB-DL-PHOENiX",
-      "date": "2026-02-25",
-      "size_bytes": 890156148,
-      "seeders": 52
-    },
-    {
-      "name": "The.Quiet.Ones.2025.1080p.WEB-DL.DD5.1.H.264-NTFY",
-      "date": "2026-02-25",
-      "size_bytes": 7694238043,
-      "seeders": 136
-    },
-    {
-      "name": "Deadlock.S03E01.720p.AMZN.WEB-DL-LAZYCUNTS",
-      "date": "2026-02-25",
-      "size_bytes": 6649874064,
-      "seeders": 88
-    },
-    {
-      "name": "Outer.Ring.S02E10.720p.PCOK.WEB-DL-HANDJOB",
-      "date": "2026-02-25",
-      "size_bytes": 6596892340,
-      "seeders": 151
-    },
-    {
-      "name": "Solar.Winds.S02E12.PROPER.720p.WEB.H264-decibeL",
-      "date": "2026-02-25",
-      "size_bytes": 1508546803,
-      "seeders": 32
-    },
-    {
-      "name": "Deadlock.S03E01.720p.AMZN.WEB-DL-FGT",
-      "date": "2026-02-26",
-      "size_bytes": 42302916810,
-      "seeders": 159
-    },
-    {
-      "name": "Frontier.S05E02.1080p.NF.WEB-DL.DDP5.1-GGEZ",
-      "date": "2026-02-26",
-      "size_bytes": 49195852503,
-      "seeders": 79
-    },
-    {
-      "name": "Gridlock.S02E08.720p.WEB-DL.x264-HANDJOB",
-      "date": "2026-02-26",
-      "size_bytes": 37098727276,
-      "seeders": 43
-    },
-    {
-      "name": "Razor.Edge.2024.1080p.BluRay.x264-NTFY",
-      "date": "2026-02-26",
-      "size_bytes": 4053406467,
-      "seeders": 156
-    },
-    {
-      "name": "Apex.Predator.2025.1080p.BluRay.REMUX-APEX",
-      "date": "2026-02-26",
-      "size_bytes": 29404686326,
-      "seeders": 26
-    },
-    {
-      "name": "Crimson.Sky.S04E11.1080p.WEB-DL.DDP5.1-KODO",
-      "date": "2026-02-26",
-      "size_bytes": 23447191703,
-      "seeders": 32
-    },
-    {
-      "name": "Parallel.Lines.2025.2160p.WEB.H265-RARBG",
-      "date": "2026-02-26",
-      "size_bytes": 2991145276,
-      "seeders": 148
-    },
-    {
-      "name": "Overdrive.S03E11.720p.AMZN.WEB-DL-GECKOS",
-      "date": "2026-02-27",
-      "size_bytes": 31975254948,
-      "seeders": 103
-    },
-    {
-      "name": "Fast.Track.2025.720p.BluRay.x264-GGEZ",
-      "date": "2026-02-27",
-      "size_bytes": 608094151,
-      "seeders": 78
-    },
-    {
-      "name": "Crossfire.S04E09.720p.WEB-DL.x265-GECKOS",
-      "date": "2026-02-27",
-      "size_bytes": 421565274,
-      "seeders": 163
-    },
-    {
-      "name": "Vanguard.S03E06.1080p.WEB-DL.DD5.1-HANDJOB",
-      "date": "2026-02-27",
-      "size_bytes": 1924186340,
-      "seeders": 145
-    },
-    {
-      "name": "Deadlock.S03E01.720p.AMZN.WEB-DL-GGEZ",
-      "date": "2026-02-27",
-      "size_bytes": 1375944219,
-      "seeders": 112
-    },
-    {
-      "name": "Frostbite.S01E09.720p.PCOK.WEB-DL-KODO",
-      "date": "2026-02-27",
-      "size_bytes": 7470026268,
-      "seeders": 182
-    },
-    {
-      "name": "Shadow.Play.2025.2160p.WEB-DL.DDP5.1-MIXED",
-      "date": "2026-02-27",
-      "size_bytes": 4860267022,
-      "seeders": 145
-    },
-    {
-      "name": "Night.Shift.S01E03.1080p.AMZN.WEB-DL-SIGMA",
-      "date": "2026-02-28",
-      "size_bytes": 2807276309,
-      "seeders": 185
-    },
-    {
-      "name": "The.Bureau.S01E07.720p.HMAX.WEB-DL-SPARKS",
-      "date": "2026-02-28",
-      "size_bytes": 3998423886,
-      "seeders": 159
-    },
-    {
-      "name": "The.Last.Adventure.2025.1080p.BluRay.x264-APEX",
-      "date": "2026-02-28",
-      "size_bytes": 4118555226,
-      "seeders": 198
-    },
-    {
-      "name": "Storm.Chaser.2025.1080p.BluRay.x264-EDITH",
-      "date": "2026-02-28",
-      "size_bytes": 18872329094,
-      "seeders": 164
-    },
-    {
-      "name": "Razor.Edge.2024.1080p.BluRay.x264-JETSET",
-      "date": "2026-02-28",
-      "size_bytes": 2617252425,
-      "seeders": 99
-    },
-    {
-      "name": "Northern.Lights.2025.2160p.Remux-JETSET",
-      "date": "2026-02-28",
-      "size_bytes": 652596346,
-      "seeders": 49
-    },
-    {
-      "name": "Firewall.2025.2160p.BluRay.x265-GGEZ",
-      "date": "2026-02-28",
-      "size_bytes": 1705732171,
-      "seeders": 101
-    },
-    {
-      "name": "Night.Shift.S01E03.1080p.AMZN.WEB-DL-SMURF",
-      "date": "2026-02-28",
-      "size_bytes": 28159169433,
-      "seeders": 55
-    },
-    {
-      "name": "Apex.Predator.2025.1080p.BluRay.REMUX-BTN",
-      "date": "2026-02-28",
-      "size_bytes": 21697258210,
-      "seeders": 189
-    },
-    {
-      "name": "Crimson.Sky.S04E11.1080p.WEB-DL.DDP5.1-SMURF",
-      "date": "2026-03-01",
-      "size_bytes": 49697983842,
-      "seeders": 129
-    },
-    {
-      "name": "The.Bureau.S01E07.720p.HMAX.WEB-DL-SWTYBLZ",
-      "date": "2026-03-01",
-      "size_bytes": 1574839543,
-      "seeders": 189
-    },
-    {
-      "name": "Vanguard.S03E06.1080p.WEB-DL.DD5.1-SWTYBLZ",
-      "date": "2026-03-01",
-      "size_bytes": 1815478516,
-      "seeders": 105
-    },
-    {
-      "name": "The.Watchers.S02E06.720p.WEB-DL.x264-NTFY",
-      "date": "2026-03-01",
-      "size_bytes": 5926947160,
-      "seeders": 41
-    },
-    {
-      "name": "Dark.Waters.Rising.2025.2160p.BluRay.REMUX-HONE",
-      "date": "2026-03-01",
-      "size_bytes": 35107257415,
-      "seeders": 183
-    },
-    {
-      "name": "Velocity.2025.720p.BluRay.x264-SWTYBLZ",
-      "date": "2026-03-01",
-      "size_bytes": 8790387384,
-      "seeders": 135
-    },
-    {
-      "name": "Crimson.Sky.S04E11.1080p.WEB-DL.DDP5.1-NOGROUP",
-      "date": "2026-03-01",
-      "size_bytes": 5803951429,
-      "seeders": 5
-    },
-    {
-      "name": "Frontier.S05E02.1080p.NF.WEB-DL.DDP5.1-KODO",
-      "date": "2026-03-02",
-      "size_bytes": 4699213335,
-      "seeders": 197
-    },
-    {
-      "name": "Silver.Lining.2025.720p.WEB-DL.x264-GGWP",
-      "date": "2026-03-02",
-      "size_bytes": 219120732,
-      "seeders": 18
-    },
-    {
-      "name": "Night.Shift.S01E03.1080p.AMZN.WEB-DL-GGEZ",
-      "date": "2026-03-02",
-      "size_bytes": 4369975553,
-      "seeders": 184
-    },
-    {
-      "name": "Fast.Track.2025.720p.BluRay.x264-SPARKS",
-      "date": "2026-03-02",
-      "size_bytes": 9812211096,
-      "seeders": 15
-    },
-    {
-      "name": "Deep.State.S02E03.1080p.HMAX.WEB-DL.DDP5.1-SIGMA",
-      "date": "2026-03-02",
-      "size_bytes": 7384719337,
-      "seeders": 96
-    },
-    {
-      "name": "Skybound.S05E07.720p.AMZN.WEB-DL-HONE",
-      "date": "2026-03-02",
-      "size_bytes": 1708572468,
-      "seeders": 158
-    },
-    {
-      "name": "Outer.Ring.S02E10.720p.PCOK.WEB-DL-GGEZ",
-      "date": "2026-03-02",
-      "size_bytes": 210902479,
-      "seeders": 71
-    },
-    {
-      "name": "Under.Pressure.2024.1080p.WEB-DL-GGWP",
-      "date": "2026-03-02",
-      "size_bytes": 5034716380,
-      "seeders": 128
-    },
-    {
-      "name": "Parallel.Lines.2025.2160p.WEB.H265-JETSET",
-      "date": "2026-03-02",
-      "size_bytes": 5033674100,
-      "seeders": 155
-    },
-    {
-      "name": "Frostbite.S01E09.720p.PCOK.WEB-DL-GECKOS",
-      "date": "2026-03-03",
-      "size_bytes": 17984071080,
-      "seeders": 126
-    },
-    {
-      "name": "Deep.State.S02E03.1080p.HMAX.WEB-DL.DDP5.1-HONE",
-      "date": "2026-03-03",
-      "size_bytes": 9508457020,
-      "seeders": 58
-    },
-    {
-      "name": "Crimson.Sky.S04E11.1080p.WEB-DL.DDP5.1-SWTYBLZ",
-      "date": "2026-03-03",
-      "size_bytes": 2271362938,
-      "seeders": 156
-    },
-    {
-      "name": "Neon.Horizons.2025.2160p.WEB-DL.DDP5.1.H.265-EPSiLON",
-      "date": "2026-03-03",
-      "size_bytes": 5920153400,
-      "seeders": 130
-    },
-    {
-      "name": "Crossfire.S04E09.720p.WEB-DL.x265-HAiKU",
-      "date": "2026-03-03",
-      "size_bytes": 4081236438,
-      "seeders": 50
-    },
-    {
-      "name": "Crimson.Sky.S04E11.1080p.WEB-DL.DDP5.1-GECKOS",
-      "date": "2026-03-03",
-      "size_bytes": 1661768518,
-      "seeders": 91
-    },
-    {
-      "name": "Crossfire.S04E09.720p.WEB-DL.x265-GECKOS",
-      "date": "2026-03-03",
-      "size_bytes": 3104405694,
-      "seeders": 70
-    },
-    {
-      "name": "Breaking.Limits.S03E08.720p.WEB-DL.x265-HAiKU",
-      "date": "2026-03-04",
-      "size_bytes": 139278292,
-      "seeders": 169
-    },
-    {
-      "name": "The.Final.Stand.2025.1080p.BluRay.Remux-HANDJOB",
-      "date": "2026-03-04",
-      "size_bytes": 1382984805,
-      "seeders": 116
-    },
-    {
-      "name": "Northern.Lights.2025.2160p.Remux-LAZYCUNTS",
-      "date": "2026-03-04",
-      "size_bytes": 8245335694,
-      "seeders": 33
-    },
-    {
-      "name": "Tidal.Wave.2025.1080p.BluRay.x264-RARBG",
-      "date": "2026-03-04",
-      "size_bytes": 47656330651,
-      "seeders": 17
-    },
-    {
-      "name": "Riptide.S02E01.1080p.DSNP.WEB-DL.DDP5.1-NTFY",
-      "date": "2026-03-04",
-      "size_bytes": 1209211916,
-      "seeders": 21
-    },
-    {
-      "name": "Night.Shift.S01E03.1080p.AMZN.WEB-DL-EDITH",
-      "date": "2026-03-04",
-      "size_bytes": 1573086141,
-      "seeders": 170
-    },
-    {
-      "name": "Razor.Edge.2024.1080p.BluRay.x264-SWTYBLZ",
-      "date": "2026-03-04",
-      "size_bytes": 32916812945,
-      "seeders": 136
-    },
-    {
-      "name": "Crossfire.S04E09.720p.WEB-DL.x265-decibeL",
-      "date": "2026-03-04",
-      "size_bytes": 8326440565,
-      "seeders": 60
-    },
-    {
-      "name": "The.Last.Adventure.2025.1080p.BluRay.x264-HONE",
-      "date": "2026-03-05",
-      "size_bytes": 3631334406,
-      "seeders": 21
-    },
-    {
-      "name": "Apex.Predator.2025.1080p.BluRay.REMUX-FGT",
-      "date": "2026-03-05",
-      "size_bytes": 2932907887,
-      "seeders": 109
-    },
-    {
-      "name": "Vanguard.S03E06.1080p.WEB-DL.DD5.1-SMURF",
-      "date": "2026-03-05",
-      "size_bytes": 889919004,
-      "seeders": 100
-    },
-    {
-      "name": "Skybound.S05E07.720p.AMZN.WEB-DL-APEX",
-      "date": "2026-03-05",
-      "size_bytes": 1640602133,
-      "seeders": 62
-    },
-    {
-      "name": "Firewall.2025.2160p.BluRay.x265-GGWP",
-      "date": "2026-03-05",
-      "size_bytes": 5176728783,
-      "seeders": 109
-    },
-    {
-      "name": "Storm.Chaser.2025.1080p.BluRay.x264-GGWP",
-      "date": "2026-03-05",
-      "size_bytes": 5238965952,
-      "seeders": 190
-    },
-    {
-      "name": "Ember.S04E05.1080p.AMZN.WEB-DL.DDP5.1-NTb",
-      "date": "2026-03-05",
-      "size_bytes": 7949317343,
-      "seeders": 181
-    },
-    {
-      "name": "Night.Shift.S01E03.1080p.AMZN.WEB-DL-JETSET",
-      "date": "2026-03-05",
-      "size_bytes": 1975008080,
-      "seeders": 182
-    },
-    {
-      "name": "Gridlock.S02E08.720p.WEB-DL.x264-decibeL",
-      "date": "2026-03-06",
-      "size_bytes": 33223685149,
-      "seeders": 119
-    },
-    {
-      "name": "Deadlock.S03E01.720p.AMZN.WEB-DL-NTb",
-      "date": "2026-03-06",
-      "size_bytes": 645534979,
-      "seeders": 5
-    },
-    {
-      "name": "Echo.Chamber.2025.720p.WEB-DL.x264-FraMeSToR",
-      "date": "2026-03-06",
-      "size_bytes": 3297729076,
-      "seeders": 60
-    },
-    {
-      "name": "Wild.Frontier.2025.1080p.BluRay.x264-NOGROUP",
-      "date": "2026-03-06",
-      "size_bytes": 640679862,
-      "seeders": 123
-    },
-    {
-      "name": "Parallel.Lines.2025.2160p.WEB.H265-GECKOS",
-      "date": "2026-03-06",
-      "size_bytes": 9923438232,
-      "seeders": 122
-    },
-    {
-      "name": "The.Signal.2025.2160p.WEB-DL.DDP5.1.Atmos-LAZYCUNTS",
-      "date": "2026-03-06",
-      "size_bytes": 9997725748,
-      "seeders": 59
-    },
-    {
-      "name": "Skybound.S05E07.720p.AMZN.WEB-DL-RARBG",
-      "date": "2026-03-06",
-      "size_bytes": 981244618,
-      "seeders": 148
-    },
-    {
-      "name": "Broken.Compass.2025.1080p.AMZN.WEB-DL.DDP5.1-SPARKS",
-      "date": "2026-03-06",
-      "size_bytes": 33481756590,
-      "seeders": 150
-    },
-    {
-      "name": "Fast.Track.2025.720p.BluRay.x264-GGEZ",
-      "date": "2026-03-06",
-      "size_bytes": 3982257658,
-      "seeders": 34
-    },
-    {
-      "name": "Silver.Lining.2025.720p.WEB-DL.x264-JETSET",
-      "date": "2026-03-07",
-      "size_bytes": 21249401053,
-      "seeders": 45
-    },
-    {
-      "name": "Rising.Tides.S02E04.1080p.DSNP.WEB-DL-decibeL",
-      "date": "2026-03-07",
-      "size_bytes": 3171481457,
-      "seeders": 101
-    },
-    {
-      "name": "Broken.Compass.2025.1080p.AMZN.WEB-DL.DDP5.1-BTN",
-      "date": "2026-03-07",
-      "size_bytes": 227923068,
-      "seeders": 102
-    },
-    {
-      "name": "Frostbite.S01E09.720p.PCOK.WEB-DL-SMURF",
-      "date": "2026-03-07",
-      "size_bytes": 4194722568,
-      "seeders": 160
-    },
-    {
-      "name": "Cold.Front.2025.1080p.WEB-DL.DD5.1-decibeL",
-      "date": "2026-03-07",
-      "size_bytes": 914026248,
-      "seeders": 8
-    },
-    {
-      "name": "Firewall.2025.2160p.BluRay.x265-NTb",
-      "date": "2026-03-07",
-      "size_bytes": 33953664519,
-      "seeders": 65
-    },
-    {
-      "name": "Riptide.S02E01.1080p.DSNP.WEB-DL.DDP5.1-HAiKU",
-      "date": "2026-03-07",
-      "size_bytes": 38652393868,
-      "seeders": 28
-    },
-    {
-      "name": "The.Quiet.Ones.2025.1080p.WEB-DL.DD5.1.H.264-TEPES",
-      "date": "2026-03-07",
-      "size_bytes": 48932830058,
-      "seeders": 43
-    },
-    {
-      "name": "Tidal.Wave.2025.1080p.BluRay.x264-JETSET",
-      "date": "2026-03-07",
-      "size_bytes": 6716141867,
-      "seeders": 98
-    },
-    {
-      "name": "The.Quiet.Ones.2025.1080p.WEB-DL.DD5.1.H.264-FraMeSToR",
-      "date": "2026-03-08",
-      "size_bytes": 1395546474,
-      "seeders": 86
-    },
-    {
-      "name": "Velocity.2025.720p.BluRay.x264-TEPES",
-      "date": "2026-03-08",
-      "size_bytes": 7465085796,
-      "seeders": 193
-    },
-    {
-      "name": "The.Quiet.Ones.2025.1080p.WEB-DL.DD5.1.H.264-APEX",
-      "date": "2026-03-08",
-      "size_bytes": 9370361793,
-      "seeders": 84
-    },
-    {
-      "name": "The.Quiet.Ones.2025.1080p.WEB-DL.DD5.1.H.264-GGEZ",
-      "date": "2026-03-08",
-      "size_bytes": 31789484314,
-      "seeders": 6
-    },
-    {
-      "name": "Outer.Ring.S02E10.720p.PCOK.WEB-DL-HAiKU",
-      "date": "2026-03-08",
-      "size_bytes": 42708494492,
-      "seeders": 32
-    },
-    {
-      "name": "Wild.Frontier.2025.1080p.BluRay.x264-MIXED",
-      "date": "2026-03-08",
-      "size_bytes": 8334926493,
-      "seeders": 183
-    },
-    {
-      "name": "Midnight.Protocol.2024.COMPLETE.BLURAY-JETSET",
-      "date": "2026-03-08",
-      "size_bytes": 6280835869,
-      "seeders": 56
-    },
-    {
-      "name": "Dark.Waters.Rising.2025.2160p.BluRay.REMUX-SWTYBLZ",
-      "date": "2026-03-08",
-      "size_bytes": 13831957636,
-      "seeders": 45
-    },
-    {
-      "name": "Night.Shift.S01E03.1080p.AMZN.WEB-DL-RARBG",
-      "date": "2026-03-08",
-      "size_bytes": 44469579959,
-      "seeders": 85
-    },
-    {
-      "name": "Razor.Edge.2024.1080p.BluRay.x264-decibeL",
-      "date": "2026-03-09",
-      "size_bytes": 2535020888,
-      "seeders": 186
-    },
-    {
-      "name": "The.Bureau.S01E07.720p.HMAX.WEB-DL-MIXED",
-      "date": "2026-03-09",
-      "size_bytes": 32138466007,
-      "seeders": 49
-    },
-    {
-      "name": "Steel.Rain.2025.720p.BluRay.x264-JETSET",
-      "date": "2026-03-09",
-      "size_bytes": 1691198011,
-      "seeders": 125
-    },
-    {
-      "name": "Deadlock.S03E01.720p.AMZN.WEB-DL-SWTYBLZ",
-      "date": "2026-03-09",
-      "size_bytes": 15660914278,
-      "seeders": 162
-    },
-    {
-      "name": "Wild.Frontier.2025.1080p.BluRay.x264-JETSET",
-      "date": "2026-03-09",
-      "size_bytes": 2130054072,
-      "seeders": 54
-    },
-    {
-      "name": "Zero.Hour.2024.2160p.WEB.H265-CMRG",
-      "date": "2026-03-09",
-      "size_bytes": 293128607,
-      "seeders": 169
-    },
-    {
-      "name": "Steel.Rain.2025.720p.BluRay.x264-decibeL",
-      "date": "2026-03-09",
-      "size_bytes": 342139194,
-      "seeders": 70
-    },
-    {
-      "name": "Echo.Valley.S03E02.1080p.AMZN.WEB-DL.DDP5.1-TEPES",
-      "date": "2026-03-09",
-      "size_bytes": 12015587558,
-      "seeders": 77
-    },
-    {
-      "name": "Ember.S04E05.1080p.AMZN.WEB-DL.DDP5.1-KODO",
-      "date": "2026-03-09",
-      "size_bytes": 3548321099,
-      "seeders": 175
-    },
-    {
-      "name": "Midnight.Protocol.2024.COMPLETE.BLURAY-FLUX",
-      "date": "2026-03-10",
-      "size_bytes": 42222300150,
-      "seeders": 19
-    },
-    {
-      "name": "The.Divide.2025.1080p.AMZN.WEB-DL.DDP5.1-NTFY",
-      "date": "2026-03-10",
-      "size_bytes": 5325220024,
-      "seeders": 94
-    },
-    {
-      "name": "Apex.Predator.2025.1080p.BluRay.REMUX-LAZYCUNTS",
-      "date": "2026-03-10",
-      "size_bytes": 2119406372,
-      "seeders": 168
-    },
-    {
-      "name": "Code.Black.S03E09.720p.WEB-DL.x265-HONE",
-      "date": "2026-03-10",
-      "size_bytes": 1481476222,
-      "seeders": 108
-    },
-    {
-      "name": "Crossfire.S04E09.720p.WEB-DL.x265-RARBG",
-      "date": "2026-03-10",
-      "size_bytes": 4087800034,
-      "seeders": 179
-    },
-    {
-      "name": "Overdrive.S03E11.720p.AMZN.WEB-DL-FLUX",
-      "date": "2026-03-10",
-      "size_bytes": 4295763721,
-      "seeders": 198
-    },
-    {
-      "name": "Overdrive.S03E11.720p.AMZN.WEB-DL-HAiKU",
-      "date": "2026-03-10",
-      "size_bytes": 24776590697,
-      "seeders": 120
-    },
-    {
-      "name": "Firewall.2025.2160p.BluRay.x265-SWTYBLZ",
-      "date": "2026-03-10",
-      "size_bytes": 8376390933,
-      "seeders": 51
-    },
-    {
-      "name": "Phantom.Thread.Remastered.2025.1080p.BluRay-APEX",
-      "date": "2026-03-10",
-      "size_bytes": 32220712426,
-      "seeders": 153
-    },
-    {
-      "name": "Gridlock.S02E08.720p.WEB-DL.x264-BTN",
-      "date": "2026-03-11",
-      "size_bytes": 28229117327,
-      "seeders": 6
-    },
-    {
-      "name": "Riptide.S02E01.1080p.DSNP.WEB-DL.DDP5.1-GGWP",
-      "date": "2026-03-11",
-      "size_bytes": 27403576662,
-      "seeders": 138
-    },
-    {
-      "name": "The.Architects.2025.1080p.BluRay.Remux.AVC-GGEZ",
-      "date": "2026-03-11",
-      "size_bytes": 793005565,
-      "seeders": 189
-    },
-    {
-      "name": "Deep.Currents.S01E01-E03.1080p.AMZN.WEB-DL-SIGMA",
-      "date": "2026-03-11",
-      "size_bytes": 3054764156,
-      "seeders": 129
-    },
-    {
-      "name": "Crimson.Sky.S04E11.1080p.WEB-DL.DDP5.1-APEX",
-      "date": "2026-03-11",
-      "size_bytes": 1584411297,
-      "seeders": 88
-    },
-    {
-      "name": "Under.The.Wire.S01E05.720p.HMAX.WEB-DL-LAZYCUNTS",
-      "date": "2026-03-11",
-      "size_bytes": 7183376564,
-      "seeders": 192
-    },
-    {
-      "name": "Storm.Chaser.2025.1080p.BluRay.x264-decibeL",
-      "date": "2026-03-11",
-      "size_bytes": 1484803316,
-      "seeders": 60
-    },
-    {
-      "name": "Shadow.Play.2025.2160p.WEB-DL.DDP5.1-FGT",
-      "date": "2026-03-12",
-      "size_bytes": 9933689658,
-      "seeders": 116
-    },
-    {
-      "name": "Ember.S04E05.1080p.AMZN.WEB-DL.DDP5.1-GECKOS",
-      "date": "2026-03-12",
-      "size_bytes": 120637860,
-      "seeders": 121
-    },
-    {
-      "name": "Riptide.S02E01.1080p.DSNP.WEB-DL.DDP5.1-HAiKU",
-      "date": "2026-03-12",
-      "size_bytes": 4225391545,
-      "seeders": 192
-    },
-    {
-      "name": "Gravity.Well.2025.720p.BluRay.x264-EDITH",
-      "date": "2026-03-12",
-      "size_bytes": 681524624,
-      "seeders": 63
-    },
-    {
-      "name": "Rising.Tides.S02E04.1080p.DSNP.WEB-DL-SWTYBLZ",
-      "date": "2026-03-12",
-      "size_bytes": 566660827,
-      "seeders": 16
-    },
-    {
-      "name": "Apex.Predator.2025.1080p.BluRay.REMUX-HANDJOB",
-      "date": "2026-03-12",
-      "size_bytes": 1774691526,
-      "seeders": 88
-    },
-    {
-      "name": "Shadow.Play.2025.2160p.WEB-DL.DDP5.1-GGEZ",
-      "date": "2026-03-12",
-      "size_bytes": 1487292854,
-      "seeders": 60
-    },
-    {
-      "name": "The.Quiet.Ones.2025.1080p.WEB-DL.DD5.1.H.264-NTb",
-      "date": "2026-03-13",
-      "size_bytes": 1263536411,
-      "seeders": 184
-    },
-    {
-      "name": "Razor.Edge.2024.1080p.BluRay.x264-BTN",
-      "date": "2026-03-13",
-      "size_bytes": 4871250478,
-      "seeders": 200
-    },
-    {
-      "name": "Code.Black.S03E09.720p.WEB-DL.x265-decibeL",
-      "date": "2026-03-13",
-      "size_bytes": 1902113292,
-      "seeders": 58
-    },
-    {
-      "name": "The.Architects.2025.1080p.BluRay.Remux.AVC-FGT",
-      "date": "2026-03-13",
-      "size_bytes": 2047758494,
-      "seeders": 78
-    },
-    {
-      "name": "Zero.Hour.2024.2160p.WEB.H265-NOGROUP",
-      "date": "2026-03-13",
-      "size_bytes": 1850647712,
-      "seeders": 13
-    },
-    {
-      "name": "The.Architects.2025.1080p.BluRay.Remux.AVC-LAZYCUNTS",
-      "date": "2026-03-13",
-      "size_bytes": 1858805113,
-      "seeders": 95
-    },
-    {
-      "name": "Gravity.Well.2025.720p.BluRay.x264-LAZYCUNTS",
-      "date": "2026-03-13",
-      "size_bytes": 5280326375,
-      "seeders": 128
-    },
-    {
-      "name": "The.Expanse.Reboot.S01E01.1080p.PMTP.WEB-DL-JETSET",
-      "date": "2026-03-13",
-      "size_bytes": 6979033700,
-      "seeders": 50
-    },
-    {
-      "name": "Under.The.Wire.S01E05.720p.HMAX.WEB-DL-HAiKU",
-      "date": "2026-03-13",
-      "size_bytes": 7883215117,
-      "seeders": 64
-    },
-    {
-      "name": "Deadlock.S03E01.720p.AMZN.WEB-DL-HAiKU",
-      "date": "2026-03-14",
-      "size_bytes": 1967693355,
-      "seeders": 147
-    },
-    {
-      "name": "Vanguard.S03E06.1080p.WEB-DL.DD5.1-SIGMA",
-      "date": "2026-03-14",
-      "size_bytes": 30936998381,
-      "seeders": 83
-    },
-    {
-      "name": "Breaking.Limits.S03E08.720p.WEB-DL.x265-HAiKU",
-      "date": "2026-03-14",
-      "size_bytes": 3938130842,
-      "seeders": 176
-    },
-    {
-      "name": "Midnight.Protocol.2024.COMPLETE.BLURAY-NOGROUP",
-      "date": "2026-03-14",
-      "size_bytes": 259168746,
-      "seeders": 154
-    },
-    {
-      "name": "Deadlock.S03E01.720p.AMZN.WEB-DL-PHOENiX",
-      "date": "2026-03-14",
-      "size_bytes": 5992623771,
-      "seeders": 50
-    },
-    {
-      "name": "Blackout.2025.2160p.WEB.H265-TEPES",
-      "date": "2026-03-14",
-      "size_bytes": 46169151699,
-      "seeders": 181
-    },
-    {
-      "name": "Storm.Chaser.2025.1080p.BluRay.x264-SWTYBLZ",
-      "date": "2026-03-14",
-      "size_bytes": 42138608709,
-      "seeders": 85
-    },
-    {
-      "name": "Phantom.Thread.Remastered.2025.1080p.BluRay-FLUX",
-      "date": "2026-03-14",
-      "size_bytes": 7467793240,
-      "seeders": 61
-    },
-    {
-      "name": "Frostbite.S01E09.720p.PCOK.WEB-DL-NOGROUP",
-      "date": "2026-03-15",
-      "size_bytes": 2319142763,
-      "seeders": 26
-    },
-    {
-      "name": "Breaking.Limits.S03E08.720p.WEB-DL.x265-HONE",
-      "date": "2026-03-15",
-      "size_bytes": 2118735373,
-      "seeders": 48
-    },
-    {
-      "name": "Ghost.Signal.S05E01.1080p.DSNP.WEB-DL.DDP5.1-EDITH",
-      "date": "2026-03-15",
-      "size_bytes": 9379155948,
-      "seeders": 37
-    },
-    {
-      "name": "Fast.Track.2025.720p.BluRay.x264-NTb",
-      "date": "2026-03-15",
-      "size_bytes": 129751523,
-      "seeders": 154
-    },
-    {
-      "name": "Razor.Edge.2024.1080p.BluRay.x264-HONE",
-      "date": "2026-03-15",
-      "size_bytes": 45358756890,
-      "seeders": 169
-    },
-    {
-      "name": "The.Watchers.S02E06.720p.WEB-DL.x264-NTFY",
-      "date": "2026-03-15",
-      "size_bytes": 1012001074,
-      "seeders": 85
-    },
-    {
-      "name": "Flashpoint.S04E03.1080p.BluRay.x264-CMRG",
-      "date": "2026-03-15",
-      "size_bytes": 939759693,
+      "size_bytes": 43768289658,
       "seeders": 46
     },
     {
-      "name": "Code.Black.S03E09.720p.WEB-DL.x265-NTFY",
-      "date": "2026-03-15",
-      "size_bytes": 117184672,
-      "seeders": 78
+      "name": "Static.Bloom.S03E02.720p.PCOK.WEB-DL-HELIX",
+      "date": "2026-02-16",
+      "size_bytes": 5731075750,
+      "seeders": 8
     },
     {
-      "name": "The.Architects.2025.1080p.BluRay.Remux.AVC-SWTYBLZ",
-      "date": "2026-03-16",
-      "size_bytes": 23569116077,
-      "seeders": 160
+      "name": "The.Lost.Octave.2024.1080p.BluRay.x264-QUARRY",
+      "date": "2026-02-16",
+      "size_bytes": 10943145200,
+      "seeders": 27
     },
     {
-      "name": "Wild.Frontier.2025.1080p.BluRay.x264-SPARKS",
-      "date": "2026-03-16",
-      "size_bytes": 3051579323,
-      "seeders": 197
-    },
-    {
-      "name": "Glass.Kingdom.2025.720p.AMZN.WEB-DL-PHOENiX",
-      "date": "2026-03-16",
-      "size_bytes": 27968898387,
-      "seeders": 100
-    },
-    {
-      "name": "Solar.Winds.S02E12.PROPER.720p.WEB.H264-FraMeSToR",
-      "date": "2026-03-16",
-      "size_bytes": 1403242771,
-      "seeders": 177
-    },
-    {
-      "name": "Zero.Hour.2024.2160p.WEB.H265-GGEZ",
-      "date": "2026-03-16",
-      "size_bytes": 7807704600,
-      "seeders": 36
-    },
-    {
-      "name": "Cold.Front.2025.1080p.WEB-DL.DD5.1-NTb",
-      "date": "2026-03-16",
-      "size_bytes": 9681992575,
-      "seeders": 16
-    },
-    {
-      "name": "Velocity.2025.720p.BluRay.x264-CMRG",
-      "date": "2026-03-16",
-      "size_bytes": 4933057794,
-      "seeders": 196
-    },
-    {
-      "name": "The.Haven.S01E06.1080p.NF.WEB-DL-SWTYBLZ",
-      "date": "2026-03-16",
-      "size_bytes": 8961375944,
-      "seeders": 104
-    },
-    {
-      "name": "The.Last.Adventure.2025.1080p.BluRay.x264-GGWP",
-      "date": "2026-03-16",
-      "size_bytes": 30624163980,
-      "seeders": 80
-    },
-    {
-      "name": "Solar.Winds.S02E12.PROPER.720p.WEB.H264-NTb",
-      "date": "2026-03-17",
-      "size_bytes": 337734384,
-      "seeders": 89
-    },
-    {
-      "name": "Crimson.Tide.Remastered.2025.1080p.BluRay.x264-HAiKU",
-      "date": "2026-03-17",
-      "size_bytes": 45103012582,
-      "seeders": 107
-    },
-    {
-      "name": "Gridlock.S02E08.720p.WEB-DL.x264-HAiKU",
-      "date": "2026-03-17",
-      "size_bytes": 307167431,
-      "seeders": 156
-    },
-    {
-      "name": "Phantom.Thread.Remastered.2025.1080p.BluRay-APEX",
-      "date": "2026-03-17",
-      "size_bytes": 6051303444,
-      "seeders": 94
-    },
-    {
-      "name": "The.Reckoning.2025.720p.BluRay.x264-APEX",
-      "date": "2026-03-17",
-      "size_bytes": 7390815700,
-      "seeders": 183
-    },
-    {
-      "name": "Night.Shift.S01E03.1080p.AMZN.WEB-DL-SMURF",
-      "date": "2026-03-17",
-      "size_bytes": 574317196,
-      "seeders": 110
-    },
-    {
-      "name": "Ember.S04E05.1080p.AMZN.WEB-DL.DDP5.1-GGEZ",
-      "date": "2026-03-17",
-      "size_bytes": 1391653869,
+      "name": "The.Last.Cipher.2024.1080p.BluRay.x264-TORQUE",
+      "date": "2026-02-16",
+      "size_bytes": 4521519026,
       "seeders": 51
     },
     {
-      "name": "Silver.Lining.2025.720p.WEB-DL.x264-GGEZ",
+      "name": "Crossfire.Station.S02E06.1080p.AMZN.WEB-DL.DDP5.1-CIPHER",
+      "date": "2026-02-16",
+      "size_bytes": 4901638743,
+      "seeders": 24
+    },
+    {
+      "name": "Burnt.Horizon.2025.1080p.BluRay.REMUX.HEVC-QUARRY",
+      "date": "2026-02-17",
+      "size_bytes": 28125153549,
+      "seeders": 7
+    },
+    {
+      "name": "Cold.Symmetry.2025.720p.BluRay.x265-RIVETS",
+      "date": "2026-02-17",
+      "size_bytes": 2151531223,
+      "seeders": 66
+    },
+    {
+      "name": "Carbon.Veil.2025.720p.BluRay.REMUX.HEVC-PRISM",
+      "date": "2026-02-17",
+      "size_bytes": 51770796155,
+      "seeders": 36
+    },
+    {
+      "name": "Phosphor.Blue.2025.1080p.BluRay.x265-PRISM",
+      "date": "2026-02-17",
+      "size_bytes": 7283366056,
+      "seeders": 14
+    },
+    {
+      "name": "Hollow.Crown.2024.2160p.BluRay.x265-FERRIC",
+      "date": "2026-02-17",
+      "size_bytes": 7561557300,
+      "seeders": 52
+    },
+    {
+      "name": "Circuit.Break.2025.2160p.BluRay.Remux.AVC.DTS-HD.MA-VERTEX",
+      "date": "2026-02-17",
+      "size_bytes": 53159875837,
+      "seeders": 37
+    },
+    {
+      "name": "Granite.Peak.2024.1080p.WEB-DL.DD5.1.H.264-STRATUM",
+      "date": "2026-02-17",
+      "size_bytes": 2748728483,
+      "seeders": 36
+    },
+    {
+      "name": "Zero.Latitude.2024.2160p.BluRay.REMUX.HEVC-NEXUS",
+      "date": "2026-02-18",
+      "size_bytes": 30500409031,
+      "seeders": 22
+    },
+    {
+      "name": "Burnt.Horizon.2024.2160p.BluRay.REMUX.HEVC-ALLOY",
+      "date": "2026-02-18",
+      "size_bytes": 19378619266,
+      "seeders": 49
+    },
+    {
+      "name": "The.Paper.Kingdom.2024.720p.BluRay.x265-RIVETS",
+      "date": "2026-02-18",
+      "size_bytes": 4867116918,
+      "seeders": 13
+    },
+    {
+      "name": "Frostbound.2024.720p.WEB-DL.DDP5.1-ALLOY",
+      "date": "2026-02-18",
+      "size_bytes": 5804182187,
+      "seeders": 70
+    },
+    {
+      "name": "Phosphor.Blue.2024.2160p.BluRay.Remux.AVC.DTS-HD.MA-LATTICE",
+      "date": "2026-02-18",
+      "size_bytes": 35241961702,
+      "seeders": 54
+    },
+    {
+      "name": "Carbon.Veil.2025.1080p.WEB-DL.DDP5.1.H.265-IONIC",
+      "date": "2026-02-18",
+      "size_bytes": 1319709079,
+      "seeders": 31
+    },
+    {
+      "name": "Deep.Current.S05E09.720p.DSNP.WEB-DL.DDP5.1-TORQUE",
+      "date": "2026-02-18",
+      "size_bytes": 330884438,
+      "seeders": 10
+    },
+    {
+      "name": "The.Signal.Path.S03E02.2160p.AMZN.WEB-DL.DDP5.1-CIPHER",
+      "date": "2026-02-19",
+      "size_bytes": 3173237671,
+      "seeders": 30
+    },
+    {
+      "name": "The.Broken.Almanac.2025.720p.BluRay.Remux.AVC.DTS-HD.MA-ALLOY",
+      "date": "2026-02-19",
+      "size_bytes": 44237976989,
+      "seeders": 27
+    },
+    {
+      "name": "Greyline.S03E07.1080p.PCOK.WEB-DL-PULSAR",
+      "date": "2026-02-19",
+      "size_bytes": 722701550,
+      "seeders": 54
+    },
+    {
+      "name": "The.Obsidian.Gate.2024.720p.BluRay.x265-QUARRY",
+      "date": "2026-02-19",
+      "size_bytes": 2726780541,
+      "seeders": 57
+    },
+    {
+      "name": "Subterranea.S02E02.1080p.DSNP.WEB-DL.DDP5.1-HELIX",
+      "date": "2026-02-19",
+      "size_bytes": 4812242520,
+      "seeders": 72
+    },
+    {
+      "name": "Cobalt.Season.2024.720p.WEB-DL.DD5.1.H.264-ALLOY",
+      "date": "2026-02-20",
+      "size_bytes": 2867418686,
+      "seeders": 54
+    },
+    {
+      "name": "Burnt.Horizon.2025.720p.WEB-DL.DD5.1.H.264-CIPHER",
+      "date": "2026-02-20",
+      "size_bytes": 8467072205,
+      "seeders": 39
+    },
+    {
+      "name": "The.Broken.Almanac.2025.720p.BluRay.x265-RADIX",
+      "date": "2026-02-20",
+      "size_bytes": 9641118422,
+      "seeders": 72
+    },
+    {
+      "name": "Blind.Frequency.S01E01.2160p.PCOK.WEB-DL-NEXUS",
+      "date": "2026-02-20",
+      "size_bytes": 2581169403,
+      "seeders": 10
+    },
+    {
+      "name": "Crimson.Meridian.2024.720p.WEB-DL.DDP5.1.H.265-FORGE",
+      "date": "2026-02-20",
+      "size_bytes": 6105160342,
+      "seeders": 18
+    },
+    {
+      "name": "Last.Transmission.S01E10.720p.PCOK.WEB-DL-RIVETS",
+      "date": "2026-02-21",
+      "size_bytes": 5953765439,
+      "seeders": 36
+    },
+    {
+      "name": "Blind.Frequency.S02E05.1080p.AMZN.WEB-DL.DDP5.1-RADIX",
+      "date": "2026-02-21",
+      "size_bytes": 2263764597,
+      "seeders": 12
+    },
+    {
+      "name": "Last.Transmission.S05E02.720p.DSNP.WEB-DL.DDP5.1-LATTICE",
+      "date": "2026-02-21",
+      "size_bytes": 2472758220,
+      "seeders": 19
+    },
+    {
+      "name": "Frostbound.2024.1080p.BluRay.REMUX.HEVC-STRATUM",
+      "date": "2026-02-21",
+      "size_bytes": 54954006886,
+      "seeders": 70
+    },
+    {
+      "name": "Narrow.Gauge.S03E11.720p.AMZN.WEB-DL.DDP5.1-CIPHER",
+      "date": "2026-02-21",
+      "size_bytes": 5090729644,
+      "seeders": 16
+    },
+    {
+      "name": "Silent.Fracture.2025.1080p.WEB-DL.DDP5.1.H.265-LATTICE",
+      "date": "2026-02-21",
+      "size_bytes": 8177088167,
+      "seeders": 29
+    },
+    {
+      "name": "Lunar.Descent.2025.1080p.BluRay.Remux.AVC.DTS-HD.MA-PULSAR",
+      "date": "2026-02-21",
+      "size_bytes": 16188332531,
+      "seeders": 3
+    },
+    {
+      "name": "The.Frozen.Lattice.2025.720p.WEB-DL.DDP5.1-IONIC",
+      "date": "2026-02-22",
+      "size_bytes": 11759383961,
+      "seeders": 57
+    },
+    {
+      "name": "Hollow.Crown.2024.2160p.BluRay.x265-QUARRY",
+      "date": "2026-02-22",
+      "size_bytes": 23765639768,
+      "seeders": 73
+    },
+    {
+      "name": "Borderline.S01E05.1080p.WEB-DL.DDP5.1-BASALT",
+      "date": "2026-02-22",
+      "size_bytes": 5497239148,
+      "seeders": 34
+    },
+    {
+      "name": "The.Seventh.Signal.2025.2160p.WEB-DL.DDP5.1-PRISM",
+      "date": "2026-02-22",
+      "size_bytes": 6770791023,
+      "seeders": 25
+    },
+    {
+      "name": "Granite.Peak.2025.2160p.BluRay.Remux.AVC.DTS-HD.MA-TORQUE",
+      "date": "2026-02-22",
+      "size_bytes": 24735856395,
+      "seeders": 16
+    },
+    {
+      "name": "The.Last.Cipher.2025.720p.BluRay.x265-IONIC",
+      "date": "2026-02-22",
+      "size_bytes": 6596738787,
+      "seeders": 32
+    },
+    {
+      "name": "Static.Bloom.S04E06.1080p.WEB-DL.DDP5.1-CIPHER",
+      "date": "2026-02-23",
+      "size_bytes": 2487880715,
+      "seeders": 71
+    },
+    {
+      "name": "Deep.Current.S01E05.720p.DSNP.WEB-DL.DDP5.1-CIPHER",
+      "date": "2026-02-23",
+      "size_bytes": 464313410,
+      "seeders": 79
+    },
+    {
+      "name": "The.Broken.Almanac.2025.1080p.WEB-DL.DDP5.1.H.265-NEXUS",
+      "date": "2026-02-23",
+      "size_bytes": 5591662169,
+      "seeders": 76
+    },
+    {
+      "name": "The.Signal.Path.S04E01.2160p.DSNP.WEB-DL.DDP5.1-LATTICE",
+      "date": "2026-02-23",
+      "size_bytes": 1864319318,
+      "seeders": 11
+    },
+    {
+      "name": "Granite.Peak.2025.2160p.BluRay.Remux.AVC.DTS-HD.MA-HELIX",
+      "date": "2026-02-23",
+      "size_bytes": 50649612688,
+      "seeders": 42
+    },
+    {
+      "name": "Cold.Symmetry.2025.2160p.BluRay.x265-LATTICE",
+      "date": "2026-02-24",
+      "size_bytes": 21923733095,
+      "seeders": 25
+    },
+    {
+      "name": "The.Paper.Kingdom.2025.2160p.BluRay.Remux.AVC.DTS-HD.MA-VERTEX",
+      "date": "2026-02-24",
+      "size_bytes": 33485002167,
+      "seeders": 29
+    },
+    {
+      "name": "The.Blind.Current.2025.1080p.WEB-DL.DD5.1.H.264-IONIC",
+      "date": "2026-02-24",
+      "size_bytes": 3701796894,
+      "seeders": 68
+    },
+    {
+      "name": "Windscale.North.2024.2160p.BluRay.x264-RADIX",
+      "date": "2026-02-24",
+      "size_bytes": 24898329463,
+      "seeders": 45
+    },
+    {
+      "name": "Offshore.Protocol.S03E04.720p.AMZN.WEB-DL.DDP5.1-VERTEX",
+      "date": "2026-02-24",
+      "size_bytes": 498486416,
+      "seeders": 63
+    },
+    {
+      "name": "The.Ninth.Archive.2024.1080p.WEB-DL.DD5.1.H.264-RIVETS",
+      "date": "2026-02-24",
+      "size_bytes": 10225027564,
+      "seeders": 52
+    },
+    {
+      "name": "The.Copper.Wire.2024.2160p.WEB-DL.DDP5.1-VERTEX",
+      "date": "2026-02-24",
+      "size_bytes": 8803044105,
+      "seeders": 57
+    },
+    {
+      "name": "Daybreak.Protocol.S04E01.2160p.AMZN.WEB-DL.DDP5.1-HELIX",
+      "date": "2026-02-25",
+      "size_bytes": 2260488639,
+      "seeders": 62
+    },
+    {
+      "name": "Riven.Coast.2025.1080p.WEB-DL.DDP5.1.H.265-NEXUS",
+      "date": "2026-02-25",
+      "size_bytes": 10073512584,
+      "seeders": 63
+    },
+    {
+      "name": "Cobalt.Season.2024.2160p.BluRay.REMUX.HEVC-NEXUS",
+      "date": "2026-02-25",
+      "size_bytes": 33207422361,
+      "seeders": 59
+    },
+    {
+      "name": "The.Foundation.S02E05.1080p.HMAX.WEB-DL.DDP5.1-QUARRY",
+      "date": "2026-02-25",
+      "size_bytes": 646078411,
+      "seeders": 22
+    },
+    {
+      "name": "Borderline.S02E02.1080p.PCOK.WEB-DL-FULCRUM",
+      "date": "2026-02-25",
+      "size_bytes": 2630497115,
+      "seeders": 56
+    },
+    {
+      "name": "Greyline.S04E10.2160p.WEB-DL.DDP5.1-RIVETS",
+      "date": "2026-02-26",
+      "size_bytes": 1933724084,
+      "seeders": 3
+    },
+    {
+      "name": "The.Paper.Kingdom.2025.1080p.WEB-DL.DDP5.1.H.265-QUARRY",
+      "date": "2026-02-26",
+      "size_bytes": 4656070374,
+      "seeders": 65
+    },
+    {
+      "name": "Greyline.S04E01.1080p.HMAX.WEB-DL.DDP5.1-COBALT",
+      "date": "2026-02-26",
+      "size_bytes": 3410335359,
+      "seeders": 62
+    },
+    {
+      "name": "Saltwater.Edge.2024.1080p.WEB-DL.DDP5.1.H.265-RIVETS",
+      "date": "2026-02-26",
+      "size_bytes": 3647562279,
+      "seeders": 13
+    },
+    {
+      "name": "Vapor.Trail.2025.720p.BluRay.x264-CIPHER",
+      "date": "2026-02-26",
+      "size_bytes": 6723206003,
+      "seeders": 30
+    },
+    {
+      "name": "The.Outer.Ring.S03E07.1080p.WEB-DL.DDP5.1-ALLOY",
+      "date": "2026-02-27",
+      "size_bytes": 4678217862,
+      "seeders": 72
+    },
+    {
+      "name": "Crossfire.Station.S02E11.720p.BluRay.x264-PULSAR",
+      "date": "2026-02-27",
+      "size_bytes": 3539406957,
+      "seeders": 34
+    },
+    {
+      "name": "Deep.Current.S05E03.720p.AMZN.WEB-DL.DDP5.1-ALLOY",
+      "date": "2026-02-27",
+      "size_bytes": 3175303857,
+      "seeders": 75
+    },
+    {
+      "name": "Circuit.Break.2025.1080p.BluRay.x265-SOLDER",
+      "date": "2026-02-27",
+      "size_bytes": 4318871744,
+      "seeders": 42
+    },
+    {
+      "name": "Deep.Current.S03E10.2160p.PCOK.WEB-DL-COBALT",
+      "date": "2026-02-27",
+      "size_bytes": 1151819913,
+      "seeders": 78
+    },
+    {
+      "name": "The.Frozen.Lattice.2024.720p.WEB-DL.DDP5.1-RADIX",
+      "date": "2026-02-27",
+      "size_bytes": 4161393222,
+      "seeders": 47
+    },
+    {
+      "name": "Velvet.Thunder.2024.2160p.WEB-DL.DDP5.1-FULCRUM",
+      "date": "2026-02-28",
+      "size_bytes": 7105400301,
+      "seeders": 58
+    },
+    {
+      "name": "The.Frozen.Lattice.2025.2160p.BluRay.x265-FERRIC",
+      "date": "2026-02-28",
+      "size_bytes": 16383627929,
+      "seeders": 71
+    },
+    {
+      "name": "Circuit.Break.2025.2160p.WEB-DL.DDP5.1.H.265-CIPHER",
+      "date": "2026-02-28",
+      "size_bytes": 9014170428,
+      "seeders": 38
+    },
+    {
+      "name": "The.Copper.Wire.2025.2160p.WEB-DL.DDP5.1.H.265-COBALT",
+      "date": "2026-02-28",
+      "size_bytes": 6444812497,
+      "seeders": 66
+    },
+    {
+      "name": "The.Glass.Architect.2025.720p.BluRay.REMUX.HEVC-CIPHER",
+      "date": "2026-02-28",
+      "size_bytes": 33641613382,
+      "seeders": 79
+    },
+    {
+      "name": "Binary.Storm.2024.2160p.BluRay.x265-FORGE",
+      "date": "2026-02-28",
+      "size_bytes": 19630497379,
+      "seeders": 74
+    },
+    {
+      "name": "Flintlock.Road.2025.2160p.WEB-DL.DDP5.1-ALLOY",
+      "date": "2026-02-28",
+      "size_bytes": 5074059253,
+      "seeders": 40
+    },
+    {
+      "name": "The.Copper.Wire.2025.2160p.WEB-DL.DDP5.1.H.265-BASALT",
+      "date": "2026-03-01",
+      "size_bytes": 24212507507,
+      "seeders": 70
+    },
+    {
+      "name": "Narrow.Gauge.S03E06.2160p.PCOK.WEB-DL-CIPHER",
+      "date": "2026-03-01",
+      "size_bytes": 1616935719,
+      "seeders": 32
+    },
+    {
+      "name": "Static.Bloom.S03E02.2160p.DSNP.WEB-DL.DDP5.1-STRATUM",
+      "date": "2026-03-01",
+      "size_bytes": 1122662216,
+      "seeders": 64
+    },
+    {
+      "name": "The.Archive.S05E10.1080p.WEB-DL.DDP5.1-LATTICE",
+      "date": "2026-03-01",
+      "size_bytes": 1572368870,
+      "seeders": 49
+    },
+    {
+      "name": "Deep.Current.S05E03.1080p.WEB-DL.DDP5.1-PULSAR",
+      "date": "2026-03-01",
+      "size_bytes": 2676658660,
+      "seeders": 19
+    },
+    {
+      "name": "Nightshade.Valley.2024.720p.WEB-DL.DDP5.1.H.265-RADIX",
+      "date": "2026-03-02",
+      "size_bytes": 7111011808,
+      "seeders": 59
+    },
+    {
+      "name": "The.Signal.Path.S03E08.720p.WEB-DL.DDP5.1-COBALT",
+      "date": "2026-03-02",
+      "size_bytes": 2412035409,
+      "seeders": 76
+    },
+    {
+      "name": "Neon.Requiem.2024.720p.BluRay.Remux.AVC.DTS-HD.MA-RIVETS",
+      "date": "2026-03-02",
+      "size_bytes": 36256332794,
+      "seeders": 13
+    },
+    {
+      "name": "Hollow.Crown.2025.2160p.WEB-DL.DDP5.1.H.265-SOLDER",
+      "date": "2026-03-02",
+      "size_bytes": 20129333835,
+      "seeders": 60
+    },
+    {
+      "name": "The.Paper.Kingdom.2025.1080p.WEB-DL.DDP5.1.H.265-SOLDER",
+      "date": "2026-03-02",
+      "size_bytes": 9648621776,
+      "seeders": 15
+    },
+    {
+      "name": "Darkwater.Bay.2024.1080p.WEB-DL.DDP5.1-FORGE",
+      "date": "2026-03-02",
+      "size_bytes": 1474555072,
+      "seeders": 25
+    },
+    {
+      "name": "Burnt.Horizon.2024.1080p.WEB-DL.DD5.1.H.264-SOLDER",
+      "date": "2026-03-02",
+      "size_bytes": 7113226025,
+      "seeders": 7
+    },
+    {
+      "name": "The.Foundation.S04E02.2160p.AMZN.WEB-DL.DDP5.1-CIPHER",
+      "date": "2026-03-03",
+      "size_bytes": 4310075517,
+      "seeders": 57
+    },
+    {
+      "name": "Offshore.Protocol.S02E05.720p.WEB-DL.DDP5.1-PULSAR",
+      "date": "2026-03-03",
+      "size_bytes": 5307600232,
+      "seeders": 42
+    },
+    {
+      "name": "Pale.Meridian.2025.1080p.BluRay.x264-IONIC",
+      "date": "2026-03-03",
+      "size_bytes": 8052816758,
+      "seeders": 54
+    },
+    {
+      "name": "Zero.Latitude.2025.1080p.BluRay.x264-SOLDER",
+      "date": "2026-03-03",
+      "size_bytes": 11245483582,
+      "seeders": 44
+    },
+    {
+      "name": "Iron.Cascade.2024.720p.WEB-DL.DDP5.1-RIVETS",
+      "date": "2026-03-03",
+      "size_bytes": 8622944679,
+      "seeders": 76
+    },
+    {
+      "name": "The.Glass.Architect.2025.2160p.WEB-DL.DDP5.1-IONIC",
+      "date": "2026-03-04",
+      "size_bytes": 17524437248,
+      "seeders": 26
+    },
+    {
+      "name": "Phosphor.Blue.2025.720p.WEB-DL.DD5.1.H.264-BASALT",
+      "date": "2026-03-04",
+      "size_bytes": 6848809022,
+      "seeders": 44
+    },
+    {
+      "name": "Burnt.Horizon.2025.1080p.WEB-DL.DDP5.1-ALLOY",
+      "date": "2026-03-04",
+      "size_bytes": 10627820607,
+      "seeders": 54
+    },
+    {
+      "name": "Riven.Coast.2024.1080p.BluRay.x264-FULCRUM",
+      "date": "2026-03-04",
+      "size_bytes": 6179012098,
+      "seeders": 17
+    },
+    {
+      "name": "Cold.Symmetry.2024.2160p.BluRay.Remux.AVC.DTS-HD.MA-QUARRY",
+      "date": "2026-03-04",
+      "size_bytes": 42753977085,
+      "seeders": 9
+    },
+    {
+      "name": "Saltwater.Edge.2025.2160p.WEB-DL.DD5.1.H.264-PULSAR",
+      "date": "2026-03-05",
+      "size_bytes": 14464210580,
+      "seeders": 73
+    },
+    {
+      "name": "The.Foundation.S04E12.1080p.WEB-DL.DDP5.1-VERTEX",
+      "date": "2026-03-05",
+      "size_bytes": 5622742076,
+      "seeders": 23
+    },
+    {
+      "name": "Deep.Current.S05E07.720p.AMZN.WEB-DL.DDP5.1-HELIX",
+      "date": "2026-03-05",
+      "size_bytes": 5099480547,
+      "seeders": 22
+    },
+    {
+      "name": "Sterling.Divide.2025.2160p.WEB-DL.DDP5.1-CIPHER",
+      "date": "2026-03-05",
+      "size_bytes": 11323135819,
+      "seeders": 61
+    },
+    {
+      "name": "Shattered.Prism.2024.2160p.WEB-DL.DDP5.1.H.265-PRISM",
+      "date": "2026-03-05",
+      "size_bytes": 8710967433,
+      "seeders": 38
+    },
+    {
+      "name": "Daybreak.Protocol.S03E01.1080p.BluRay.x264-RADIX",
+      "date": "2026-03-06",
+      "size_bytes": 3134423953,
+      "seeders": 22
+    },
+    {
+      "name": "The.Amber.Protocol.2025.1080p.WEB-DL.DDP5.1.H.265-QUARRY",
+      "date": "2026-03-06",
+      "size_bytes": 6715072151,
+      "seeders": 44
+    },
+    {
+      "name": "Flintlock.Road.2024.2160p.WEB-DL.DD5.1.H.264-TORQUE",
+      "date": "2026-03-06",
+      "size_bytes": 6764265618,
+      "seeders": 43
+    },
+    {
+      "name": "Sterling.Divide.2025.1080p.WEB-DL.DDP5.1-PRISM",
+      "date": "2026-03-06",
+      "size_bytes": 958998032,
+      "seeders": 67
+    },
+    {
+      "name": "Granite.Peak.2024.1080p.BluRay.x264-NEXUS",
+      "date": "2026-03-06",
+      "size_bytes": 9005284543,
+      "seeders": 4
+    },
+    {
+      "name": "The.Iron.Strand.2024.720p.WEB-DL.DD5.1.H.264-CIPHER",
+      "date": "2026-03-06",
+      "size_bytes": 10844044017,
+      "seeders": 53
+    },
+    {
+      "name": "Blind.Frequency.S05E07.1080p.BluRay.x264-ALLOY",
+      "date": "2026-03-07",
+      "size_bytes": 4749152758,
+      "seeders": 11
+    },
+    {
+      "name": "The.Foundation.S02E12.720p.PCOK.WEB-DL-HELIX",
+      "date": "2026-03-07",
+      "size_bytes": 731675310,
+      "seeders": 24
+    },
+    {
+      "name": "Iron.Cascade.2024.1080p.BluRay.Remux.AVC.DTS-HD.MA-PULSAR",
+      "date": "2026-03-07",
+      "size_bytes": 37734841499,
+      "seeders": 50
+    },
+    {
+      "name": "The.Copper.Wire.2025.2160p.WEB-DL.DDP5.1-STRATUM",
+      "date": "2026-03-07",
+      "size_bytes": 10025041511,
+      "seeders": 13
+    },
+    {
+      "name": "Shattered.Prism.2024.1080p.WEB-DL.DDP5.1.H.265-PRISM",
+      "date": "2026-03-07",
+      "size_bytes": 6092209057,
+      "seeders": 35
+    },
+    {
+      "name": "Dusk.Pattern.2024.1080p.BluRay.REMUX.HEVC-QUARRY",
+      "date": "2026-03-07",
+      "size_bytes": 19973467443,
+      "seeders": 59
+    },
+    {
+      "name": "The.Blind.Current.2025.2160p.WEB-DL.DD5.1.H.264-CIPHER",
+      "date": "2026-03-07",
+      "size_bytes": 10592569984,
+      "seeders": 52
+    },
+    {
+      "name": "The.Outer.Ring.S05E06.2160p.HMAX.WEB-DL.DDP5.1-RADIX",
+      "date": "2026-03-08",
+      "size_bytes": 4689197149,
+      "seeders": 53
+    },
+    {
+      "name": "The.Archive.S01E10.2160p.PCOK.WEB-DL-RADIX",
+      "date": "2026-03-08",
+      "size_bytes": 5583318270,
+      "seeders": 48
+    },
+    {
+      "name": "Static.Bloom.S05E05.2160p.BluRay.x264-PRISM",
+      "date": "2026-03-08",
+      "size_bytes": 2998305085,
+      "seeders": 8
+    },
+    {
+      "name": "Subterranea.S01E10.1080p.BluRay.x264-PRISM",
+      "date": "2026-03-08",
+      "size_bytes": 4982087190,
+      "seeders": 40
+    },
+    {
+      "name": "Greyline.S02E04.720p.DSNP.WEB-DL.DDP5.1-BASALT",
+      "date": "2026-03-08",
+      "size_bytes": 4223396682,
+      "seeders": 24
+    },
+    {
+      "name": "The.Long.Winter.S03E12.1080p.WEB-DL.DDP5.1-IONIC",
+      "date": "2026-03-08",
+      "size_bytes": 4435595227,
+      "seeders": 21
+    },
+    {
+      "name": "The.Broken.Almanac.2025.2160p.BluRay.REMUX.HEVC-FORGE",
+      "date": "2026-03-09",
+      "size_bytes": 44165756964,
+      "seeders": 4
+    },
+    {
+      "name": "Northern.Drift.S04E06.2160p.BluRay.x264-CIPHER",
+      "date": "2026-03-09",
+      "size_bytes": 2810666490,
+      "seeders": 50
+    },
+    {
+      "name": "Offshore.Protocol.S04E01.2160p.DSNP.WEB-DL.DDP5.1-FULCRUM",
+      "date": "2026-03-09",
+      "size_bytes": 5545732172,
+      "seeders": 11
+    },
+    {
+      "name": "Circuit.Break.2025.2160p.WEB-DL.DD5.1.H.264-HELIX",
+      "date": "2026-03-09",
+      "size_bytes": 5600337712,
+      "seeders": 7
+    },
+    {
+      "name": "The.Long.Winter.S01E02.720p.DSNP.WEB-DL.DDP5.1-PRISM",
+      "date": "2026-03-09",
+      "size_bytes": 1969221121,
+      "seeders": 50
+    },
+    {
+      "name": "Flintlock.Road.2025.2160p.WEB-DL.DDP5.1-PRISM",
+      "date": "2026-03-10",
+      "size_bytes": 21687725149,
+      "seeders": 15
+    },
+    {
+      "name": "Saltwater.Edge.2025.1080p.BluRay.x264-BASALT",
+      "date": "2026-03-10",
+      "size_bytes": 6028133486,
+      "seeders": 59
+    },
+    {
+      "name": "Velvet.Thunder.2024.2160p.BluRay.REMUX.HEVC-QUARRY",
+      "date": "2026-03-10",
+      "size_bytes": 39244346528,
+      "seeders": 10
+    },
+    {
+      "name": "Parallax.Shift.2024.1080p.BluRay.x264-LATTICE",
+      "date": "2026-03-10",
+      "size_bytes": 891729577,
+      "seeders": 45
+    },
+    {
+      "name": "Borderline.S05E04.720p.DSNP.WEB-DL.DDP5.1-LATTICE",
+      "date": "2026-03-10",
+      "size_bytes": 2818496186,
+      "seeders": 32
+    },
+    {
+      "name": "Borderline.S05E01.1080p.AMZN.WEB-DL.DDP5.1-PRISM",
+      "date": "2026-03-10",
+      "size_bytes": 2620207740,
+      "seeders": 25
+    },
+    {
+      "name": "Deep.Current.S02E01.1080p.AMZN.WEB-DL.DDP5.1-RIVETS",
+      "date": "2026-03-10",
+      "size_bytes": 1690587865,
+      "seeders": 25
+    },
+    {
+      "name": "Greyline.S05E02.2160p.WEB-DL.DDP5.1-ALLOY",
+      "date": "2026-03-11",
+      "size_bytes": 2849776132,
+      "seeders": 60
+    },
+    {
+      "name": "Saltwater.Edge.2024.2160p.BluRay.Remux.AVC.DTS-HD.MA-NEXUS",
+      "date": "2026-03-11",
+      "size_bytes": 46360263481,
+      "seeders": 6
+    },
+    {
+      "name": "The.Long.Winter.S04E07.2160p.WEB-DL.DDP5.1-ALLOY",
+      "date": "2026-03-11",
+      "size_bytes": 2205085701,
+      "seeders": 13
+    },
+    {
+      "name": "Borderline.S01E03.1080p.DSNP.WEB-DL.DDP5.1-RIVETS",
+      "date": "2026-03-11",
+      "size_bytes": 1696660850,
+      "seeders": 79
+    },
+    {
+      "name": "Circuit.Break.2025.720p.BluRay.Remux.AVC.DTS-HD.MA-HELIX",
+      "date": "2026-03-11",
+      "size_bytes": 52662408155,
+      "seeders": 30
+    },
+    {
+      "name": "Ember.Fall.2025.1080p.BluRay.Remux.AVC.DTS-HD.MA-IONIC",
+      "date": "2026-03-11",
+      "size_bytes": 42482336873,
+      "seeders": 15
+    },
+    {
+      "name": "Dusk.Pattern.2025.1080p.BluRay.x265-ALLOY",
+      "date": "2026-03-12",
+      "size_bytes": 1088335378,
+      "seeders": 13
+    },
+    {
+      "name": "Northern.Drift.S03E03.2160p.WEB-DL.DDP5.1-RIVETS",
+      "date": "2026-03-12",
+      "size_bytes": 2712411754,
+      "seeders": 18
+    },
+    {
+      "name": "Dusk.Pattern.2025.2160p.BluRay.x264-RADIX",
+      "date": "2026-03-12",
+      "size_bytes": 16168676308,
+      "seeders": 48
+    },
+    {
+      "name": "Daybreak.Protocol.S02E03.2160p.PCOK.WEB-DL-TORQUE",
+      "date": "2026-03-12",
+      "size_bytes": 3939017775,
+      "seeders": 47
+    },
+    {
+      "name": "Velvet.Thunder.2024.1080p.WEB-DL.DDP5.1.H.265-TORQUE",
+      "date": "2026-03-12",
+      "size_bytes": 8561956684,
+      "seeders": 74
+    },
+    {
+      "name": "Saltwater.Edge.2024.2160p.WEB-DL.DDP5.1-CIPHER",
+      "date": "2026-03-12",
+      "size_bytes": 9419320278,
+      "seeders": 37
+    },
+    {
+      "name": "Granite.Peak.2025.720p.BluRay.x265-PRISM",
+      "date": "2026-03-13",
+      "size_bytes": 11822265175,
+      "seeders": 54
+    },
+    {
+      "name": "Deep.Current.S01E12.2160p.AMZN.WEB-DL.DDP5.1-COBALT",
+      "date": "2026-03-13",
+      "size_bytes": 2103166816,
+      "seeders": 46
+    },
+    {
+      "name": "The.Foundation.S03E10.2160p.WEB-DL.DDP5.1-PULSAR",
+      "date": "2026-03-13",
+      "size_bytes": 968210614,
+      "seeders": 9
+    },
+    {
+      "name": "Binary.Storm.2025.2160p.WEB-DL.DD5.1.H.264-ALLOY",
+      "date": "2026-03-13",
+      "size_bytes": 20492273485,
+      "seeders": 56
+    },
+    {
+      "name": "Daybreak.Protocol.S01E06.1080p.WEB-DL.DDP5.1-RADIX",
+      "date": "2026-03-13",
+      "size_bytes": 2847492192,
+      "seeders": 70
+    },
+    {
+      "name": "The.Last.Cipher.2024.1080p.WEB-DL.DDP5.1.H.265-PULSAR",
+      "date": "2026-03-13",
+      "size_bytes": 833015788,
+      "seeders": 41
+    },
+    {
+      "name": "The.Ninth.Archive.2024.1080p.BluRay.REMUX.HEVC-FULCRUM",
+      "date": "2026-03-13",
+      "size_bytes": 15515328854,
+      "seeders": 66
+    },
+    {
+      "name": "Vapor.Trail.2025.2160p.WEB-DL.DDP5.1-TORQUE",
+      "date": "2026-03-14",
+      "size_bytes": 24328479595,
+      "seeders": 48
+    },
+    {
+      "name": "The.Signal.Path.S04E01.1080p.WEB-DL.DDP5.1-FULCRUM",
+      "date": "2026-03-14",
+      "size_bytes": 2772866768,
+      "seeders": 76
+    },
+    {
+      "name": "The.Frozen.Lattice.2025.1080p.BluRay.x264-COBALT",
+      "date": "2026-03-14",
+      "size_bytes": 2194868732,
+      "seeders": 61
+    },
+    {
+      "name": "Velvet.Thunder.2024.1080p.BluRay.Remux.AVC.DTS-HD.MA-HELIX",
+      "date": "2026-03-14",
+      "size_bytes": 41814840073,
+      "seeders": 78
+    },
+    {
+      "name": "Crimson.Meridian.2025.1080p.WEB-DL.DDP5.1-FULCRUM",
+      "date": "2026-03-14",
+      "size_bytes": 6046612046,
+      "seeders": 24
+    },
+    {
+      "name": "Northern.Drift.S05E09.720p.HMAX.WEB-DL.DDP5.1-BASALT",
+      "date": "2026-03-14",
+      "size_bytes": 3800557310,
+      "seeders": 33
+    },
+    {
+      "name": "Threadbare.S02E03.2160p.AMZN.WEB-DL.DDP5.1-FORGE",
+      "date": "2026-03-14",
+      "size_bytes": 5355804102,
+      "seeders": 66
+    },
+    {
+      "name": "Cobalt.Season.2025.2160p.WEB-DL.DDP5.1.H.265-SOLDER",
+      "date": "2026-03-15",
+      "size_bytes": 10652773522,
+      "seeders": 59
+    },
+    {
+      "name": "Subterranea.S03E05.2160p.WEB-DL.DDP5.1-BASALT",
+      "date": "2026-03-15",
+      "size_bytes": 2478995337,
+      "seeders": 42
+    },
+    {
+      "name": "The.Last.Cipher.2024.1080p.BluRay.Remux.AVC.DTS-HD.MA-RADIX",
+      "date": "2026-03-15",
+      "size_bytes": 22968424359,
+      "seeders": 79
+    },
+    {
+      "name": "Circuit.Break.2024.1080p.BluRay.Remux.AVC.DTS-HD.MA-RIVETS",
+      "date": "2026-03-15",
+      "size_bytes": 30684522456,
+      "seeders": 44
+    },
+    {
+      "name": "Zero.Latitude.2024.720p.WEB-DL.DD5.1.H.264-HELIX",
+      "date": "2026-03-15",
+      "size_bytes": 8691474909,
+      "seeders": 13
+    },
+    {
+      "name": "The.Glass.Architect.2024.720p.WEB-DL.DDP5.1-IONIC",
+      "date": "2026-03-15",
+      "size_bytes": 9351219870,
+      "seeders": 70
+    },
+    {
+      "name": "Velvet.Thunder.2025.1080p.WEB-DL.DD5.1.H.264-FERRIC",
+      "date": "2026-03-16",
+      "size_bytes": 8421268224,
+      "seeders": 79
+    },
+    {
+      "name": "Blind.Frequency.S01E06.720p.DSNP.WEB-DL.DDP5.1-COBALT",
+      "date": "2026-03-16",
+      "size_bytes": 1520401982,
+      "seeders": 80
+    },
+    {
+      "name": "Granite.Peak.2024.2160p.WEB-DL.DDP5.1-PRISM",
+      "date": "2026-03-16",
+      "size_bytes": 17527330627,
+      "seeders": 42
+    },
+    {
+      "name": "Flintlock.Road.2025.720p.WEB-DL.DDP5.1.H.265-FORGE",
+      "date": "2026-03-16",
+      "size_bytes": 10719578671,
+      "seeders": 51
+    },
+    {
+      "name": "Granite.Peak.2024.2160p.WEB-DL.DDP5.1-NEXUS",
+      "date": "2026-03-16",
+      "size_bytes": 20764488651,
+      "seeders": 68
+    },
+    {
+      "name": "Velvet.Thunder.2025.720p.BluRay.x265-FULCRUM",
+      "date": "2026-03-16",
+      "size_bytes": 2888517710,
+      "seeders": 31
+    },
+    {
+      "name": "Silent.Fracture.2024.1080p.BluRay.Remux.AVC.DTS-HD.MA-HELIX",
+      "date": "2026-03-16",
+      "size_bytes": 17261436148,
+      "seeders": 46
+    },
+    {
+      "name": "The.Outer.Ring.S02E03.720p.BluRay.x264-SOLDER",
       "date": "2026-03-17",
-      "size_bytes": 5744641555,
-      "seeders": 133
+      "size_bytes": 5305952594,
+      "seeders": 59
+    },
+    {
+      "name": "Crossfire.Station.S02E08.2160p.HMAX.WEB-DL.DDP5.1-IONIC",
+      "date": "2026-03-17",
+      "size_bytes": 5600002292,
+      "seeders": 33
+    },
+    {
+      "name": "The.Long.Winter.S02E06.2160p.DSNP.WEB-DL.DDP5.1-IONIC",
+      "date": "2026-03-17",
+      "size_bytes": 5805167648,
+      "seeders": 51
+    },
+    {
+      "name": "The.Iron.Strand.2024.720p.BluRay.Remux.AVC.DTS-HD.MA-SOLDER",
+      "date": "2026-03-17",
+      "size_bytes": 16073755632,
+      "seeders": 64
+    },
+    {
+      "name": "Riven.Coast.2024.2160p.BluRay.Remux.AVC.DTS-HD.MA-NEXUS",
+      "date": "2026-03-17",
+      "size_bytes": 22950697651,
+      "seeders": 39
+    },
+    {
+      "name": "The.Relay.S03E08.2160p.AMZN.WEB-DL.DDP5.1-FERRIC",
+      "date": "2026-03-17",
+      "size_bytes": 4988874079,
+      "seeders": 31
+    },
+    {
+      "name": "The.Seventh.Signal.2024.1080p.BluRay.x264-COBALT",
+      "date": "2026-03-17",
+      "size_bytes": 7251071432,
+      "seeders": 33
     }
   ]
 }

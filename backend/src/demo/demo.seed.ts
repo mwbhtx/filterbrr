@@ -1,5 +1,3 @@
-export const DEMO_DATASET_PATH = 'demo/datasets/freeleech_2026-02-16_0000.json';
-
 const filterDefaults = {
   enabled: true,
   delay: 0,
@@ -16,7 +14,7 @@ const filterDefaults = {
 
 export const DEMO_FILTERS = [
   {
-    name: 'Small Freeleech',
+    name: 'freeleech-high-priority',
     version: '1',
     _id: 'demo_filter_small',
     data: {
@@ -30,7 +28,7 @@ export const DEMO_FILTERS = [
     },
   },
   {
-    name: 'Medium Freeleech',
+    name: 'freeleech-medium-priority',
     version: '1',
     _id: 'demo_filter_medium',
     data: {
@@ -44,7 +42,7 @@ export const DEMO_FILTERS = [
     },
   },
   {
-    name: 'Large Freeleech',
+    name: 'freeleech-low-priority',
     version: '1',
     _id: 'demo_filter_large',
     data: {
