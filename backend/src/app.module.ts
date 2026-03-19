@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core'; // DemoWriteGuard runs after CognitoAuthGuard
+import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { CognitoAuthGuard } from './auth/cognito-auth.guard';
-import { DemoWriteGuard } from './auth/demo.guard';
+import { RoleGuard } from './auth/role.guard';
 import { HealthModule } from './health/health.module';
 import { DynamoModule } from './dynamo/dynamo.module';
 import { SettingsModule } from './settings/settings.module';
@@ -20,7 +20,7 @@ import { DemoModule } from './demo/demo.module';
   imports: [AuthModule, CryptoModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, SimulationModule, AutobrrModule, SyncModule, DemoModule],
   providers: [
     { provide: APP_GUARD, useClass: CognitoAuthGuard },
-    { provide: APP_GUARD, useClass: DemoWriteGuard },
+    { provide: APP_GUARD, useClass: RoleGuard },
   ],
 })
 export class AppModule {}
