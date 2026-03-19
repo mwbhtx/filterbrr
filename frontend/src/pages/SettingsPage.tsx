@@ -88,7 +88,7 @@ export default function SettingsPage() {
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">API Key</Label>
             <Input
-              type="text"
+              type="password"
               value={settings.autobrr_api_key}
               onChange={(e) => setSettings({ ...settings, autobrr_api_key: e.target.value })}
               placeholder="Enter your autobrr API key"
