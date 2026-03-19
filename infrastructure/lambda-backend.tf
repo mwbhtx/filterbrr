@@ -40,7 +40,7 @@ resource "aws_lambda_function_url" "backend" {
   function_name      = aws_lambda_function.backend.function_name
   authorization_type = "NONE"
 
-  invoke_mode = "RESPONSE_STREAM"
+  invoke_mode = "BUFFERED"
 
   cors {
     allow_origins = ["https://${var.domain_name}"]

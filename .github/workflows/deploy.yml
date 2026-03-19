@@ -76,10 +76,10 @@ jobs:
       - name: Package
         working-directory: backend
         run: |
-          cd dist
-          cp ../package.json ../package-lock.json .
-          npm ci --omit=dev --legacy-peer-deps
-          zip -rq ../../backend.zip . -x "*.map"
+          cp package.json package-lock.json dist/
+          cd dist && npm ci --omit=dev --legacy-peer-deps && rm package.json package-lock.json
+          cd ..
+          zip -rq ../backend.zip dist/ -x "dist/*.map"
       - name: Deploy
         run: |
           aws lambda update-function-code \
@@ -109,10 +109,10 @@ jobs:
       - name: Package
         working-directory: lambdas/scraper
         run: |
-          cd dist
-          cp ../package.json ../package-lock.json .
-          npm ci --production
-          zip -rq ../../../scraper.zip . -x "*.map"
+          cp package.json package-lock.json dist/
+          cd dist && npm ci --omit=dev && rm package.json package-lock.json
+          cd ..
+          zip -rq ../../../scraper.zip dist/ -x "dist/*.map"
       - name: Deploy
         run: |
           aws lambda update-function-code \
@@ -142,10 +142,10 @@ jobs:
       - name: Package
         working-directory: lambdas/analyzer
         run: |
-          cd dist
-          cp ../package.json ../package-lock.json .
-          npm ci --production
-          zip -rq ../../../analyzer.zip . -x "*.map"
+          cp package.json package-lock.json dist/
+          cd dist && npm ci --omit=dev && rm package.json package-lock.json
+          cd ..
+          zip -rq ../../../analyzer.zip dist/ -x "dist/*.map"
       - name: Deploy
         run: |
           aws lambda update-function-code \
