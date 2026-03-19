@@ -14,15 +14,18 @@ import { useIsDemo } from "../auth/useIsDemo";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { HelpCircle } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 function HintIcon({ tip }: { tip: string }) {
   return (
-    <span className="relative group inline-flex ml-1 align-middle">
-      <HelpCircle className="size-3 text-muted-foreground/60 cursor-help" />
-      <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 rounded-md bg-popover border border-border px-3 py-2 text-sm leading-relaxed text-popover-foreground opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-50 text-center">
-        {tip}
-      </span>
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex ml-1 align-middle cursor-help">
+          <HelpCircle className="size-3 text-muted-foreground/60" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-56 text-center">{tip}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -483,7 +486,7 @@ export default function SimulatorPage() {
     <div className="overflow-y-auto px-4 md:px-6 py-4 space-y-4 flex-1">
       {/* Section 1: Dataset Selection */}
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Select Dataset</CardTitle></CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Select Dataset<HintIcon tip="Choose a scraped torrent dataset to analyze and simulate against" /></CardTitle></CardHeader>
         <CardContent className="pt-0">
           <select
             value={selectedDataset}
@@ -501,11 +504,11 @@ export default function SimulatorPage() {
         </CardContent>
       </Card>
 
-      {/* Section 2: Generate Filters */}
+      {/* Section 2: Seedbox Config */}
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Generate Filters</CardTitle></CardHeader>
-        <CardContent className="pt-0 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Seedbox Config<HintIcon tip="Your seedbox hardware settings — used by both filter generation and simulation" /></CardTitle></CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs text-muted-foreground mb-1">Storage (TB)<HintIcon tip="Total disk space available for storing downloaded torrents" /></label>
               <input
@@ -527,26 +530,6 @@ export default function SimulatorPage() {
                 className={selectCls}
               />
             </div>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap pt-3 border-t border-border">
-            <Button
-              onClick={handleGenerate}
-              disabled={generating || !selectedDataset}
-              size="sm"
-              className="shrink-0 btn-glow"
-            >
-              {generating ? "Generating..." : "Generate Filters"}
-            </Button>
-            <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Section 3: Simulation */}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Simulation</CardTitle></CardHeader>
-        <CardContent className="pt-0 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-muted-foreground mb-1">Avg Ratio<HintIcon tip="Average upload-to-download ratio achieved per torrent" /></label>
               <input
@@ -560,6 +543,31 @@ export default function SimulatorPage() {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 3: Generate Filters */}
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Generate Filters<HintIcon tip="Analyze the dataset and auto-generate optimized filters based on your seedbox config" /></CardTitle></CardHeader>
+        <CardContent className="pt-0 space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              onClick={handleGenerate}
+              disabled={generating || !selectedDataset}
+              size="sm"
+              className="shrink-0 btn-glow"
+            >
+              {generating ? "Generating..." : "Generate Filters"}
+            </Button>
+            <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 4: Simulation */}
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Simulation<HintIcon tip="Back-test your filters against the dataset to see projected grabs, disk usage, and upload" /></CardTitle></CardHeader>
+        <CardContent className="pt-0 space-y-3">
           {allFilters.length > 0 && (
             <div>
               <label className="block text-xs text-muted-foreground mb-1.5">

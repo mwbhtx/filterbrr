@@ -7,14 +7,17 @@ import { queryClient } from './queryClient'
 import './index.css'
 import App from './App.tsx'
 import { ToastProvider } from './components/Toast'
+import { TooltipProvider } from './components/ui/tooltip'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
+        <TooltipProvider delayDuration={200}>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </TooltipProvider>
       </QueryClientProvider>
     </BrowserRouter>
   </StrictMode>,
