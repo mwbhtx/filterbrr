@@ -79,6 +79,7 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --legacy-peer-deps
+      - run: npm run build --workspace=packages/filter-engine
       - run: npm test --workspace=backend
 
   infra:
@@ -115,13 +116,17 @@ jobs:
       - name: Build
         run: |
           npm ci --legacy-peer-deps
+          npm run build --workspace=packages/filter-engine
           npm run build --workspace=backend
       - name: Package
         run: |
           mkdir -p lambda-pkg/dist
           cp -r backend/dist/* lambda-pkg/dist/
           cp backend/package.json package-lock.json lambda-pkg/
-          cd lambda-pkg && npm ci --omit=dev --legacy-peer-deps
+          mkdir -p lambda-pkg/node_modules/filter-engine
+          cp -r packages/filter-engine/dist/* lambda-pkg/node_modules/filter-engine/
+          cp packages/filter-engine/package.json lambda-pkg/node_modules/filter-engine/
+          cd lambda-pkg && npm ci --omit=dev --legacy-peer-deps --ignore-scripts
           zip -rq ../backend.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
         run: |
@@ -177,6 +182,11 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+      - name: Build filter-engine
+        working-directory: packages/filter-engine
+        run: |
+          npm install
+          npm run build
       - name: Build
         working-directory: lambdas/filter-generator
         run: |
@@ -187,7 +197,10 @@ jobs:
           mkdir -p filter-generator-pkg/dist
           cp -r lambdas/filter-generator/dist/* filter-generator-pkg/dist/
           cp lambdas/filter-generator/package.json lambdas/filter-generator/package-lock.json filter-generator-pkg/
-          cd filter-generator-pkg && npm ci --omit=dev
+          mkdir -p filter-generator-pkg/node_modules/filter-engine
+          cp -r packages/filter-engine/dist/* filter-generator-pkg/node_modules/filter-engine/
+          cp packages/filter-engine/package.json filter-generator-pkg/node_modules/filter-engine/
+          cd filter-generator-pkg && npm ci --omit=dev --ignore-scripts
           zip -rq ../filter-generator.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
         run: |
