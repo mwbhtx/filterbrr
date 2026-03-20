@@ -157,7 +157,7 @@ export const handler: Handler<ScrapeEvent> = async (event) => {
         referenceDate = first.addedTimestamp ? new Date(first.addedTimestamp + ' UTC') : new Date();
       }
 
-      const cutoff = new Date(referenceDate.getTime() - days * 86400_000);
+      const cutoff = new Date(referenceDate.getTime() - (days - 1) * 86400_000);
       let hitOld = false;
 
       for (const t of torrents) {
