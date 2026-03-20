@@ -43,6 +43,7 @@ export class PipelineController {
       command: job.command,
       status: job.status,
       progress: job.progress,
+      started_at: job.started_at,
       result: job.result,
       error: job.error,
     };
