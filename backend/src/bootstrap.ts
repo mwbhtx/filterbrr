@@ -16,10 +16,6 @@ export async function createApp(): Promise<BootstrapResult> {
   const app = await NestFactory.create(AppModule, adapter);
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
-  const corsOrigin = process.env.CORS_ORIGIN;
-  if (!corsOrigin && process.env.NODE_ENV === 'production') {
-    throw new Error('CORS_ORIGIN must be set in production');
-  }
-  app.enableCors({ origin: corsOrigin ?? '*' });
+  app.enableCors({ origin: process.env.CORS_ORIGIN ?? '*' });
   return { app, expressApp };
 }
