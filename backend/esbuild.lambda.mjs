@@ -1,4 +1,5 @@
 import { build } from 'esbuild';
+import esbuildPluginTsc from 'esbuild-plugin-tsc';
 
 await build({
   entryPoints: ['src/lambda.ts'],
@@ -9,6 +10,9 @@ await build({
   format: 'cjs',
   sourcemap: true,
   minify: false,
+  plugins: [
+    esbuildPluginTsc({ force: true }),
+  ],
   external: [
     // AWS SDK v3 is available in the Lambda runtime
     '@aws-sdk/*',

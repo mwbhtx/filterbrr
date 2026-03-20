@@ -40,7 +40,7 @@ describe('JobRepository', () => {
       await repo.create(job);
       expect(mockSend).toHaveBeenCalledTimes(1);
       const cmd = mockSend.mock.calls[0][0];
-      expect(cmd.input).toEqual({ TableName: 'Jobs', Item: job });
+      expect(cmd.input).toEqual({ TableName: 'Jobs', Item: { ...job, ttl: expect.any(Number) } });
     });
   });
 
