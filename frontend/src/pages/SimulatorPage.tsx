@@ -629,38 +629,51 @@ export default function SimulatorPage() {
         return (
           <>
             <MetricsBar result={r} loading={running} />
-            <GrabbedList torrents={r.grabbed_torrents} />
-            <SkippedList torrents={r.skipped_torrents} />
-            <Card>
-              <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
-              <CardContent>
-                <FilterBreakdownTable result={r} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Disk Utilization</CardTitle></CardHeader>
-              <CardContent>
-                <UtilizationChart dailyStats={r.daily_stats} targetPct={80} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Daily Grabs</CardTitle></CardHeader>
-              <CardContent>
-                <DailyGrabsChart dailyStats={r.daily_stats} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>GB Flow</CardTitle></CardHeader>
-              <CardContent>
-                <GBFlowChart dailyStats={r.daily_stats} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Upload</CardTitle></CardHeader>
-              <CardContent>
-                <UploadChart dailyStats={r.daily_stats} />
-              </CardContent>
-            </Card>
+            {running ? (
+              <Card>
+                <CardContent className="flex items-center justify-center py-12">
+                  <div className="flex items-center gap-3">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary" />
+                    <span className="text-sm text-muted-foreground">Running simulation…</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <GrabbedList torrents={r.grabbed_torrents} />
+                <SkippedList torrents={r.skipped_torrents} />
+                <Card>
+                  <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
+                  <CardContent>
+                    <FilterBreakdownTable result={r} />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle>Disk Utilization</CardTitle></CardHeader>
+                  <CardContent>
+                    <UtilizationChart dailyStats={r.daily_stats} targetPct={80} />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle>Daily Grabs</CardTitle></CardHeader>
+                  <CardContent>
+                    <DailyGrabsChart dailyStats={r.daily_stats} />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle>GB Flow</CardTitle></CardHeader>
+                  <CardContent>
+                    <GBFlowChart dailyStats={r.daily_stats} />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle>Upload</CardTitle></CardHeader>
+                  <CardContent>
+                    <UploadChart dailyStats={r.daily_stats} />
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </>
         );
       })()}
