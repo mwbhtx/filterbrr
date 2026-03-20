@@ -39,6 +39,40 @@ function daysDiffUTC(a: Date, b: Date): number {
   return Math.round((a.getTime() - b.getTime()) / 86_400_000);
 }
 
+/**
+ * Build a rate-limit bucket key matching autobrr's fixed-period semantics:
+ * - HOUR: per clock hour (e.g. 12:00-13:00)
+ * - DAY:  per calendar day (midnight to midnight)
+ * - WEEK: per ISO week (Monday 00:00 to Sunday 23:59)
+ */
+function rateLimitKey(unit: string, dayOffset: number, hour: number, filterName: string, currentDay: Date): string {
+  switch (unit) {
+    case 'DAY':
+      return `day:${dayOffset}:${filterName}`;
+    case 'WEEK': {
+      // ISO week number: group by week boundary
+      const weekNum = getISOWeekNumber(currentDay);
+      const year = currentDay.getUTCFullYear();
+      return `week:${year}-W${weekNum}:${filterName}`;
+    }
+    default: // 'HOUR'
+      return `hour:${dayOffset}:${hour}:${filterName}`;
+  }
+}
+
+/** Get ISO week number for a date. */
+function getISOWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+}
+
+/** Compute the total number of hours elapsed between two dates. */
+function hoursDiff(a: Date, b: Date): number {
+  return Math.floor((a.getTime() - b.getTime()) / 3_600_000);
+}
+
 // ---------------------------------------------------------------------------
 // Internal types
 // ---------------------------------------------------------------------------
@@ -48,6 +82,7 @@ interface InternalFilter {
   priority: number;
   delay: number;
   max_downloads: number;
+  max_downloads_unit: string; // 'HOUR' | 'DAY' | 'WEEK'
   data: FilterData;
 }
 
@@ -86,6 +121,7 @@ export function runSimulation(
       priority: data.priority,
       delay: data.delay ?? 0,
       max_downloads: data.max_downloads ?? 999,
+      max_downloads_unit: (data.max_downloads_unit ?? 'HOUR').toUpperCase(),
       data,
     });
   }
@@ -111,8 +147,11 @@ export function runSimulation(
   let disk: DiskItem[] = [];
   let currentDiskGb = 0.0;
 
-  // Per-hour rate limit counters: key = "dayOffset:hour:filterName"
-  const hourlyGrabs = new Map<string, number>();
+  // Rate limit counters: key = rateLimitKey(unit, dayOffset, hour, filterName)
+  const rateLimitCounts = new Map<string, number>();
+
+  // Convert seedDays to seedHours for hour-level expiry
+  const seedHours = seedDays * 24;
 
   // Results tracking
   const dailyStats: DailyStats[] = [];
@@ -138,21 +177,6 @@ export function runSimulation(
     const currentDay = new Date(baseDate.getTime() + dayOffset * 86_400_000);
     const nextDay = new Date(currentDay.getTime() + 86_400_000);
 
-    // Expire torrents seeded >= avgSeedDays
-    let expiredGb = 0;
-    const newDisk: DiskItem[] = [];
-    for (const item of disk) {
-      const grabDay = truncateToMidnightUTC(item.grab_date);
-      const ageDays = daysDiffUTC(currentDay, grabDay);
-      if (ageDays >= seedDays) {
-        expiredGb += item.size_gb;
-        currentDiskGb -= item.size_gb;
-      } else {
-        newDisk.push(item);
-      }
-    }
-    disk = newDisk;
-
     // Get torrents for this day
     const dayTorrents = sortedTorrents.filter((t) => {
       const d = parseDate(t.date);
@@ -166,10 +190,24 @@ export function runSimulation(
     let daySkippedNoMatch = 0;
     let daySkippedRate = 0;
     let daySkippedStorage = 0;
+    let dayExpiredGb = 0;
 
     for (let hour = 0; hour < 24; hour++) {
       const hourStart = new Date(currentDay.getTime() + hour * 3_600_000);
       const hourEnd = new Date(hourStart.getTime() + 3_600_000);
+
+      // Expire torrents at hour granularity: remove items where age >= seedHours
+      const newDisk: DiskItem[] = [];
+      for (const item of disk) {
+        const ageHours = hoursDiff(hourStart, item.grab_date);
+        if (ageHours >= seedHours) {
+          dayExpiredGb += item.size_gb;
+          currentDiskGb -= item.size_gb;
+        } else {
+          newDisk.push(item);
+        }
+      }
+      disk = newDisk;
 
       const hourTorrents = dayTorrents
         .filter((t) => {
@@ -185,9 +223,9 @@ export function runSimulation(
         for (const filt of internalFilters) {
           if (!torrentMatchesFilter(torrent, filt.data)) continue;
 
-          // Check rate limit
-          const hourKey = `${dayOffset}:${hour}:${filt.name}`;
-          const currentCount = hourlyGrabs.get(hourKey) ?? 0;
+          // Check rate limit using the filter's unit (HOUR, DAY, WEEK)
+          const rlKey = rateLimitKey(filt.max_downloads_unit, dayOffset, hour, filt.name, currentDay);
+          const currentCount = rateLimitCounts.get(rlKey) ?? 0;
           if (currentCount >= filt.max_downloads) continue;
 
           matchedFilter = filt;
@@ -236,8 +274,8 @@ export function runSimulation(
         }
 
         // Grab the torrent
-        const hourKey = `${dayOffset}:${hour}:${matchedFilter.name}`;
-        hourlyGrabs.set(hourKey, (hourlyGrabs.get(hourKey) ?? 0) + 1);
+        const rlKey = rateLimitKey(matchedFilter.max_downloads_unit, dayOffset, hour, matchedFilter.name, currentDay);
+        rateLimitCounts.set(rlKey, (rateLimitCounts.get(rlKey) ?? 0) + 1);
         currentDiskGb += torrent.size_gb;
         disk.push({
           grab_date: parseDate(torrent.date),
@@ -271,7 +309,7 @@ export function runSimulation(
       date: currentDay.toISOString().slice(0, 10),
       grabbed: dayGrabbed,
       grabbed_gb: Math.round(dayGrabbedGb * 10) / 10,
-      expired_gb: Math.round(expiredGb * 10) / 10,
+      expired_gb: Math.round(dayExpiredGb * 10) / 10,
       disk_usage_gb: Math.round(currentDiskGb * 10) / 10,
       utilization_pct: Math.round((currentDiskGb / maxStorageGb) * 1000) / 10,
       upload_gb: Math.round(dayUploadGb * 10) / 10,

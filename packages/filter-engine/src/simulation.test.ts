@@ -253,6 +253,122 @@ describe('runSimulation', () => {
     expect(result.filters_used).toEqual(['test-filter']);
   });
 
+  it('enforces rate limiting per calendar day with max_downloads_unit DAY', () => {
+    // 10 torrents spread across 2 hours of the same day, max_downloads = 3 per DAY
+    const torrents = [
+      makeTorrent({ torrent_id: 1, name: 'T1', date: '2026-03-01 10:00:00' }),
+      makeTorrent({ torrent_id: 2, name: 'T2', date: '2026-03-01 10:10:00' }),
+      makeTorrent({ torrent_id: 3, name: 'T3', date: '2026-03-01 10:20:00' }),
+      makeTorrent({ torrent_id: 4, name: 'T4', date: '2026-03-01 11:00:00' }),
+      makeTorrent({ torrent_id: 5, name: 'T5', date: '2026-03-01 11:10:00' }),
+    ];
+    const filter = makeFilter();
+    filter.data.max_downloads = 3;
+    filter.data.max_downloads_unit = 'DAY';
+    const result = runSimulation(torrents, [filter], defaultConfig);
+    // 3 grabbed (daily cap), 2 rate-limited
+    expect(result.total_grabbed).toBe(3);
+    expect(result.skip_reasons.rate_limited).toBe(2);
+  });
+
+  it('resets daily rate limit on new calendar day', () => {
+    const torrents = [
+      makeTorrent({ torrent_id: 1, name: 'T1', date: '2026-03-01 12:00:00' }),
+      makeTorrent({ torrent_id: 2, name: 'T2', date: '2026-03-01 13:00:00' }),
+      makeTorrent({ torrent_id: 3, name: 'T3', date: '2026-03-02 12:00:00' }),
+      makeTorrent({ torrent_id: 4, name: 'T4', date: '2026-03-02 13:00:00' }),
+    ];
+    const filter = makeFilter();
+    filter.data.max_downloads = 1;
+    filter.data.max_downloads_unit = 'DAY';
+    const result = runSimulation(torrents, [filter], defaultConfig);
+    // 1 per day = 2 total over 2 days
+    expect(result.total_grabbed).toBe(2);
+    expect(result.skip_reasons.rate_limited).toBe(2);
+  });
+
+  it('enforces rate limiting per ISO week with max_downloads_unit WEEK', () => {
+    // 2026-03-01 is a Sunday (end of ISO week 9)
+    // 2026-03-02 is a Monday (start of ISO week 10)
+    const torrents = [
+      makeTorrent({ torrent_id: 1, name: 'T1', date: '2026-03-01 12:00:00' }), // Week 9
+      makeTorrent({ torrent_id: 2, name: 'T2', date: '2026-03-01 13:00:00' }), // Week 9
+      makeTorrent({ torrent_id: 3, name: 'T3', date: '2026-03-02 12:00:00' }), // Week 10
+      makeTorrent({ torrent_id: 4, name: 'T4', date: '2026-03-02 13:00:00' }), // Week 10
+    ];
+    const filter = makeFilter();
+    filter.data.max_downloads = 1;
+    filter.data.max_downloads_unit = 'WEEK';
+    const result = runSimulation(torrents, [filter], defaultConfig);
+    // 1 per week: 1 from week 9 (Sunday), 1 from week 10 (Monday)
+    expect(result.total_grabbed).toBe(2);
+    expect(result.skip_reasons.rate_limited).toBe(2);
+  });
+
+  it('DAY unit allows more grabs per hour than HOUR unit with same max_downloads', () => {
+    // 6 torrents in the same hour
+    const torrents = Array.from({ length: 6 }, (_, i) =>
+      makeTorrent({ torrent_id: i, name: `T${i}`, date: '2026-03-01 12:00:00' }),
+    );
+    // With HOUR unit, max 3 per hour
+    const hourFilter = makeFilter();
+    hourFilter.data.max_downloads = 3;
+    hourFilter.data.max_downloads_unit = 'HOUR';
+    const hourResult = runSimulation(torrents, [hourFilter], defaultConfig);
+    expect(hourResult.total_grabbed).toBe(3);
+
+    // With DAY unit, max 3 per day — still only 3 even though they're all in one hour
+    const dayFilter = makeFilter();
+    dayFilter.data.max_downloads = 3;
+    dayFilter.data.max_downloads_unit = 'DAY';
+    const dayResult = runSimulation(torrents, [dayFilter], defaultConfig);
+    expect(dayResult.total_grabbed).toBe(3);
+  });
+
+  it('expires torrents at hour granularity, not just midnight', () => {
+    // Torrent grabbed at hour 18 on day 1, avgSeedDays = 1 (24 hours)
+    // Should expire at hour 18 on day 2, NOT at midnight on day 2
+    const torrents = [
+      makeTorrent({ torrent_id: 1, name: 'Big', date: '2026-03-01 18:00:00', size_gb: 900 }),
+      // At hour 12 on day 2 — 18 hours since grab. Big hasn't expired (needs 24h).
+      // disk = 900GB, only 124GB free. This 300GB torrent should NOT fit → storage_full
+      makeTorrent({ torrent_id: 2, name: 'TooBig', date: '2026-03-02 12:00:00', size_gb: 300 }),
+      // At hour 20 on day 2 — 26 hours since grab. Big HAS expired (26 >= 24).
+      // disk = 0GB, 1024GB free. This 300GB torrent SHOULD fit.
+      makeTorrent({ torrent_id: 3, name: 'FitsNow', date: '2026-03-02 20:00:00', size_gb: 300 }),
+    ];
+    const config: SimulationConfig = { storageTb: 1, avgSeedDays: 1, avgRatio: 1.0 };
+    const bigFilter = makeFilter();
+    bigFilter.data.max_size = '999999GB';
+    const result = runSimulation(torrents, [bigFilter], config);
+    // Big grabbed, TooBig skipped (storage), FitsNow grabbed (after Big expires)
+    expect(result.total_grabbed).toBe(2);
+    expect(result.grabbed_torrents.map(g => g.name)).toEqual(['Big', 'FitsNow']);
+    expect(result.skip_reasons.storage_full).toBe(1);
+    expect(result.skipped_torrents[0].name).toBe('TooBig');
+  });
+
+  it('would over-grab with day-level expiry but correctly limits with hour-level', () => {
+    // This test verifies hour-level is more accurate than day-level:
+    // Torrent grabbed at 23:00 on day 1, avgSeedDays = 1 (24h)
+    // At hour 1 on day 2 (only 2 hours later), it should NOT have expired
+    // Day-level expiry would wrongly expire it at midnight (1 day boundary)
+    const torrents = [
+      makeTorrent({ torrent_id: 1, name: 'Late', date: '2026-03-01 23:00:00', size_gb: 900 }),
+      // At hour 1 on day 2, only 2 hours have passed. Late should still be on disk.
+      makeTorrent({ torrent_id: 2, name: 'Early', date: '2026-03-02 01:00:00', size_gb: 200 }),
+    ];
+    const config: SimulationConfig = { storageTb: 1, avgSeedDays: 1, avgRatio: 1.0 };
+    const bigFilter = makeFilter();
+    bigFilter.data.max_size = '999999GB';
+    const result = runSimulation(torrents, [bigFilter], config);
+    // Both fit: 900 + 200 = 1100 > 1024 → Early should be storage_full
+    // because Late is still on disk at hour 1 (only 2 hours old, not 24)
+    expect(result.total_grabbed).toBe(1);
+    expect(result.grabbed_torrents[0].name).toBe('Late');
+    expect(result.skip_reasons.storage_full).toBe(1);
+  });
+
   it('handles non-matching torrents', () => {
     const torrents = [
       makeTorrent({ resolution: '720p' }),
