@@ -1,7 +1,9 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PipelineController } from './pipeline.controller';
 import { PipelineService } from './pipeline.service';
 import { Job } from './job.repository';
+
+const mockReq = (userId = 'user-1') => ({ user: { userId } });
 
 function makeJob(overrides: Partial<Job> = {}): Job {
   return {
@@ -42,7 +44,7 @@ describe('PipelineController', () => {
       const job = makeJob({ progress: 'Scraping day 5 of 30', result: { key: 'test.csv' } });
       (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
 
-      const result = await controller.getJob('job-1');
+      const result = await controller.getJob(mockReq(), 'job-1');
       expect(result).toEqual({
         id: 'job-1',
         command: 'scrape TorrentLeech freeleech 7d',
@@ -55,16 +57,35 @@ describe('PipelineController', () => {
 
     it('throws NotFoundException when job not found', async () => {
       (mockPipeline.getJob as jest.Mock).mockResolvedValue(null);
-      await expect(controller.getJob('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(controller.getJob(mockReq(), 'nonexistent')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException when user does not own job', async () => {
+      const job = makeJob();
+      (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
+      await expect(controller.getJob(mockReq('other-user'), 'job-1')).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('cancelJob', () => {
     it('calls pipeline.cancelJob and returns id', async () => {
+      const job = makeJob();
+      (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
       (mockPipeline.cancelJob as jest.Mock).mockResolvedValue(undefined);
-      const result = await controller.cancelJob('job-1');
+      const result = await controller.cancelJob(mockReq(), 'job-1');
       expect(mockPipeline.cancelJob).toHaveBeenCalledWith('job-1');
       expect(result).toEqual({ cancelled: 'job-1' });
+    });
+
+    it('throws ForbiddenException when user does not own job', async () => {
+      const job = makeJob();
+      (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
+      await expect(controller.cancelJob(mockReq('other-user'), 'job-1')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws NotFoundException when job not found', async () => {
+      (mockPipeline.getJob as jest.Mock).mockResolvedValue(null);
+      await expect(controller.cancelJob(mockReq(), 'nonexistent')).rejects.toThrow(NotFoundException);
     });
   });
 });

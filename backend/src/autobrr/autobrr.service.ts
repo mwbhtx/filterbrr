@@ -7,6 +7,8 @@ export class AutobrrService {
     return axios.create({
       baseURL: `${url}/api`,
       headers: { 'X-API-Token': apiKey },
+      maxRedirects: 0,
+      timeout: 10_000,
     });
   }
 

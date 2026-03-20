@@ -30,6 +30,12 @@ export class CognitoAuthGuard extends AuthGuard('jwt') {
       try {
         const payload = jwt.verify(token, jwtSecret) as { sub: string; role: string; iss: string };
         if (!payload.role) throw new UnauthorizedException('Missing role claim');
+
+        // Ensure demo tokens can only have demo role
+        if (payload.iss === 'filterbrr-demo' && payload.role !== 'demo') {
+          throw new UnauthorizedException('Invalid demo token');
+        }
+
         req.user = { userId: payload.sub, role: payload.role };
         return true;
       } catch (err) {

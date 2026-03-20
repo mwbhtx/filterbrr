@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Get, Param, Body, Req, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Delete, Get, Param, Body, Req, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PipelineService } from './pipeline.service';
 import { ScrapeRequestDto } from './dto/scrape-request.dto';
 import { GenerateFiltersRequestDto } from './dto/generate-filters-request.dto';
@@ -34,9 +34,10 @@ export class PipelineController {
   saveAllTemp() { return { saved: 0 }; }
 
   @Get('jobs/:id')
-  async getJob(@Param('id') id: string) {
+  async getJob(@Req() req: any, @Param('id') id: string) {
     const job = await this.pipeline.getJob(id);
     if (!job) throw new NotFoundException('Job not found');
+    if (job.user_id !== req.user.userId) throw new ForbiddenException('Access denied');
     return {
       id: job.job_id,
       command: job.command,
@@ -48,7 +49,10 @@ export class PipelineController {
   }
 
   @Delete('jobs/:id')
-  async cancelJob(@Param('id') id: string) {
+  async cancelJob(@Req() req: any, @Param('id') id: string) {
+    const job = await this.pipeline.getJob(id);
+    if (!job) throw new NotFoundException('Job not found');
+    if (job.user_id !== req.user.userId) throw new ForbiddenException('Access denied');
     await this.pipeline.cancelJob(id);
     return { cancelled: id };
   }

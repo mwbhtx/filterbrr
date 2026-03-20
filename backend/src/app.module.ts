@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { CognitoAuthGuard } from './auth/cognito-auth.guard';
@@ -17,7 +18,7 @@ import { CryptoModule } from './crypto/crypto.module';
 import { DemoModule } from './demo/demo.module';
 
 @Module({
-  imports: [AuthModule, CryptoModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, FilterSimulatorModule, AutobrrModule, SyncModule, DemoModule],
+  imports: [ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]), AuthModule, CryptoModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, FilterSimulatorModule, AutobrrModule, SyncModule, DemoModule],
   providers: [
     { provide: APP_GUARD, useClass: CognitoAuthGuard },
     { provide: APP_GUARD, useClass: RoleGuard },
