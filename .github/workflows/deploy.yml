@@ -123,10 +123,10 @@ jobs:
           mkdir -p lambda-pkg/dist
           cp -r backend/dist/* lambda-pkg/dist/
           cp backend/package.json package-lock.json lambda-pkg/
-          # Remove filter-engine from package.json (it's a local file: dep, we copy it manually)
+          # Remove filter-engine from package.json (local file: dep not in lock file)
           node -e "const p=require('./lambda-pkg/package.json'); delete p.dependencies['filter-engine']; require('fs').writeFileSync('./lambda-pkg/package.json', JSON.stringify(p,null,2))"
-          cd lambda-pkg && npm ci --omit=dev --legacy-peer-deps --ignore-scripts
-          # Copy filter-engine into node_modules after npm ci
+          cd lambda-pkg && npm install --omit=dev --legacy-peer-deps --ignore-scripts
+          # Copy filter-engine into node_modules
           mkdir -p node_modules/filter-engine
           cp -r ../packages/filter-engine/dist/* node_modules/filter-engine/
           cp ../packages/filter-engine/package.json node_modules/filter-engine/
@@ -200,10 +200,10 @@ jobs:
           mkdir -p filter-generator-pkg/dist
           cp -r lambdas/filter-generator/dist/* filter-generator-pkg/dist/
           cp lambdas/filter-generator/package.json lambdas/filter-generator/package-lock.json filter-generator-pkg/
-          # Remove filter-engine from package.json (local file: dep, copied manually)
+          # Remove filter-engine from package.json (local file: dep not in lock file)
           node -e "const p=require('./filter-generator-pkg/package.json'); delete p.dependencies['filter-engine']; require('fs').writeFileSync('./filter-generator-pkg/package.json', JSON.stringify(p,null,2))"
-          cd filter-generator-pkg && npm ci --omit=dev --ignore-scripts
-          # Copy filter-engine into node_modules after npm ci
+          cd filter-generator-pkg && npm install --omit=dev --ignore-scripts
+          # Copy filter-engine into node_modules
           mkdir -p node_modules/filter-engine
           cp -r ../packages/filter-engine/dist/* node_modules/filter-engine/
           cp ../packages/filter-engine/package.json node_modules/filter-engine/
