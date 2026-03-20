@@ -122,11 +122,13 @@ export const api = {
 
   // Settings
   getSettings: () => fetchJSON<Settings>("/settings"),
-  updateSettings: (settings: Settings) =>
-    fetchJSON<Settings>("/settings", {
+  updateSettings: (settings: Settings) => {
+    const { user_id: _, ...rest } = settings as Settings & { user_id?: string };
+    return fetchJSON<Settings>("/settings", {
       method: "PUT",
-      body: JSON.stringify(settings),
-    }),
+      body: JSON.stringify(rest),
+    });
+  },
   verifyTracker: (tracker: { tracker_type: string; username: string; password: string }) =>
     fetchJSON<{ success: boolean; error?: string }>("/settings/trackers/verify", {
       method: "POST",

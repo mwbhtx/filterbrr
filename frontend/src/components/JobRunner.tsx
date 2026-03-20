@@ -81,8 +81,17 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
             }
             return;
           }
-        } catch {
-          // Network error — keep polling
+        } catch (err: unknown) {
+          // Job not found (expired/deleted) — treat as completed
+          if (err instanceof Error && err.message.includes('404')) {
+            clearInterval(timer);
+            if (completedRef.current !== jobId) {
+              completedRef.current = jobId;
+              onComplete();
+            }
+            return;
+          }
+          // Other network error — keep polling
         }
 
         await new Promise((r) => setTimeout(r, 2000));
