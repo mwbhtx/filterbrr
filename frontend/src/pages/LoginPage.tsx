@@ -143,11 +143,11 @@ export default function LoginPage() {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-1">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                    <Input id="email" type="text" value={email} onChange={e => setEmail(e.target.value)} />
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                    <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
                     <div>
                       <Link to="/forgot-password" className="text-xs text-muted-foreground underline">Forgot password?</Link>
                     </div>

@@ -43,7 +43,14 @@ export async function login(email: string, password: string): Promise<void> {
         queryClient.clear();
         return;
       }
-    } catch {
+      // If empty credentials and local endpoint failed, don't fall through to Cognito
+      if (!email && !password) {
+        const text = await res.text();
+        throw new Error(text || 'Local login failed');
+      }
+    } catch (err) {
+      // If empty credentials, surface the error (don't try Cognito)
+      if (!email && !password) throw err;
       // Local endpoint unavailable — fall through to Cognito
     }
   }
