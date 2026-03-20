@@ -123,10 +123,13 @@ jobs:
           mkdir -p lambda-pkg/dist
           cp -r backend/dist/* lambda-pkg/dist/
           cp backend/package.json package-lock.json lambda-pkg/
-          mkdir -p lambda-pkg/node_modules/filter-engine
-          cp -r packages/filter-engine/dist/* lambda-pkg/node_modules/filter-engine/
-          cp packages/filter-engine/package.json lambda-pkg/node_modules/filter-engine/
+          # Remove filter-engine from package.json (it's a local file: dep, we copy it manually)
+          node -e "const p=require('./lambda-pkg/package.json'); delete p.dependencies['filter-engine']; require('fs').writeFileSync('./lambda-pkg/package.json', JSON.stringify(p,null,2))"
           cd lambda-pkg && npm ci --omit=dev --legacy-peer-deps --ignore-scripts
+          # Copy filter-engine into node_modules after npm ci
+          mkdir -p node_modules/filter-engine
+          cp -r ../packages/filter-engine/dist/* node_modules/filter-engine/
+          cp ../packages/filter-engine/package.json node_modules/filter-engine/
           zip -rq ../backend.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
         run: |
@@ -197,10 +200,13 @@ jobs:
           mkdir -p filter-generator-pkg/dist
           cp -r lambdas/filter-generator/dist/* filter-generator-pkg/dist/
           cp lambdas/filter-generator/package.json lambdas/filter-generator/package-lock.json filter-generator-pkg/
-          mkdir -p filter-generator-pkg/node_modules/filter-engine
-          cp -r packages/filter-engine/dist/* filter-generator-pkg/node_modules/filter-engine/
-          cp packages/filter-engine/package.json filter-generator-pkg/node_modules/filter-engine/
+          # Remove filter-engine from package.json (local file: dep, copied manually)
+          node -e "const p=require('./filter-generator-pkg/package.json'); delete p.dependencies['filter-engine']; require('fs').writeFileSync('./filter-generator-pkg/package.json', JSON.stringify(p,null,2))"
           cd filter-generator-pkg && npm ci --omit=dev --ignore-scripts
+          # Copy filter-engine into node_modules after npm ci
+          mkdir -p node_modules/filter-engine
+          cp -r ../packages/filter-engine/dist/* node_modules/filter-engine/
+          cp ../packages/filter-engine/package.json node_modules/filter-engine/
           zip -rq ../filter-generator.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
         run: |
