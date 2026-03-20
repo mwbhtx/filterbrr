@@ -87,8 +87,11 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!(uuid)/)"
+      "node_modules/(?!(uuid|filter-engine)/)"
     ],
+    "moduleNameMapper": {
+      "^filter-engine$": "<rootDir>/../../packages/filter-engine/src/index.ts"
+    },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
