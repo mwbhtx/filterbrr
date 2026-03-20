@@ -2,12 +2,19 @@ import { Handler } from 'aws-lambda';
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, UpdateCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
-import type { AnalyzeEvent, NormalizedTorrent, ScoredTorrent, GeneratedFilter } from './types';
+import type { GenerateFiltersEvent, NormalizedTorrent, ScoredTorrent, GeneratedFilter } from './types';
+import type { SimulationConfig, FilterDef } from 'filter-engine';
+import { runSimulation } from 'filter-engine';
+import { matchExceptReleases } from 'filter-engine';
 import { scoreTorrents, analyzeAllAttributes } from './scoring';
 import { assignTiers, calculateDailyVolume, calculateRateLimits } from './tiers';
 import { generateFilter, EXCEPT_RELEASES } from './filters';
-import { runSimulation, calibrateLowTier, matchExceptReleases } from './simulation';
+import { calibrateLowTier } from './simulation';
 import { generateReport } from './report';
+
+// Helper to convert GeneratedFilter[] to FilterDef[]
+const toFilterDefs = (filters: GeneratedFilter[]): FilterDef[] =>
+  filters.map(f => ({ name: f.name, data: f.data as any }));
 
 // ---------------------------------------------------------------------------
 // AWS clients
@@ -97,7 +104,7 @@ async function completeJob(jobId: string, status: 'completed' | 'failed' | 'canc
 // Handler
 // ---------------------------------------------------------------------------
 
-export const handler: Handler<AnalyzeEvent> = async (event) => {
+export const handler: Handler<GenerateFiltersEvent> = async (event) => {
   const { jobId } = event;
 
   try {
@@ -190,6 +197,7 @@ export const handler: Handler<AnalyzeEvent> = async (event) => {
     // Use the full allScored set (including young/excluded) for simulation
     // to test that filters correctly reject them.
     const simTorrents: NormalizedTorrent[] = allScored;
+    const simConfig: SimulationConfig = { storageTb: event.storageTb, avgSeedDays: 7, avgRatio: 1 };
 
     // Stage 1: High tier only
     if (jobId) await updateProgress(jobId, 'Running simulation (stage 1/3)...');
@@ -198,7 +206,7 @@ export const handler: Handler<AnalyzeEvent> = async (event) => {
       ...f,
       data: { ...f.data, enabled: f.name.includes('high') ? f.data.enabled : false },
     }));
-    runSimulation(simTorrents, highOnly, event.storageTb);
+    runSimulation(simTorrents as any[], toFilterDefs(highOnly), simConfig);
 
     // Stage 2: High + medium
     if (jobId) await updateProgress(jobId, 'Running simulation (stage 2/3)...');
@@ -210,14 +218,14 @@ export const handler: Handler<AnalyzeEvent> = async (event) => {
         enabled: (f.name.includes('high') || f.name.includes('medium')) ? f.data.enabled : false,
       },
     }));
-    runSimulation(simTorrents, highMedium, event.storageTb);
+    runSimulation(simTorrents as any[], toFilterDefs(highMedium), simConfig);
 
     // Stage 3: Calibrate low tier with all 4 filters
     if (jobId) await updateProgress(jobId, 'Calibrating low tier (stage 3/3)...');
 
     const { bestSettings, bestSim } = calibrateLowTier(
       generatedFilters,
-      simTorrents,
+      simTorrents as any[],
       event.storageTb,
     );
 

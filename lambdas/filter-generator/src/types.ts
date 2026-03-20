@@ -79,37 +79,9 @@ export interface GeneratedFilter {
   data: FilterData;
 }
 
-export interface SimulationResult {
-  total_seen: number;
-  total_grabbed: number;
-  total_grabbed_gb: number;
-  grab_rate_pct: number;
-  total_days: number;
-  skip_reasons: Record<string, number>;
-  daily_stats: DailyStats[];
-  per_filter_stats: Record<string, { count: number; gb: number; median_size: number }>;
-  steady_state_avg_utilization: number;
-  steady_state_avg_disk_gb: number;
-  max_storage_gb: number;
-  filters_used: string[];
-  blackout_days: number;
-}
+export type { SimulationResult, DailyStats } from 'filter-engine';
 
-export interface DailyStats {
-  day: number;
-  date: string;
-  grabbed: number;
-  grabbed_gb: number;
-  expired_gb: number;
-  disk_usage_gb: number;
-  utilization_pct: number;
-  available_torrents: number;
-  skipped_no_match: number;
-  skipped_rate_limit: number;
-  skipped_storage: number;
-}
-
-export interface AnalyzeEvent {
+export interface GenerateFiltersEvent {
   jobId?: string;
   userId: string;
   datasetKey: string;

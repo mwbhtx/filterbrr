@@ -4,8 +4,10 @@ import {
   matchExceptReleases,
   torrentMatchesFilter,
   runSimulation,
-} from './simulation';
+} from 'filter-engine';
+import type { FilterDef, SimulationConfig } from 'filter-engine';
 import type { NormalizedTorrent, FilterData, GeneratedFilter } from './types';
+import { calibrateLowTier } from './simulation';
 
 // ---------------------------------------------------------------------------
 // parseSizeStr
@@ -32,8 +34,8 @@ describe('parseSizeStr', () => {
     expect(parseSizeStr('2Tb')).toBe(2048);
   });
 
-  it('handles bare numbers', () => {
-    expect(parseSizeStr('10')).toBe(10);
+  it('handles bare numbers (treated as bytes)', () => {
+    expect(parseSizeStr('10')).toBe(10 / 1e9);
   });
 });
 
@@ -137,32 +139,32 @@ function makeFilterData(overrides: Partial<FilterData> = {}): FilterData {
 
 describe('torrentMatchesFilter', () => {
   it('matches a basic torrent', () => {
-    expect(torrentMatchesFilter(makeTorrent(), makeFilterData())).toBe(true);
+    expect(torrentMatchesFilter(makeTorrent() as any, makeFilterData() as any)).toBe(true);
   });
 
   it('rejects torrent below min size', () => {
     expect(
-      torrentMatchesFilter(makeTorrent({ size_gb: 0.5 }), makeFilterData({ min_size: '1GB' })),
+      torrentMatchesFilter(makeTorrent({ size_gb: 0.5 }) as any, makeFilterData({ min_size: '1GB' }) as any),
     ).toBe(false);
   });
 
   it('rejects torrent above max size', () => {
     expect(
-      torrentMatchesFilter(makeTorrent({ size_gb: 50 }), makeFilterData({ max_size: '30GB' })),
+      torrentMatchesFilter(makeTorrent({ size_gb: 50 }) as any, makeFilterData({ max_size: '30GB' }) as any),
     ).toBe(false);
   });
 
   it('checks resolution filter', () => {
     expect(
       torrentMatchesFilter(
-        makeTorrent({ resolution: '720p' }),
-        makeFilterData({ resolutions: ['1080p', '2160p'] }),
+        makeTorrent({ resolution: '720p' }) as any,
+        makeFilterData({ resolutions: ['1080p', '2160p'] }) as any,
       ),
     ).toBe(false);
     expect(
       torrentMatchesFilter(
-        makeTorrent({ resolution: '1080p' }),
-        makeFilterData({ resolutions: ['1080p', '2160p'] }),
+        makeTorrent({ resolution: '1080p' }) as any,
+        makeFilterData({ resolutions: ['1080p', '2160p'] }) as any,
       ),
     ).toBe(true);
   });
@@ -170,20 +172,20 @@ describe('torrentMatchesFilter', () => {
   it('checks source filter', () => {
     expect(
       torrentMatchesFilter(
-        makeTorrent({ source: 'WEB-DL' }),
-        makeFilterData({ sources: ['Blu-ray'] }),
+        makeTorrent({ source: 'WEB-DL' }) as any,
+        makeFilterData({ sources: ['Blu-ray'] }) as any,
       ),
     ).toBe(false);
   });
 
   it('checks category pattern', () => {
     expect(
-      torrentMatchesFilter(makeTorrent({ category: 'TV' }), makeFilterData({ match_categories: 'Movies*' })),
+      torrentMatchesFilter(makeTorrent({ category: 'TV' }) as any, makeFilterData({ match_categories: 'Movies*' }) as any),
     ).toBe(false);
     expect(
       torrentMatchesFilter(
-        makeTorrent({ category: 'Movies/HD' }),
-        makeFilterData({ match_categories: 'Movies*' }),
+        makeTorrent({ category: 'Movies/HD' }) as any,
+        makeFilterData({ match_categories: 'Movies*' }) as any,
       ),
     ).toBe(true);
   });
@@ -191,8 +193,8 @@ describe('torrentMatchesFilter', () => {
   it('excludes by except_releases', () => {
     expect(
       torrentMatchesFilter(
-        makeTorrent({ name: 'Olympics 2024 1080p' }),
-        makeFilterData({ except_releases: '*Olympics*' }),
+        makeTorrent({ name: 'Olympics 2024 1080p' }) as any,
+        makeFilterData({ except_releases: '*Olympics*' }) as any,
       ),
     ).toBe(false);
   });
@@ -200,14 +202,14 @@ describe('torrentMatchesFilter', () => {
   it('checks release group allowlist', () => {
     expect(
       torrentMatchesFilter(
-        makeTorrent({ release_group: 'OTHER' }),
-        makeFilterData({ match_release_groups: 'GROUP,ELITE' }),
+        makeTorrent({ release_group: 'OTHER' }) as any,
+        makeFilterData({ match_release_groups: 'GROUP,ELITE' }) as any,
       ),
     ).toBe(false);
     expect(
       torrentMatchesFilter(
-        makeTorrent({ release_group: 'GROUP' }),
-        makeFilterData({ match_release_groups: 'GROUP,ELITE' }),
+        makeTorrent({ release_group: 'GROUP' }) as any,
+        makeFilterData({ match_release_groups: 'GROUP,ELITE' }) as any,
       ),
     ).toBe(true);
   });
@@ -215,27 +217,27 @@ describe('torrentMatchesFilter', () => {
   it('checks release group blocklist', () => {
     expect(
       torrentMatchesFilter(
-        makeTorrent({ release_group: 'BAD' }),
-        makeFilterData({ except_release_groups: 'BAD,AWFUL' }),
+        makeTorrent({ release_group: 'BAD' }) as any,
+        makeFilterData({ except_release_groups: 'BAD,AWFUL' }) as any,
       ),
     ).toBe(false);
     expect(
       torrentMatchesFilter(
-        makeTorrent({ release_group: 'GROUP' }),
-        makeFilterData({ except_release_groups: 'BAD,AWFUL' }),
+        makeTorrent({ release_group: 'GROUP' }) as any,
+        makeFilterData({ except_release_groups: 'BAD,AWFUL' }) as any,
       ),
     ).toBe(true);
   });
 
   it('passes with empty resolution/source arrays', () => {
     expect(
-      torrentMatchesFilter(makeTorrent(), makeFilterData({ resolutions: [], sources: [] })),
+      torrentMatchesFilter(makeTorrent() as any, makeFilterData({ resolutions: [], sources: [] }) as any),
     ).toBe(true);
   });
 });
 
 // ---------------------------------------------------------------------------
-// runSimulation
+// runSimulation (via filter-engine)
 // ---------------------------------------------------------------------------
 
 function makeFilter(name: string, overrides: Partial<FilterData> = {}): GeneratedFilter {
@@ -246,6 +248,11 @@ function makeFilter(name: string, overrides: Partial<FilterData> = {}): Generate
   };
 }
 
+const toFilterDefs = (filters: GeneratedFilter[]): FilterDef[] =>
+  filters.map(f => ({ name: f.name, data: f.data as any }));
+
+const defaultConfig: SimulationConfig = { storageTb: 1, avgSeedDays: 7, avgRatio: 1 };
+
 describe('runSimulation', () => {
   it('grabs torrents that match and fit in storage', () => {
     const torrents: NormalizedTorrent[] = [
@@ -255,7 +262,7 @@ describe('runSimulation', () => {
     ];
     const filters = [makeFilter('tier-high', { priority: 4, max_downloads: 10 })];
 
-    const result = runSimulation(torrents, filters, 1); // 1 TB = 1024 GB
+    const result = runSimulation(torrents as any[], toFilterDefs(filters), defaultConfig);
 
     expect(result.total_seen).toBe(3);
     expect(result.total_grabbed).toBe(3);
@@ -272,7 +279,7 @@ describe('runSimulation', () => {
     ];
     const filters = [makeFilter('tier-low', { priority: 2, max_downloads: 1 })];
 
-    const result = runSimulation(torrents, filters, 1);
+    const result = runSimulation(torrents as any[], toFilterDefs(filters), defaultConfig);
 
     expect(result.total_grabbed).toBe(1);
     expect(result.skip_reasons.rate_limited).toBe(2);
@@ -288,7 +295,7 @@ describe('runSimulation', () => {
       makeFilter('tier-high', { priority: 4, max_downloads: 10, max_size: '999GB' }),
     ];
 
-    const result = runSimulation(torrents, filters, 1);
+    const result = runSimulation(torrents as any[], toFilterDefs(filters), defaultConfig);
 
     expect(result.total_grabbed).toBe(1);
     expect(result.skip_reasons.storage_full).toBe(1);
@@ -298,14 +305,14 @@ describe('runSimulation', () => {
     const torrents = [makeTorrent({ torrent_id: 1, date: '2026-03-01 10:00:00' })];
     const filters = [makeFilter('tier-high', { enabled: false })];
 
-    const result = runSimulation(torrents, filters, 1);
+    const result = runSimulation(torrents as any[], toFilterDefs(filters), defaultConfig);
 
     expect(result.total_grabbed).toBe(0);
     expect(result.skip_reasons.no_match).toBe(1);
   });
 
-  it('expires torrents after MAX_SEED_DAYS', () => {
-    // Create torrents spread over more than MAX_SEED_DAYS
+  it('expires torrents after seed days', () => {
+    // Create torrents spread over more than avgSeedDays
     const torrents: NormalizedTorrent[] = [];
     for (let d = 1; d <= 15; d++) {
       const day = d.toString().padStart(2, '0');
@@ -321,17 +328,18 @@ describe('runSimulation', () => {
       makeFilter('tier-high', { priority: 4, max_downloads: 10, max_size: '999GB' }),
     ];
 
-    const result = runSimulation(torrents, filters, 2); // 2TB = 2048GB
+    const config: SimulationConfig = { storageTb: 2, avgSeedDays: 7, avgRatio: 1 };
+    const result = runSimulation(torrents as any[], toFilterDefs(filters), config);
 
-    // All 15 should be grabbed (100GB each, 2048GB limit, max 10 on disk at once = 1000GB)
+    // All 15 should be grabbed (100GB each, 2048GB limit, max ~7 on disk at once = 700GB)
     expect(result.total_grabbed).toBe(15);
-    // Disk should never exceed MAX_SEED_DAYS * 100GB
+    // Disk should never exceed seed_days * 100GB + some margin
     const maxDisk = Math.max(...result.daily_stats.map((d) => d.disk_usage_gb));
     expect(maxDisk).toBeLessThanOrEqual(1100); // at most ~10 days worth + 1
   });
 
   it('handles empty torrent list', () => {
-    const result = runSimulation([], [makeFilter('tier-high')], 1);
+    const result = runSimulation([], toFilterDefs([makeFilter('tier-high')]), defaultConfig);
     expect(result.total_seen).toBe(0);
     expect(result.total_grabbed).toBe(0);
     expect(result.total_days).toBe(0);
@@ -352,7 +360,7 @@ describe('runSimulation', () => {
       makeFilter('tier-low', { priority: 2, max_downloads: 10, resolutions: ['1080p'] }),
     ];
 
-    const result = runSimulation(torrents, filters, 1);
+    const result = runSimulation(torrents as any[], toFilterDefs(filters), defaultConfig);
 
     expect(result.total_grabbed).toBe(1);
     expect(result.per_filter_stats['tier-low'].count).toBe(1);
@@ -366,7 +374,7 @@ describe('runSimulation', () => {
     ];
     const filters = [makeFilter('tier-high', { priority: 4, max_downloads: 10 })];
 
-    const result = runSimulation(torrents, filters, 1);
+    const result = runSimulation(torrents as any[], toFilterDefs(filters), defaultConfig);
 
     expect(result.daily_stats.length).toBe(2);
     expect(result.daily_stats[0].grabbed).toBe(1);

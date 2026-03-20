@@ -125,7 +125,7 @@ describe('generateFilter', () => {
 
     it('generates correct filter name', () => {
       const filter = generateFilter('High', 0, baseTiers, baseRateLimits, 'freeleech', baseAnalyses);
-      expect(filter.name).toBe('fl-fl-freeleech-high-priority');
+      expect(filter.name).toBe('fl-freeleech-high-priority');
     });
 
     it('sets freeleech true for freeleech source', () => {
