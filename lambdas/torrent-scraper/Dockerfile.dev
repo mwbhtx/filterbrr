@@ -5,19 +5,19 @@ WORKDIR /var/task
 COPY package.json ./
 RUN npm install
 
-RUN npm install -g typescript nodemon
+RUN npm install -g nodemon
 
-COPY tsconfig.json ./
+COPY tsconfig.json esbuild.lambda.mjs esbuild.dev.mjs ./
 
 # Override the Lambda base image entrypoint so we can run our own init script
 ENTRYPOINT []
 
 # src/ is volume-mounted at runtime
-# 1. Initial tsc build so handler exists on first invocation
-# 2. tsc --watch recompiles src/ -> dist/ in background
-# 3. nodemon watches dist/ and restarts the Lambda runtime on each recompile
+# 1. Initial esbuild so handler exists on first invocation
+# 2. esbuild watch mode rebundles src/ -> dist/index.js in background
+# 3. nodemon watches dist/ and restarts the Lambda runtime on each rebuild
 CMD ["sh", "-c", \
-  "tsc 2>/dev/null || true; \
-   tsc --watch --preserveWatchOutput & \
+  "node esbuild.lambda.mjs && \
+   node esbuild.dev.mjs & \
    nodemon --watch dist --delay 1 --signal SIGTERM \
      --exec '/lambda-entrypoint.sh dist/index.handler'"]

@@ -30,6 +30,8 @@ services:
       - '9001:8080'
     volumes:
       - ./lambdas/torrent-scraper/src:/var/task/src
+      - ./lambdas/torrent-scraper/esbuild.dev.mjs:/var/task/esbuild.dev.mjs
+      - ./lambdas/torrent-scraper/esbuild.lambda.mjs:/var/task/esbuild.lambda.mjs
     environment:
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=local
@@ -50,6 +52,9 @@ services:
       - '9002:8080'
     volumes:
       - ./lambdas/filter-generator/src:/var/task/src
+      - ./lambdas/filter-generator/esbuild.dev.mjs:/var/task/esbuild.dev.mjs
+      - ./lambdas/filter-generator/esbuild.lambda.mjs:/var/task/esbuild.lambda.mjs
+      - ./packages/filter-engine:/var/task/node_modules/filter-engine
     environment:
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=local
