@@ -54,6 +54,7 @@ export default function DatasetsPage() {
     () => localStorage.getItem('active-scrape-job')
   );
   const [scrapeRunning, setScrapeRunning] = useState(() => !!localStorage.getItem('active-scrape-job'));
+  const [scrapeError, setScrapeError] = useState<string | null>(null);
 
   const handleDelete = async (filename: string) => {
     deleteDataset.mutate(filename);
@@ -61,6 +62,7 @@ export default function DatasetsPage() {
 
   const handleScrape = async () => {
     setScrapeRunning(true);
+    setScrapeError(null);
     try {
       // Save credentials to settings before scraping
       const trackerId = existingTracker?.id ?? Math.random().toString(36).slice(2, 10);
@@ -86,8 +88,9 @@ export default function DatasetsPage() {
       });
       setScrapeJobId(job_id);
       localStorage.setItem('active-scrape-job', job_id);
-    } catch {
+    } catch (err) {
       setScrapeRunning(false);
+      setScrapeError(err instanceof Error ? err.message : 'Scrape failed');
     }
   };
 
@@ -192,6 +195,9 @@ export default function DatasetsPage() {
             >
               {scrapeRunning ? "Running..." : "Run Scrape"}
             </Button>
+            {scrapeError && (
+              <span className="text-xs text-destructive flex-1 truncate">{scrapeError}</span>
+            )}
             <JobRunner
               jobId={scrapeJobId}
               onComplete={() => {

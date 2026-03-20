@@ -55,6 +55,10 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
     throw new Error(`API error ${res.status}: ${text}`);
   }
   if (res.status === 204 || res.headers.get('content-length') === '0') return undefined as T;
+  const contentType = res.headers.get('content-type') ?? '';
+  if (contentType.includes('text/html')) {
+    throw new Error(`Server returned an unexpected response (status ${res.status}). The service may be temporarily unavailable.`);
+  }
   return res.json();
 }
 
