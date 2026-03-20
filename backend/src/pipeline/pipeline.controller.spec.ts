@@ -50,6 +50,7 @@ describe('PipelineController', () => {
         command: 'scrape TorrentLeech freeleech 7d',
         status: 'running',
         progress: 'Scraping day 5 of 30',
+        started_at: '2026-03-18T00:00:00.000Z',
         result: { key: 'test.csv' },
         error: null,
       });
