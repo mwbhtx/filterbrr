@@ -143,11 +143,11 @@ export default function LoginPage() {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-1">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type={import.meta.env.DEV ? 'text' : 'email'} value={email} onChange={e => setEmail(e.target.value)} required={!import.meta.env.DEV} />
+                    <Input id="email" type={import.meta.env.DEV ? 'text' : 'email'} value={email} onChange={e => setEmail(e.target.value)} required={!import.meta.env.DEV} data-lpignore="true" autoComplete="off" />
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required={!import.meta.env.DEV} />
+                    <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required={!import.meta.env.DEV} data-lpignore="true" autoComplete="off" />
                     <div>
                       <Link to="/forgot-password" className="text-xs text-muted-foreground underline">Forgot password?</Link>
                     </div>
