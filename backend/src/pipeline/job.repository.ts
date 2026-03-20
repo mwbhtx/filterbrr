@@ -21,13 +21,15 @@ export interface Job {
 }
 
 const TABLE = 'Jobs';
+const JOB_TTL_SECONDS = 900; // 15 minutes — matches Lambda timeout
 
 @Injectable()
 export class JobRepository {
   constructor(private readonly dynamo: DynamoService) {}
 
   async create(job: Job): Promise<void> {
-    await this.dynamo.client.send(new PutCommand({ TableName: TABLE, Item: job }));
+    const ttl = Math.floor(Date.now() / 1000) + JOB_TTL_SECONDS;
+    await this.dynamo.client.send(new PutCommand({ TableName: TABLE, Item: { ...job, ttl } }));
   }
 
   async get(jobId: string): Promise<Job | null> {
