@@ -14,4 +14,9 @@ export class SyncController {
   pushFilter(@Req() req: any, @Param('filterId') filterId: string) {
     return this.sync.pushFilter(req.user.userId, filterId);
   }
+
+  @Post('pull/:filterId')
+  pullFilter(@Req() req: any, @Param('filterId') filterId: string) {
+    return this.sync.pullFilter(req.user.userId, filterId);
+  }
 }

@@ -15,6 +15,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useToast } from "@/components/Toast";
+import { filterDataFromAutobrr } from "../types/autobrr";
 
 function HintIcon({ tip }: { tip: string }) {
   return (
@@ -120,7 +122,10 @@ export default function SimulatorPage() {
   const [dirtyMap, setDirtyMap] = useState<Map<string, Filter>>(new Map());
   const [selectedFilterId, setSelectedFilterId] = useState<string | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [pullingId, setPullingId] = useState<string | null>(null);
   const [filterError, setFilterError] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const { toast } = useToast();
   const [connectionStatus, setConnectionStatus] = useState<AutobrrConnectionStatus | null>(null);
   const [checkingConnection, setCheckingConnection] = useState(false);
 
@@ -385,33 +390,48 @@ export default function SimulatorPage() {
 
   const handlePush = async (filterId: string) => {
     setSyncingId(filterId);
-    setFilterError(null);
-    try { await api.pushFilter(filterId); }
-    catch (err: unknown) { setFilterError(err instanceof Error ? err.message : "Push failed"); }
+    setSyncError(null);
+    try { await api.pushFilter(filterId); toast("Filter pushed to autobrr"); }
+    catch (err: unknown) { const msg = err instanceof Error ? err.message : "Push failed"; setSyncError(msg); toast(msg, "error"); }
     finally { setSyncingId(null); }
   };
 
   const handlePushAll = async () => {
     setSyncingId("all");
-    setFilterError(null);
-    try { await api.pushAll(); }
-    catch (err: unknown) { setFilterError(err instanceof Error ? err.message : "Push all failed"); }
+    setSyncError(null);
+    try { await api.pushAll(); toast("All filters pushed to autobrr"); }
+    catch (err: unknown) { const msg = err instanceof Error ? err.message : "Push all failed"; setSyncError(msg); toast(msg, "error"); }
     finally { setSyncingId(null); }
   };
 
-  const handlePull = async (remoteId: number) => {
-    setSyncingId(String(remoteId));
+  const handlePull = async (filterId: string) => {
+    setPullingId(filterId);
     setFilterError(null);
-    try { await api.pullFilter(remoteId); await refetchFilters(); }
-    catch (err: unknown) { setFilterError(err instanceof Error ? err.message : "Pull failed"); }
-    finally { setSyncingId(null); }
+    try {
+      const remote = await api.pullFilter(filterId);
+      const local = allFilters.find((f) => f._id === filterId);
+      if (!local) return;
+      const pulled: Filter = {
+        ...local,
+        name: (remote.name as string) ?? local.name,
+        data: filterDataFromAutobrr(remote, local.data),
+      };
+      setDirtyMap((prev) => new Map(prev).set(filterId, pulled));
+      toast("Filter pulled from autobrr — review and save");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Pull failed";
+      setSyncError(msg);
+      toast(msg, "error");
+    } finally {
+      setPullingId(null);
+    }
   };
 
   const handlePullAll = async () => {
     setSyncingId("all");
-    setFilterError(null);
-    try { await api.pullAll(); await refetchFilters(); }
-    catch (err: unknown) { setFilterError(err instanceof Error ? err.message : "Pull all failed"); }
+    setSyncError(null);
+    try { await api.pullAll(); await refetchFilters(); toast("All filters pulled from autobrr"); }
+    catch (err: unknown) { const msg = err instanceof Error ? err.message : "Pull all failed"; setSyncError(msg); toast(msg, "error"); }
     finally { setSyncingId(null); }
   };
 
@@ -444,6 +464,7 @@ export default function SimulatorPage() {
       dirtyIds={dirtyIds}
       {...(!isDemo && {
         syncingId,
+        pullingId,
         onPush: handlePush,
         onPull: handlePull,
         onPushAll: handlePushAll,
@@ -475,8 +496,12 @@ export default function SimulatorPage() {
             onChange={handleFilterChange}
             onPush={isDemo ? undefined : handlePush}
             pushing={syncingId === selectedFilter._id}
+            onPull={isDemo ? undefined : () => handlePull(selectedFilter._id)}
+            pulling={pullingId === selectedFilter._id}
             onCancel={handleFilterCancel}
             isDirty={isDirty}
+            syncError={syncError}
+            onDismissSyncError={() => setSyncError(null)}
           />
         </>
       ) : (

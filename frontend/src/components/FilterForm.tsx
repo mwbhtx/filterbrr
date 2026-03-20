@@ -11,8 +11,12 @@ interface FilterFormProps {
   onChange?: (filter: Filter) => void;
   onPush?: (filterId: string) => void;
   pushing?: boolean;
+  onPull?: () => void;
+  pulling?: boolean;
   onCancel?: () => void;
   isDirty?: boolean;
+  syncError?: string | null;
+  onDismissSyncError?: () => void;
 }
 
 const RESOLUTIONS = ["2160p", "1080p", "720p", "480p", "576p"];
@@ -50,8 +54,12 @@ export default function FilterForm({
   onChange,
   onPush,
   pushing,
+  onPull,
+  pulling,
   onCancel,
   isDirty,
+  syncError,
+  onDismissSyncError,
 }: FilterFormProps) {
   const [name, setName] = useState("");
   const [data, setData] = useState<FilterData>({ ...emptyData });
@@ -478,10 +486,20 @@ export default function FilterForm({
           {onPush && filter?._id && (
             <button
               onClick={() => onPush(filter._id)}
-              disabled={pushing}
+              disabled={pushing || isDirty}
+              title={isDirty ? "Save changes before pushing" : undefined}
               className="px-4 py-2 text-sm font-medium rounded bg-muted hover:bg-muted text-foreground transition-colors disabled:opacity-50"
             >
               {pushing ? "Pushing..." : "Push to Autobrr"}
+            </button>
+          )}
+          {onPull && filter?._id && (
+            <button
+              onClick={onPull}
+              disabled={pulling}
+              className="px-4 py-2 text-sm font-medium rounded bg-muted hover:bg-muted text-foreground transition-colors disabled:opacity-50"
+            >
+              {pulling ? "Pulling..." : "Pull from Autobrr"}
             </button>
           )}
           {onDelete && !readOnly && (
@@ -493,6 +511,20 @@ export default function FilterForm({
             </button>
           )}
         </div>
+
+        {syncError && (
+          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded bg-destructive/20 border border-destructive/50 text-destructive text-sm">
+            <span>{syncError}</span>
+            {onDismissSyncError && (
+              <button
+                onClick={onDismissSyncError}
+                className="shrink-0 text-destructive hover:text-destructive/80"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

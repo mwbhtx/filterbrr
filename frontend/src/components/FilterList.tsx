@@ -11,8 +11,9 @@ interface FilterListProps {
   syncByName?: Map<string, SyncFilterEntry>;
   dirtyIds?: Set<string>;
   syncingId?: string | null;
+  pullingId?: string | null;
   onPush?: (filterId: string) => void;
-  onPull?: (remoteId: number) => void;
+  onPull?: (filterId: string) => void;
   onPushAll?: () => void;
   onPullAll?: () => void;
   onCheckConnection?: () => void;
@@ -32,6 +33,7 @@ export default function FilterList({
   syncByName,
   dirtyIds,
   syncingId,
+  pullingId,
   onPush,
   onPull,
   onPushAll,
@@ -56,6 +58,7 @@ export default function FilterList({
     const sync = syncByName?.get(filter.name);
     const isDirty = dirtyIds?.has(filter._id);
     const isSyncing = syncingId === filter._id || syncingId === "all";
+    const isPulling = pullingId === filter._id;
 
     return (
       <div
@@ -110,22 +113,23 @@ export default function FilterList({
         </div>
         {(onPush || onPull) && (
           <div className="flex items-center gap-2 mt-1.5" onClick={(e) => e.stopPropagation()}>
-            {onPush && (
+            {onPush && filter._source === "saved" && (
               <button
                 onClick={() => onPush(filter._id)}
-                disabled={isSyncing}
+                disabled={isSyncing || !!isDirty}
+                title={isDirty ? "Save changes before pushing" : undefined}
                 className="text-[10px] text-primary hover:text-primary disabled:opacity-50"
               >
                 {isSyncing ? "..." : "Push"}
               </button>
             )}
-            {sync?.remote_id != null && onPull && (
+            {onPull && filter._source === "saved" && (
               <button
-                onClick={() => onPull(sync.remote_id!)}
-                disabled={isSyncing}
+                onClick={() => onPull(filter._id)}
+                disabled={isPulling}
                 className="text-[10px] text-accent-foreground hover:text-accent-foreground disabled:opacity-50"
               >
-                {isSyncing ? "..." : "Pull"}
+                {isPulling ? "..." : "Pull"}
               </button>
             )}
             {sync && (

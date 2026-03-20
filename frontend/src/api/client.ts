@@ -52,7 +52,12 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`API error ${res.status}: ${text}`);
+    let message = `API error ${res.status}: ${text}`;
+    try {
+      const json = JSON.parse(text);
+      if (json.message) message = json.message;
+    } catch { /* not JSON, use raw text */ }
+    throw new Error(message);
   }
   if (res.status === 204 || res.headers.get('content-length') === '0') return undefined as T;
   const contentType = res.headers.get('content-type') ?? '';
@@ -144,8 +149,8 @@ export const api = {
     }),
   getSyncStatus: () => fetchJSON<SyncFilterEntry[]>("/autobrr/filters"),
   pullAll: () => fetchJSON<{ pulled: number }>("/autobrr/pull", { method: "POST" }),
-  pullFilter: (remoteId: number) =>
-    fetchJSON<Filter>(`/autobrr/pull/${remoteId}`, { method: "POST" }),
+  pullFilter: (localId: string) =>
+    fetchJSON<Record<string, unknown>>(`/autobrr/pull/${localId}`, { method: "POST" }),
   pushAll: () => fetchJSON<{ pushed: number }>("/autobrr/push", { method: "POST" }),
   pushFilter: (localId: string) =>
     fetchJSON<unknown>(`/autobrr/push/${localId}`, { method: "POST" }),

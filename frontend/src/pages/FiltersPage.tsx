@@ -2,9 +2,11 @@ import { useState } from "react";
 import { api } from "../api/client";
 import { useFilters, useDeleteFilter } from "../hooks/useFilters";
 import type { Filter, AnalysisResults } from "../types";
+import { filterDataFromAutobrr } from "../types/autobrr";
 import FilterList from "../components/FilterList";
 import FilterForm from "../components/FilterForm";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/Toast";
 
 const genTempId = () => `temp_${Math.random().toString(36).slice(2, 10)}`;
 
@@ -19,8 +21,11 @@ export default function FiltersPage() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [pullingId, setPullingId] = useState<string | null>(null);
   const [analysisResults] = useState<AnalysisResults | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Combine persistent + temp filters
   const allFilters: Filter[] = [
@@ -183,11 +188,14 @@ export default function FiltersPage() {
 
   const handlePush = async (filterId: string) => {
     setSyncingId(filterId);
-    setError(null);
+    setSyncError(null);
     try {
       await api.pushFilter(filterId);
+      toast("Filter pushed to autobrr");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Push failed");
+      const msg = err instanceof Error ? err.message : "Push failed";
+      setSyncError(msg);
+      toast(msg, "error");
     } finally {
       setSyncingId(null);
     }
@@ -195,13 +203,39 @@ export default function FiltersPage() {
 
   const handlePushAll = async () => {
     setSyncingId("all");
-    setError(null);
+    setSyncError(null);
     try {
       await api.pushAll();
+      toast("All filters pushed to autobrr");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Push all failed");
+      const msg = err instanceof Error ? err.message : "Push all failed";
+      setSyncError(msg);
+      toast(msg, "error");
     } finally {
       setSyncingId(null);
+    }
+  };
+
+  const handlePull = async (filterId: string) => {
+    setPullingId(filterId);
+    setSyncError(null);
+    try {
+      const remote = await api.pullFilter(filterId);
+      const local = allFilters.find((f) => f._id === filterId);
+      if (!local) return;
+      const pulled: Filter = {
+        ...local,
+        name: (remote.name as string) ?? local.name,
+        data: filterDataFromAutobrr(remote, local.data),
+      };
+      setDirtyMap((prev) => new Map(prev).set(filterId, pulled));
+      toast("Filter pulled from autobrr — review and save");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Pull failed";
+      setSyncError(msg);
+      toast(msg, "error");
+    } finally {
+      setPullingId(null);
     }
   };
 
@@ -223,7 +257,9 @@ export default function FiltersPage() {
           onDeleteFilter={handleDeleteTemp}
           dirtyIds={dirtyIds}
           syncingId={syncingId}
+          pullingId={pullingId}
           onPush={handlePush}
+          onPull={handlePull}
           onPushAll={handlePushAll}
         />
       </div>
@@ -261,8 +297,12 @@ export default function FiltersPage() {
             onChange={handleChange}
             onPush={handlePush}
             pushing={syncingId === selectedFilter._id}
+            onPull={() => handlePull(selectedFilter._id)}
+            pulling={pullingId === selectedFilter._id}
             onCancel={handleCancel}
             isDirty={isDirty}
+            syncError={syncError}
+            onDismissSyncError={() => setSyncError(null)}
           />
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">

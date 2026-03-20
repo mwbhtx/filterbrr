@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { DynamoService } from '../dynamo/dynamo.service';
 import { FiltersService } from '../filters/filters.service';
 import { SettingsService } from '../settings/settings.service';
 import { AutobrrService } from '../autobrr/autobrr.service';
+import { toAutobrrPayload } from '../autobrr/autobrr-filter.schema';
 
 const TABLE = 'SyncState';
 
@@ -38,16 +39,21 @@ export class SyncService {
 
     const { autobrr_url, autobrr_api_key } = userSettings as { autobrr_url?: string; autobrr_api_key?: string };
     if (!autobrr_url || !autobrr_api_key) {
-      throw new Error('autobrr not configured');
+      throw new BadRequestException('autobrr not configured');
     }
 
     const remoteId = syncState[filterId];
     let remote: Record<string, unknown>;
 
+    const filterName = filter.name as string;
+    const suffix = ' [filterbrr]';
+    const name = filterName.endsWith(suffix) ? filterName : filterName + suffix;
+    const payload = toAutobrrPayload(name, filter.data as Record<string, unknown>);
+
     if (remoteId) {
-      remote = await this.autobrr.updateFilter(autobrr_url, autobrr_api_key, remoteId, filter.data as Record<string, unknown>);
+      remote = await this.autobrr.updateFilter(autobrr_url, autobrr_api_key, remoteId, payload);
     } else {
-      remote = await this.autobrr.createFilter(autobrr_url, autobrr_api_key, filter.data as Record<string, unknown>);
+      remote = await this.autobrr.createFilter(autobrr_url, autobrr_api_key, payload);
     }
 
     const updatedState = { ...syncState, [filterId]: remote.id as number };
@@ -58,6 +64,26 @@ export class SyncService {
       })
     );
 
+    return remote;
+  }
+
+  async pullFilter(userId: string, filterId: string): Promise<Record<string, unknown>> {
+    const [userSettings, syncState] = await Promise.all([
+      this.settings.get(userId),
+      this.getSyncState(userId),
+    ]);
+
+    const { autobrr_url, autobrr_api_key } = userSettings as { autobrr_url?: string; autobrr_api_key?: string };
+    if (!autobrr_url || !autobrr_api_key) {
+      throw new BadRequestException('autobrr not configured');
+    }
+
+    const remoteId = syncState[filterId];
+    if (!remoteId) {
+      throw new NotFoundException('No remote mapping found for this filter — push it first');
+    }
+
+    const remote = await this.autobrr.getFilter(autobrr_url, autobrr_api_key, remoteId);
     return remote;
   }
 }
