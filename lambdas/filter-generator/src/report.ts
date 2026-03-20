@@ -155,7 +155,6 @@ export function generateReport(
   add('- **High** (priority 4, 5s delay): Allowlist of high-tier release groups');
   add('- **Medium** (priority 3, 30s delay): Blocklist of low-tier groups');
   add('- **Low** (priority 2, 60s delay): All resolutions/sources, rate/size calibrated via simulation');
-  add('- **Opportunistic** (priority 1, 65s delay): Small efficient torrents (<=15GB, 1080p/720p)');
   add();
 
   // -----------------------------------------------------------------------
@@ -183,7 +182,7 @@ export function generateReport(
   add();
   add('| Tier | Enabled | Budget GB/day | Median Size | DL/hour Rate Limit |');
   add('|------|---------|--------------|-------------|--------------------|');
-  for (const level of ['high', 'medium', 'low', 'opportunistic'] as const) {
+  for (const level of ['high', 'medium', 'low'] as const) {
     const info = (rateLimits as Record<string, RateLimit>)[level] ?? { enabled: false, daily_gb: 0, max_downloads_per_hour: 0 };
     const enabled = info.enabled ? 'yes' : 'no';
     const dailyGb = info.daily_gb ?? 0;
@@ -218,7 +217,7 @@ export function generateReport(
   const lowGroups = collectTierValues(rgTiers, ['low']).sort();
 
   const tierSpecs: Array<[string, number]> = [
-    ['high', 0], ['medium', 1], ['low', 2], ['opportunistic', 3],
+    ['high', 0], ['medium', 1], ['low', 2],
   ];
 
   for (const [level, idx] of tierSpecs) {
@@ -233,8 +232,6 @@ export function generateReport(
     let resolutions: string[];
     if (idx === 2) {
       resolutions = Object.keys(resTiers).filter(r => r !== 'unknown');
-    } else if (idx === 3) {
-      resolutions = ['720p', '1080p'];
     } else if (idx === 0) {
       resolutions = collectTierValues(resTiers, ['high', 'medium']).filter(r => !EXCLUDED_RESOLUTIONS.has(r));
     } else {
@@ -245,8 +242,6 @@ export function generateReport(
     let sources: string[];
     if (idx === 2) {
       sources = Object.keys(srcTiers).filter(s => s !== 'Other');
-    } else if (idx === 3) {
-      sources = collectTierValues(srcTiers, ['high', 'medium']).filter(s => !EXCLUDED_SOURCES.has(s));
     } else if (idx === 0) {
       sources = collectTierValues(srcTiers, ['high', 'medium']).filter(s => !EXCLUDED_SOURCES.has(s));
     } else {

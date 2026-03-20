@@ -9,7 +9,7 @@ export const MAX_SEED_DAYS = parseInt(process.env.MAX_SEED_DAYS ?? '10', 10);
 export const BURST_FACTOR = parseInt(process.env.BURST_FACTOR ?? '8', 10);
 export const TARGET_UTILIZATION_PCT = parseFloat(process.env.TARGET_UTILIZATION_PCT ?? '85');
 
-export const TIER_LABELS = ['high', 'medium', 'low', 'opportunistic'] as const;
+export const TIER_LABELS = ['high', 'medium', 'low'] as const;
 
 // ---------------------------------------------------------------------------
 // Release group tier assignment
@@ -200,8 +200,6 @@ export function classifyTorrentTier(
 
 /**
  * Classify all torrents and compute per-tier daily volume + median sizes.
- * Includes an "opportunistic" pool: size <= 15GB, resolution 1080p/720p,
- * not high-tier, not low-RG.
  */
 export function calculateDailyVolume(
   torrents: ScoredTorrent[],
@@ -219,21 +217,6 @@ export function calculateDailyVolume(
     tierTorrents[tier].push(t);
     torrentTiers[t.torrent_id] = tier;
   }
-
-  // Opportunistic pool: small efficient torrents not already high-tier
-  const rgTiers = tiers['release_group'] ?? {};
-  const oppTorrents: ScoredTorrent[] = [];
-  for (const t of torrents) {
-    if (
-      t.size_gb <= 15 &&
-      (t.resolution === '1080p' || t.resolution === '720p') &&
-      rgTiers[t.release_group] !== 'low' &&
-      torrentTiers[t.torrent_id] !== 'high'
-    ) {
-      oppTorrents.push(t);
-    }
-  }
-  tierTorrents['opportunistic'] = oppTorrents;
 
   // Date range
   const dates = torrents
@@ -253,7 +236,7 @@ export function calculateDailyVolume(
   const dailyVolume: Record<string, DailyVolume> = {};
   const medianSizes: Record<string, number> = {};
 
-  for (const level of ['high', 'medium', 'low', 'opportunistic'] as const) {
+  for (const level of ['high', 'medium', 'low'] as const) {
     const group = tierTorrents[level];
     const count = group.length;
     if (count === 0) {
@@ -283,7 +266,6 @@ export function calculateDailyVolume(
  * Calculate per-tier rate limits fitting within storage budget.
  * Fill-from-top: high and medium take their natural daily volume (uncapped),
  * then low gets a rate limit calibrated to fill the remaining budget.
- * Opportunistic is disabled.
  */
 export function calculateRateLimits(
   dailyVolume: Record<string, DailyVolume>,
@@ -356,14 +338,6 @@ export function calculateRateLimits(
       max_downloads_per_hour: 0,
     };
   }
-
-  // Opportunistic: disabled
-  result['opportunistic'] = {
-    enabled: false,
-    daily_gb: 0,
-    torrents_per_day: 0,
-    max_downloads_per_hour: 0,
-  };
 
   return result as Record<string, RateLimit> & { max_daily_gb: number };
 }

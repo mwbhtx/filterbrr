@@ -179,7 +179,6 @@ export const handler: Handler<GenerateFiltersEvent> = async (event) => {
       ['high', 0],
       ['medium', 1],
       ['low', 2],
-      ['opportunistic', 3],
     ];
 
     const generatedFilters: GeneratedFilter[] = tierNames.map(([name, idx]) =>

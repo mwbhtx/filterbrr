@@ -58,19 +58,4 @@ export const DEMO_FILTERS = [
       delay: 60,
     },
   },
-  {
-    name: 'fl-freeleech-opportunistic-priority',
-    version: '1',
-    _id: 'gen-freeleech-opportunistic',
-    data: {
-      ...filterDefaults,
-      min_size: '1GB',
-      max_size: '15GB',
-      max_downloads: 1,
-      max_downloads_unit: 'HOUR',
-      freeleech: true,
-      priority: 1,
-      delay: 65,
-    },
-  },
 ];

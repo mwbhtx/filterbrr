@@ -5,17 +5,16 @@ import type { AttributeStats, RateLimit, FilterData, GeneratedFilter } from './t
 // ---------------------------------------------------------------------------
 
 /** Tier index -> autobrr priority (higher = grabbed first) */
-export const PRIORITY_MAP: Record<number, number> = { 0: 4, 1: 3, 2: 2, 3: 1 };
+export const PRIORITY_MAP: Record<number, number> = { 0: 4, 1: 3, 2: 2 };
 
 /** Tier index -> delay in seconds before grabbing */
-export const DELAY_MAP: Record<number, number> = { 0: 5, 1: 30, 2: 60, 3: 65 };
+export const DELAY_MAP: Record<number, number> = { 0: 5, 1: 30, 2: 60 };
 
 /** Tier index -> [min_size, max_size] */
 export const SIZE_MAP: Record<number, [string, string]> = {
   0: ['1GB', '30GB'],
   1: ['1GB', '30GB'],
   2: ['1GB', '30GB'],
-  3: ['1GB', '15GB'],
 };
 
 /** Glob patterns to exclude from all filters */
@@ -58,14 +57,14 @@ export function collectTierValues(
 /**
  * Generate a single autobrr filter dict for a tier.
  *
- * tierIndex: 0=high, 1=medium, 2=low, 3=opportunistic
+ * tierIndex: 0=high, 1=medium, 2=low
  *
- * Per-tier logic (1:1 from Python generate_filter):
- * - Resolutions: tier 2 (low) = all except "unknown"; tier 3 (opp) = ["720p","1080p"];
+ * Per-tier logic:
+ * - Resolutions: tier 2 (low) = all except "unknown";
  *   tier 0 (high) = high+medium minus excluded; tier 1 (medium) = medium minus excluded
  * - Sources: similar per-tier logic
- * - Categories: high/medium -> movies+tv; low/opp -> movies+tv fallback
- * - Release groups: tier 0 -> allowlist; tiers 1-3 -> blocklist
+ * - Categories: high/medium -> movies+tv; low -> movies+tv fallback
+ * - Release groups: tier 0 -> allowlist; tiers 1-2 -> blocklist
  * - Rate limits from rateLimits dict
  */
 export function generateFilter(
@@ -86,9 +85,6 @@ export function generateFilter(
   if (tierIndex === 2) {
     // Low tier: all resolutions except truly unusable ones
     resolutions = Object.keys(resTiers).filter(r => r !== 'unknown');
-  } else if (tierIndex === 3) {
-    // Opportunistic: only small-file-friendly resolutions
-    resolutions = ['720p', '1080p'];
   } else if (tierIndex === 0) {
     // High: high+medium minus excluded
     resolutions = collectTierValues(resTiers, ['high', 'medium']).filter(
@@ -112,11 +108,6 @@ export function generateFilter(
   if (tierIndex === 2) {
     // Low tier: all sources except truly unusable ones
     sources = Object.keys(srcTiers).filter(s => s !== 'Other');
-  } else if (tierIndex === 3) {
-    // Opportunistic: all non-excluded sources from high+medium tiers
-    sources = collectTierValues(srcTiers, ['high', 'medium']).filter(
-      s => !EXCLUDED_SOURCES.has(s),
-    );
   } else if (tierIndex === 0) {
     // High: high+medium minus excluded
     sources = collectTierValues(srcTiers, ['high', 'medium']).filter(
@@ -144,7 +135,7 @@ export function generateFilter(
       catValues = collectTierValues(catTiers, ['high', 'medium']);
     }
   } else {
-    // Low and opportunistic: movies + tv
+    // Low: movies + tv
     catValues = Object.keys(catTiers).filter(c => c === 'movies' || c === 'tv');
     if (catValues.length === 0) {
       catValues = Object.keys(catTiers);
@@ -194,7 +185,7 @@ export function generateFilter(
     except_release_groups: '',
   };
 
-  // Allowlist for high tier, blocklist for medium/low/opportunistic
+  // Allowlist for high tier, blocklist for medium/low
   if (tierIndex === 0) {
     data.match_release_groups = highGroups.join(',');
   } else {

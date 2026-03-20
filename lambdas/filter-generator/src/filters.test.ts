@@ -56,7 +56,6 @@ const baseRateLimits: Record<string, RateLimit> = {
   high: { enabled: true, daily_gb: 50, torrents_per_day: 10, max_downloads_per_hour: 4 },
   medium: { enabled: true, daily_gb: 100, torrents_per_day: 20, max_downloads_per_hour: 7 },
   low: { enabled: true, daily_gb: 200, torrents_per_day: 40, max_downloads_per_hour: 7 },
-  opportunistic: { enabled: false, daily_gb: 0, torrents_per_day: 0, max_downloads_per_hour: 0 },
 };
 
 const baseAnalyses: Record<string, Record<string, AttributeStats>> = {
@@ -181,30 +180,6 @@ describe('generateFilter', () => {
       const filter = generateFilter('Low', 2, baseTiers, baseRateLimits, 'freeleech', baseAnalyses);
       expect(filter.data.except_release_groups).toContain('YIFY');
       expect(filter.data.match_release_groups).toBe('');
-    });
-  });
-
-  describe('opportunistic tier (index 3)', () => {
-    it('uses only 720p and 1080p resolutions', () => {
-      const filter = generateFilter('Opportunistic', 3, baseTiers, baseRateLimits, 'freeleech', baseAnalyses);
-      expect(filter.data.resolutions).toEqual(['1080p', '720p']);
-    });
-
-    it('uses smaller max_size', () => {
-      const filter = generateFilter('Opportunistic', 3, baseTiers, baseRateLimits, 'freeleech', baseAnalyses);
-      expect(filter.data.max_size).toBe('15GB');
-    });
-
-    it('is disabled', () => {
-      const filter = generateFilter('Opportunistic', 3, baseTiers, baseRateLimits, 'freeleech', baseAnalyses);
-      expect(filter.data.enabled).toBe(false);
-    });
-
-    it('uses non-excluded sources from high+medium', () => {
-      const filter = generateFilter('Opportunistic', 3, baseTiers, baseRateLimits, 'freeleech', baseAnalyses);
-      expect(filter.data.sources).toContain('BluRay');
-      expect(filter.data.sources).toContain('Remux');
-      expect(filter.data.sources).not.toContain('HDTV');
     });
   });
 

@@ -262,9 +262,8 @@ describe('calculateRateLimits', () => {
       high: { count: 100, torrents_per_day: 10, daily_gb: 50 },
       medium: { count: 200, torrents_per_day: 20, daily_gb: 100 },
       low: { count: 300, torrents_per_day: 30, daily_gb: 150 },
-      opportunistic: { count: 50, torrents_per_day: 5, daily_gb: 25 },
     };
-    const medianSizes = { high: 5, medium: 5, low: 5, opportunistic: 5 };
+    const medianSizes = { high: 5, medium: 5, low: 5 };
 
     // 4TB storage, MAX_SEED_DAYS=10 => max_daily_gb = 409.6
     const limits = calculateRateLimits(dailyVolume, medianSizes, 4);
@@ -277,8 +276,6 @@ describe('calculateRateLimits', () => {
     // Low gets the remainder: 409.6 - 50 - 100 = 259.6
     expect((limits['low'] as any).enabled).toBe(true);
     expect((limits['low'] as any).daily_gb).toBeCloseTo(259.6, 1);
-    // Opportunistic is disabled
-    expect((limits['opportunistic'] as any).enabled).toBe(false);
   });
 
   it('disables low when high+medium exhaust budget', () => {
@@ -286,9 +283,8 @@ describe('calculateRateLimits', () => {
       high: { count: 100, torrents_per_day: 50, daily_gb: 300 },
       medium: { count: 200, torrents_per_day: 50, daily_gb: 200 },
       low: { count: 50, torrents_per_day: 10, daily_gb: 50 },
-      opportunistic: { count: 10, torrents_per_day: 2, daily_gb: 10 },
     };
-    const medianSizes = { high: 6, medium: 4, low: 5, opportunistic: 3 };
+    const medianSizes = { high: 6, medium: 4, low: 5 };
 
     // 4TB => 409.6 GB/day. High takes 300, medium takes min(200, 109.6)=109.6, low gets 0
     const limits = calculateRateLimits(dailyVolume, medianSizes, 4);
@@ -300,9 +296,8 @@ describe('calculateRateLimits', () => {
       high: { count: 10, torrents_per_day: 1, daily_gb: 5 },
       medium: { count: 10, torrents_per_day: 1, daily_gb: 5 },
       low: { count: 100, torrents_per_day: 10, daily_gb: 50 },
-      opportunistic: { count: 0, torrents_per_day: 0, daily_gb: 0 },
     };
-    const medianSizes = { high: 5, medium: 5, low: 5, opportunistic: 0 };
+    const medianSizes = { high: 5, medium: 5, low: 5 };
 
     const limits = calculateRateLimits(dailyVolume, medianSizes, 4);
     // Low tier should use BURST_FACTOR//2 = 4 (default BURST_FACTOR=8)
