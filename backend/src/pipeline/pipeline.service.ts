@@ -6,8 +6,8 @@ import { SettingsService } from '../settings/settings.service';
 import { JobRepository, Job } from './job.repository';
 
 const LOCAL_LAMBDA_URLS: Record<string, string> = {
-  'filterbrr-scraper':  'http://localhost:9001/2015-03-31/functions/function/invocations',
-  'filterbrr-analyzer': 'http://localhost:9002/2015-03-31/functions/function/invocations',
+  'filterbrr-torrent-scraper':  'http://localhost:9001/2015-03-31/functions/function/invocations',
+  'filterbrr-filter-generator': 'http://localhost:9002/2015-03-31/functions/function/invocations',
 };
 
 @Injectable()
@@ -42,20 +42,20 @@ export class PipelineService {
     };
 
     const command = `scrape ${tracker.tracker_type} ${dto['category']} ${dto['days']}d`;
-    return this.createAndInvoke(userId, command, 'filterbrr-scraper', payload);
+    return this.createAndInvoke(userId, command, 'filterbrr-torrent-scraper', payload);
   }
 
-  async startAnalyze(userId: string, dto: Record<string, unknown>): Promise<{ job_id: string }> {
+  async startGenerateFilters(userId: string, dto: Record<string, unknown>): Promise<{ job_id: string }> {
     const source = dto['source'] as string;
     const storageTb = (dto['storage_tb'] as number | undefined) ?? 4;
-    const seedDays = (dto['seed_days'] as number | undefined) ?? 30;
+    const seedDays = (dto['avg_seed_days'] as number | undefined) ?? 30;
     const datasetKey = dto['dataset_path'] as string | undefined;
 
     if (!datasetKey) throw new Error('dataset_path is required for analysis');
 
     const payload: Record<string, unknown> = { userId, datasetKey, storageTb, seedDays, source };
-    const command = `analyze ${source} storageTb=${storageTb} seedDays=${seedDays}`;
-    return this.createAndInvoke(userId, command, 'filterbrr-analyzer', payload);
+    const command = `generate-filters ${source} storageTb=${storageTb} seedDays=${seedDays}`;
+    return this.createAndInvoke(userId, command, 'filterbrr-filter-generator', payload);
   }
 
   async getJob(jobId: string): Promise<Job | null> {

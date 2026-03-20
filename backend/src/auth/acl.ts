@@ -11,7 +11,7 @@ export const ACL: Acl = {
     'GET /api/datasets': true,
     'POST /api/filter-simulator/run': true,
     'GET /api/pipeline/jobs/:id': true,
-    'POST /api/pipeline/analyze': true,
+    'POST /api/pipeline/generate-filters': true,
     'GET /api/auth/me': true,
   },
   user: '*',

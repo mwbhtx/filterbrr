@@ -41,7 +41,7 @@ describe('PipelineService', () => {
       expect(job.user_id).toBe('user-123');
       expect(job.status).toBe('running');
       expect(job.progress).toBe('Starting...');
-      expect(job.function_name).toBe('filterbrr-scraper');
+      expect(job.function_name).toBe('filterbrr-torrent-scraper');
       expect(job.result).toBeNull();
       expect(job.error).toBeNull();
       expect(job.cancelled).toBe(false);
@@ -85,31 +85,31 @@ describe('PipelineService', () => {
     });
   });
 
-  describe('startAnalyze', () => {
+  describe('startGenerateFilters', () => {
     it('returns a valid UUID job_id', async () => {
-      const result = await service.startAnalyze('user-123', {
+      const result = await service.startGenerateFilters('user-123', {
         source: 'freeleech', dataset_path: 'user-123/datasets/test.csv',
       });
       expect(result.job_id).toMatch(/^[0-9a-f-]{36}$/);
     });
 
     it('creates a job with correct function_name', async () => {
-      await service.startAnalyze('user-123', {
+      await service.startGenerateFilters('user-123', {
         source: 'freeleech', dataset_path: 'user-123/datasets/test.csv',
       });
       const job = (mockJobRepo.create as jest.Mock).mock.calls[0][0];
-      expect(job.function_name).toBe('filterbrr-analyzer');
+      expect(job.function_name).toBe('filterbrr-filter-generator');
       expect(job.status).toBe('running');
       expect(job.progress).toBe('Starting...');
     });
 
     it('throws when dataset_path is missing', async () => {
-      await expect(service.startAnalyze('user-123', { source: 'freeleech' }))
+      await expect(service.startGenerateFilters('user-123', { source: 'freeleech' }))
         .rejects.toThrow('dataset_path is required');
     });
 
     it('defaults storageTb to 4 and seedDays to 30', async () => {
-      await service.startAnalyze('user-123', {
+      await service.startGenerateFilters('user-123', {
         source: 'freeleech', dataset_path: 'test.csv',
       });
       const job = (mockJobRepo.create as jest.Mock).mock.calls[0][0];
@@ -118,8 +118,8 @@ describe('PipelineService', () => {
     });
 
     it('uses provided storageTb and seedDays', async () => {
-      await service.startAnalyze('user-123', {
-        source: 'freeleech', dataset_path: 'test.csv', storage_tb: 8, seed_days: 14,
+      await service.startGenerateFilters('user-123', {
+        source: 'freeleech', dataset_path: 'test.csv', storage_tb: 8, avg_seed_days: 14,
       });
       const job = (mockJobRepo.create as jest.Mock).mock.calls[0][0];
       expect(job.payload.storageTb).toBe(8);

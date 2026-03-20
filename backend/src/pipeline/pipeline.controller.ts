@@ -1,7 +1,7 @@
 import { Controller, Post, Delete, Get, Param, Body, Req, NotFoundException } from '@nestjs/common';
 import { PipelineService } from './pipeline.service';
 import { ScrapeRequestDto } from './dto/scrape-request.dto';
-import { AnalyzeRequestDto } from './dto/analyze-request.dto';
+import { GenerateFiltersRequestDto } from './dto/generate-filters-request.dto';
 
 @Controller('pipeline')
 export class PipelineController {
@@ -12,19 +12,19 @@ export class PipelineController {
     return this.pipeline.startScrape(req.user.userId, dto as unknown as Record<string, unknown>);
   }
 
-  @Post('analyze')
-  analyze(@Req() req: any, @Body() dto: AnalyzeRequestDto) {
-    return this.pipeline.startAnalyze(req.user.userId, dto as unknown as Record<string, unknown>);
+  @Post('generate-filters')
+  generateFilters(@Req() req: any, @Body() dto: GenerateFiltersRequestDto) {
+    return this.pipeline.startGenerateFilters(req.user.userId, dto as unknown as Record<string, unknown>);
   }
 
   @Post('parse')
-  parse(@Req() req: any, @Body() dto: AnalyzeRequestDto) {
-    return this.pipeline.startAnalyze(req.user.userId, dto as unknown as Record<string, unknown>);
+  parse(@Req() req: any, @Body() dto: GenerateFiltersRequestDto) {
+    return this.pipeline.startGenerateFilters(req.user.userId, dto as unknown as Record<string, unknown>);
   }
 
   @Post('report-only')
-  reportOnly(@Req() req: any, @Body() dto: AnalyzeRequestDto) {
-    return this.pipeline.startAnalyze(req.user.userId, dto as unknown as Record<string, unknown>);
+  reportOnly(@Req() req: any, @Body() dto: GenerateFiltersRequestDto) {
+    return this.pipeline.startGenerateFilters(req.user.userId, dto as unknown as Record<string, unknown>);
   }
 
   @Post('clear-temp')

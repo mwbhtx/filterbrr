@@ -11,7 +11,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     job_id: 'job-1',
     user_id: 'user-1',
     command: 'scrape TorrentLeech freeleech 7d',
-    function_name: 'filterbrr-scraper',
+    function_name: 'filterbrr-torrent-scraper',
     payload: {},
     status: 'running',
     progress: 'Starting...',

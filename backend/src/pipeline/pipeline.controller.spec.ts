@@ -8,7 +8,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     job_id: 'job-1',
     user_id: 'user-1',
     command: 'scrape TorrentLeech freeleech 7d',
-    function_name: 'filterbrr-scraper',
+    function_name: 'filterbrr-torrent-scraper',
     payload: {},
     status: 'running',
     progress: 'Scraping day 3 of 7',
@@ -24,7 +24,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
 
 const mockPipeline = {
   startScrape: jest.fn(),
-  startAnalyze: jest.fn(),
+  startGenerateFilters: jest.fn(),
   getJob: jest.fn(),
   cancelJob: jest.fn(),
 } as unknown as PipelineService;

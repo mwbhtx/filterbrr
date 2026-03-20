@@ -6,7 +6,7 @@ import type {
   SimulationResult,
   ScrapeRequest,
   ParseRequest,
-  AnalyzeRequest,
+  GenerateFiltersRequest,
   AutobrrConnectionStatus,
   SyncFilterEntry,
   AnalysisResults,
@@ -101,12 +101,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify(req),
     }),
-  startAnalyze: (req: AnalyzeRequest) =>
-    fetchJSON<{ job_id: string }>("/pipeline/analyze", {
+  startGenerateFilters: (req: GenerateFiltersRequest) =>
+    fetchJSON<{ job_id: string }>("/pipeline/generate-filters", {
       method: "POST",
       body: JSON.stringify(req),
     }),
-  startReportOnly: (req: AnalyzeRequest) =>
+  startReportOnly: (req: GenerateFiltersRequest) =>
     fetchJSON<{ job_id: string }>("/pipeline/report-only", {
       method: "POST",
       body: JSON.stringify(req),

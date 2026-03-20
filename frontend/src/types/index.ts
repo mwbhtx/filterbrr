@@ -117,7 +117,7 @@ export interface ParseRequest {
   source: string;
 }
 
-export interface AnalyzeRequest {
+export interface GenerateFiltersRequest {
   source: string;
   storage_tb?: number;
   dataset_path?: string;

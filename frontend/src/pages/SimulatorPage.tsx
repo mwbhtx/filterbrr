@@ -194,7 +194,7 @@ export default function SimulatorPage() {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const { job_id } = await api.startAnalyze({
+      const { job_id } = await api.startGenerateFilters({
         source,
         storage_tb: storageTb,
         dataset_path: selectedDataset,
