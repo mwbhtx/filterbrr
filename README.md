@@ -10,9 +10,9 @@ A SaaS platform for managing and optimising torrent filters on private trackers.
 
 ## Features
 
-- **Scraper** — Authenticates to private trackers and scrapes torrent listings into structured datasets
-- **Analyser** — Calculates percentile-based filter tiers from scrape data to maximise seeding efficiency
-- **Simulator** — Back-tests filter configurations against historical datasets with toggleable filter chips before deploying
+- **Torrent Scraper** — Authenticates to private trackers and scrapes torrent listings into structured datasets
+- **Filter Generator** — Calculates percentile-based filter tiers from scrape data to maximise seeding efficiency
+- **Filter Simulator** — Back-tests filter configurations against historical datasets with toggleable filter chips before deploying
 - **Sync** — Pushes validated filters directly to autobrr via API
 - **Demo mode** — Ephemeral per-user demo sessions with pre-seeded data, no signup required
 - **Role-based access** — JWT role claims (`user`, `demo`, `admin`) with a strict ACL guard
@@ -34,8 +34,11 @@ Lambda Function URL → NestJS (Lambda)
     └── KMS        (field-level encryption for user secrets)
 
 Async Lambdas:
-    Scraper Lambda → S3 JSON dataset
-    Analyser Lambda → S3 report + DynamoDB filters
+    Torrent Scraper Lambda → S3 JSON dataset
+    Filter Generator Lambda → S3 report + DynamoDB filters
+
+Shared Packages:
+    filter-engine → simulation logic (used by backend + filter-generator)
 
 Cognito:
     Pre-token trigger Lambda → injects role claim into JWTs
@@ -83,7 +86,7 @@ The frontend needs real Cognito values to load — fill in `VITE_COGNITO_USER_PO
 
 ### Local Login
 
-When running locally, sign in with `local@filterbrr.com` and password `sCqGfiq4VoVmF&jd`. This creates a local JWT with the role from `LOCAL_ROLE` — no Cognito required. You can also click "Try Demo" to test the demo experience.
+When running locally, click "Sign In" with empty fields — no email or password required. This creates a local JWT with the role from `LOCAL_ROLE` — no Cognito required. You can also click "Try Demo" to test the demo experience.
 
 **2. Start services**
 
@@ -111,7 +114,14 @@ Open [http://localhost:5173](http://localhost:5173).
 ### Running Tests
 
 ```bash
+# Backend
 cd backend && npm test
+
+# Filter engine
+cd packages/filter-engine && npm test
+
+# Filter generator
+cd lambdas/filter-generator && npm test
 ```
 
 ---
