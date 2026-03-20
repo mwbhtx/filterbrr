@@ -1,6 +1,6 @@
-data "archive_file" "scraper_placeholder" {
+data "archive_file" "torrent_scraper_placeholder" {
   type        = "zip"
-  output_path = "${path.module}/.build/scraper-placeholder.zip"
+  output_path = "${path.module}/.build/torrent-scraper-placeholder.zip"
 
   source {
     content  = "exports.handler = async () => ({ statusCode: 200, body: 'placeholder' });"
@@ -8,16 +8,16 @@ data "archive_file" "scraper_placeholder" {
   }
 }
 
-resource "aws_lambda_function" "scraper" {
-  function_name = "${var.app_name}-scraper"
-  role          = aws_iam_role.scraper_lambda.arn
+resource "aws_lambda_function" "torrent_scraper" {
+  function_name = "${var.app_name}-torrent-scraper"
+  role          = aws_iam_role.torrent_scraper_lambda.arn
   handler       = "dist/index.handler"
   runtime       = "nodejs22.x"
   memory_size   = 1024
   timeout       = 900
 
-  filename         = data.archive_file.scraper_placeholder.output_path
-  source_code_hash = data.archive_file.scraper_placeholder.output_base64sha256
+  filename         = data.archive_file.torrent_scraper_placeholder.output_path
+  source_code_hash = data.archive_file.torrent_scraper_placeholder.output_base64sha256
 
   environment {
     variables = {

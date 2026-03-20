@@ -44,8 +44,8 @@ resource "aws_iam_role_policy" "backend_lambda" {
         Effect = "Allow"
         Action = ["lambda:InvokeFunction"]
         Resource = [
-          aws_lambda_function.scraper.arn,
-          aws_lambda_function.analyzer.arn,
+          aws_lambda_function.torrent_scraper.arn,
+          aws_lambda_function.filter_generator.arn,
         ]
       },
       {
@@ -62,9 +62,9 @@ resource "aws_iam_role_policy" "backend_lambda" {
   })
 }
 
-# Scraper Lambda role
-resource "aws_iam_role" "scraper_lambda" {
-  name = "${var.app_name}-scraper-lambda"
+# Torrent Scraper Lambda role
+resource "aws_iam_role" "torrent_scraper_lambda" {
+  name = "${var.app_name}-torrent-scraper-lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -78,9 +78,9 @@ resource "aws_iam_role" "scraper_lambda" {
   })
 }
 
-resource "aws_iam_role_policy" "scraper_lambda" {
-  name = "${var.app_name}-scraper-lambda-policy"
-  role = aws_iam_role.scraper_lambda.id
+resource "aws_iam_role_policy" "torrent_scraper_lambda" {
+  name = "${var.app_name}-torrent-scraper-lambda-policy"
+  role = aws_iam_role.torrent_scraper_lambda.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -136,9 +136,9 @@ resource "aws_iam_role_policy" "cognito_trigger_lambda" {
   })
 }
 
-# Analyzer Lambda role
-resource "aws_iam_role" "analyzer_lambda" {
-  name = "${var.app_name}-analyzer-lambda"
+# Filter Generator Lambda role
+resource "aws_iam_role" "filter_generator_lambda" {
+  name = "${var.app_name}-filter-generator-lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -152,9 +152,9 @@ resource "aws_iam_role" "analyzer_lambda" {
   })
 }
 
-resource "aws_iam_role_policy" "analyzer_lambda" {
-  name = "${var.app_name}-analyzer-lambda-policy"
-  role = aws_iam_role.analyzer_lambda.id
+resource "aws_iam_role_policy" "filter_generator_lambda" {
+  name = "${var.app_name}-filter-generator-lambda-policy"
+  role = aws_iam_role.filter_generator_lambda.id
 
   policy = jsonencode({
     Version = "2012-10-17"

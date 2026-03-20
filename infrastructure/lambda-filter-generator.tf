@@ -1,6 +1,6 @@
-data "archive_file" "analyzer_placeholder" {
+data "archive_file" "filter_generator_placeholder" {
   type        = "zip"
-  output_path = "${path.module}/.build/analyzer-placeholder.zip"
+  output_path = "${path.module}/.build/filter-generator-placeholder.zip"
 
   source {
     content  = "exports.handler = async () => ({ statusCode: 200, body: 'placeholder' });"
@@ -8,16 +8,16 @@ data "archive_file" "analyzer_placeholder" {
   }
 }
 
-resource "aws_lambda_function" "analyzer" {
-  function_name = "${var.app_name}-analyzer"
-  role          = aws_iam_role.analyzer_lambda.arn
+resource "aws_lambda_function" "filter_generator" {
+  function_name = "${var.app_name}-filter-generator"
+  role          = aws_iam_role.filter_generator_lambda.arn
   handler       = "dist/index.handler"
   runtime       = "nodejs22.x"
   memory_size   = 1024
   timeout       = 900
 
-  filename         = data.archive_file.analyzer_placeholder.output_path
-  source_code_hash = data.archive_file.analyzer_placeholder.output_base64sha256
+  filename         = data.archive_file.filter_generator_placeholder.output_path
+  source_code_hash = data.archive_file.filter_generator_placeholder.output_base64sha256
 
   environment {
     variables = {

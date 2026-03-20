@@ -51,8 +51,8 @@ resource "aws_iam_role_policy" "github_deploy" {
         Action = ["lambda:UpdateFunctionCode"]
         Resource = [
           aws_lambda_function.backend.arn,
-          aws_lambda_function.scraper.arn,
-          aws_lambda_function.analyzer.arn,
+          aws_lambda_function.torrent_scraper.arn,
+          aws_lambda_function.filter_generator.arn,
           aws_lambda_function.cognito_trigger.arn,
         ]
       },
