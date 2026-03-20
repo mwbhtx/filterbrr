@@ -13,12 +13,12 @@ on:
         description: "Deploy backend"
         type: boolean
         default: false
-      deploy_scraper:
-        description: "Deploy scraper"
+      deploy_torrent_scraper:
+        description: "Deploy torrent-scraper"
         type: boolean
         default: false
-      deploy_analyzer:
-        description: "Deploy analyzer"
+      deploy_filter_generator:
+        description: "Deploy filter-generator"
         type: boolean
         default: false
       deploy_frontend:
@@ -43,8 +43,9 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
-      scraper: ${{ steps.filter.outputs.scraper }}
-      analyzer: ${{ steps.filter.outputs.analyzer }}
+      torrent_scraper: ${{ steps.filter.outputs.torrent_scraper }}
+      filter_generator: ${{ steps.filter.outputs.filter_generator }}
+      filter_engine: ${{ steps.filter.outputs.filter_engine }}
       cognito_trigger: ${{ steps.filter.outputs.cognito_trigger }}
       infra: ${{ steps.filter.outputs.infra }}
     steps:
@@ -57,10 +58,12 @@ jobs:
               - 'backend/**'
             frontend:
               - 'frontend/**'
-            scraper:
-              - 'lambdas/scraper/**'
-            analyzer:
-              - 'lambdas/analyzer/**'
+            torrent_scraper:
+              - 'lambdas/torrent-scraper/**'
+            filter_generator:
+              - 'lambdas/filter-generator/**'
+            filter_engine:
+              - 'packages/filter-engine/**'
             cognito_trigger:
               - 'lambdas/cognito-trigger/**'
             infra:
@@ -96,7 +99,7 @@ jobs:
 
   backend:
     needs: [changes, test, infra]
-    if: "!failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || inputs.deploy_backend == true)"
+    if: "!failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.filter_engine == 'true' || inputs.deploy_backend == true)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -126,9 +129,9 @@ jobs:
             --function-name filterbrr-backend \
             --zip-file fileb://backend.zip
 
-  scraper:
+  torrent-scraper:
     needs: [changes, test, infra]
-    if: "!failure() && !cancelled() && (needs.changes.outputs.scraper == 'true' || inputs.deploy_scraper == true)"
+    if: "!failure() && !cancelled() && (needs.changes.outputs.torrent_scraper == 'true' || inputs.deploy_torrent_scraper == true)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -136,32 +139,32 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: lambdas/scraper/package-lock.json
+          cache-dependency-path: lambdas/torrent-scraper/package-lock.json
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
       - name: Build
-        working-directory: lambdas/scraper
+        working-directory: lambdas/torrent-scraper
         run: |
           npm ci
           npm run build
       - name: Package
         run: |
-          mkdir -p scraper-pkg/dist
-          cp -r lambdas/scraper/dist/* scraper-pkg/dist/
-          cp lambdas/scraper/package.json lambdas/scraper/package-lock.json scraper-pkg/
-          cd scraper-pkg && npm ci --omit=dev
-          zip -rq ../scraper.zip dist/ node_modules/ -x "dist/*.map"
+          mkdir -p torrent-scraper-pkg/dist
+          cp -r lambdas/torrent-scraper/dist/* torrent-scraper-pkg/dist/
+          cp lambdas/torrent-scraper/package.json lambdas/torrent-scraper/package-lock.json torrent-scraper-pkg/
+          cd torrent-scraper-pkg && npm ci --omit=dev
+          zip -rq ../torrent-scraper.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
         run: |
           aws lambda update-function-code \
-            --function-name filterbrr-scraper \
-            --zip-file fileb://scraper.zip
+            --function-name filterbrr-torrent-scraper \
+            --zip-file fileb://torrent-scraper.zip
 
-  analyzer:
+  filter-generator:
     needs: [changes, test, infra]
-    if: "!failure() && !cancelled() && (needs.changes.outputs.analyzer == 'true' || inputs.deploy_analyzer == true)"
+    if: "!failure() && !cancelled() && (needs.changes.outputs.filter_generator == 'true' || needs.changes.outputs.filter_engine == 'true' || inputs.deploy_filter_generator == true)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -169,28 +172,28 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: lambdas/analyzer/package-lock.json
+          cache-dependency-path: lambdas/filter-generator/package-lock.json
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
       - name: Build
-        working-directory: lambdas/analyzer
+        working-directory: lambdas/filter-generator
         run: |
           npm ci
           npm run build
       - name: Package
         run: |
-          mkdir -p analyzer-pkg/dist
-          cp -r lambdas/analyzer/dist/* analyzer-pkg/dist/
-          cp lambdas/analyzer/package.json lambdas/analyzer/package-lock.json analyzer-pkg/
-          cd analyzer-pkg && npm ci --omit=dev
-          zip -rq ../analyzer.zip dist/ node_modules/ -x "dist/*.map"
+          mkdir -p filter-generator-pkg/dist
+          cp -r lambdas/filter-generator/dist/* filter-generator-pkg/dist/
+          cp lambdas/filter-generator/package.json lambdas/filter-generator/package-lock.json filter-generator-pkg/
+          cd filter-generator-pkg && npm ci --omit=dev
+          zip -rq ../filter-generator.zip dist/ node_modules/ -x "dist/*.map"
       - name: Deploy
         run: |
           aws lambda update-function-code \
-            --function-name filterbrr-analyzer \
-            --zip-file fileb://analyzer.zip
+            --function-name filterbrr-filter-generator \
+            --zip-file fileb://filter-generator.zip
 
   cognito-trigger:
     needs: [changes, test, infra]

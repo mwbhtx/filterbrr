@@ -9,10 +9,10 @@ echo ""
 "$DIR/deploy-backend.sh"
 echo ""
 
-"$DIR/deploy-scraper.sh"
+"$DIR/deploy-torrent-scraper.sh"
 echo ""
 
-"$DIR/deploy-analyzer.sh"
+"$DIR/deploy-filter-generator.sh"
 echo ""
 
 "$DIR/deploy-frontend.sh"

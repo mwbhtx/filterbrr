@@ -21,15 +21,15 @@ services:
       - localstack-data:/var/lib/localstack
       - ./localstack-init:/etc/localstack/init/ready.d
 
-  scraper-lambda:
+  torrent-scraper-lambda:
     build:
-      context: ./lambdas/scraper
+      context: ./lambdas/torrent-scraper
       dockerfile: Dockerfile.dev
-    container_name: filterbrr-scraper
+    container_name: filterbrr-torrent-scraper
     ports:
       - '9001:8080'
     volumes:
-      - ./lambdas/scraper/src:/var/task/src
+      - ./lambdas/torrent-scraper/src:/var/task/src
     environment:
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=local
@@ -41,15 +41,15 @@ services:
     depends_on:
       - localstack
 
-  analyzer-lambda:
+  filter-generator-lambda:
     build:
-      context: ./lambdas/analyzer
+      context: ./lambdas/filter-generator
       dockerfile: Dockerfile.dev
-    container_name: filterbrr-analyzer
+    container_name: filterbrr-filter-generator
     ports:
       - '9002:8080'
     volumes:
-      - ./lambdas/analyzer/src:/var/task/src
+      - ./lambdas/filter-generator/src:/var/task/src
     environment:
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=local
