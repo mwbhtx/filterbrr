@@ -580,7 +580,7 @@ export default function SimulatorPage() {
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm">Simulation<HintIcon tip="Back-test your filters against the dataset to see projected grabs, disk usage, and upload" /></CardTitle></CardHeader>
         <CardContent className="pt-0 space-y-3">
-          {allFilters.length > 0 && (
+          {allFilters.length > 0 ? (
             <div>
               <label className="block text-xs text-muted-foreground mb-1.5">
                 Filters<HintIcon tip="Toggle which filters are included in the simulation" />
@@ -609,11 +609,16 @@ export default function SimulatorPage() {
                 })}
               </div>
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No filters yet. Generate filters above or create one manually to run a simulation.</p>
           )}
           <div className="flex items-center gap-3 flex-wrap pt-3 border-t border-border">
-            <Button onClick={handleRunSimulation} disabled={running || !selectedDataset} size="sm" className="shrink-0 btn-glow">
+            <Button onClick={handleRunSimulation} disabled={running || !selectedDataset || enabledFilterIds.size === 0} size="sm" className="shrink-0 btn-glow">
               {running ? "Running..." : "Run Simulation"}
             </Button>
+            {!running && enabledFilterIds.size === 0 && allFilters.length > 0 && (
+              <span className="text-sm text-muted-foreground">Enable at least one filter to simulate</span>
+            )}
             {simError && <span className="text-sm text-destructive shrink-0">{simError}</span>}
           </div>
         </CardContent>

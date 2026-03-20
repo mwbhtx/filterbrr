@@ -16,9 +16,12 @@ import { AutobrrModule } from './autobrr/autobrr.module';
 import { SyncModule } from './sync/sync.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { DemoModule } from './demo/demo.module';
+import { LocalSeedModule } from './local-seed/local-seed.module';
+
+const optionalModules = process.env.NODE_ENV === 'local' ? [LocalSeedModule] : [];
 
 @Module({
-  imports: [ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]), AuthModule, CryptoModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, FilterSimulatorModule, AutobrrModule, SyncModule, DemoModule],
+  imports: [ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]), AuthModule, CryptoModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, FilterSimulatorModule, AutobrrModule, SyncModule, DemoModule, ...optionalModules],
   providers: [
     { provide: APP_GUARD, useClass: CognitoAuthGuard },
     { provide: APP_GUARD, useClass: RoleGuard },

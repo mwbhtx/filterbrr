@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { S3Service } from '../s3/s3.service';
 import { FiltersService } from '../filters/filters.service';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
@@ -65,6 +65,10 @@ export class FilterSimulatorService {
           name: f.name as string,
           data: f.data as any,
         }));
+    }
+
+    if (filterDefs.length === 0) {
+      throw new BadRequestException('At least one filter is required to run a simulation');
     }
 
     const config: SimulationConfig = {

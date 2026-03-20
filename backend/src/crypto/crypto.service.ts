@@ -8,8 +8,11 @@ export class CryptoService {
   private readonly kms = new KMSClient({ region: process.env.AWS_REGION ?? 'us-east-1' });
   private readonly keyId = process.env.KMS_KEY_ID;
 
+  private readonly isLocal = process.env.NODE_ENV === 'local';
+
   async encrypt(plaintext: string): Promise<string> {
     if (!plaintext || plaintext.startsWith(ENC_PREFIX)) return plaintext;
+    if (this.isLocal) return plaintext;
     const result = await this.kms.send(new EncryptCommand({
       KeyId: this.keyId,
       Plaintext: Buffer.from(plaintext),
@@ -19,6 +22,7 @@ export class CryptoService {
 
   async decrypt(ciphertext: string): Promise<string> {
     if (!ciphertext || !ciphertext.startsWith(ENC_PREFIX)) return ciphertext;
+    if (this.isLocal) return ciphertext;
     const blob = Buffer.from(ciphertext.slice(ENC_PREFIX.length), 'base64');
     const result = await this.kms.send(new DecryptCommand({
       CiphertextBlob: blob,

@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Req, UnauthorizedException } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
 import * as jwt from 'jsonwebtoken';
-import { randomUUID } from 'crypto';
 import { ACL } from './acl';
 import { Public } from './public.decorator';
 
@@ -33,7 +32,7 @@ export class AuthController {
     // Empty credentials → instant local JWT (no password needed for local dev)
     if (!dto.email && !dto.password) {
       const role = process.env.LOCAL_ROLE ?? 'user';
-      const userId = `local-${randomUUID()}`;
+      const userId = process.env.LOCAL_USER_ID ?? 'local-dev-user';
       const secret = process.env.DEMO_JWT_SECRET;
       if (!secret) throw new UnauthorizedException('DEMO_JWT_SECRET not configured');
 

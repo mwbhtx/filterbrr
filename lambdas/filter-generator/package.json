@@ -2,7 +2,9 @@
   "name": "filterbrr-filter-generator",
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc",
+    "build": "node esbuild.lambda.mjs",
+    "postbuild": "node bundle.test.mjs",
+    "typecheck": "tsc --noEmit",
     "test": "jest"
   },
   "dependencies": {
@@ -14,6 +16,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.0",
+    "esbuild": "^0.27.4",
     "@types/jest": "^29.0.0",
     "@types/node": "^20.0.0",
     "jest": "^29.0.0",

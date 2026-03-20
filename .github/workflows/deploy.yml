@@ -117,20 +117,10 @@ jobs:
         run: |
           npm ci --legacy-peer-deps
           npm run build --workspace=packages/filter-engine
-          npm run build --workspace=backend
+          npm run build:lambda --workspace=backend
       - name: Package
         run: |
-          mkdir -p lambda-pkg/dist
-          cp -r backend/dist/* lambda-pkg/dist/
-          cp backend/package.json package-lock.json lambda-pkg/
-          # Remove filter-engine from package.json (local file: dep not in lock file)
-          node -e "const p=require('./lambda-pkg/package.json'); delete p.dependencies['filter-engine']; require('fs').writeFileSync('./lambda-pkg/package.json', JSON.stringify(p,null,2))"
-          cd lambda-pkg && npm install --omit=dev --legacy-peer-deps --ignore-scripts
-          # Copy filter-engine into node_modules
-          mkdir -p node_modules/filter-engine
-          cp -r ../packages/filter-engine/dist/* node_modules/filter-engine/
-          cp ../packages/filter-engine/package.json node_modules/filter-engine/
-          zip -rq ../backend.zip dist/ node_modules/ -x "dist/*.map"
+          cd backend && zip -rq ../backend.zip dist/lambda.js
       - name: Deploy
         run: |
           aws lambda update-function-code \
@@ -156,14 +146,11 @@ jobs:
         working-directory: lambdas/torrent-scraper
         run: |
           npm ci
+          npm run typecheck
           npm run build
       - name: Package
         run: |
-          mkdir -p torrent-scraper-pkg/dist
-          cp -r lambdas/torrent-scraper/dist/* torrent-scraper-pkg/dist/
-          cp lambdas/torrent-scraper/package.json lambdas/torrent-scraper/package-lock.json torrent-scraper-pkg/
-          cd torrent-scraper-pkg && npm ci --omit=dev
-          zip -rq ../torrent-scraper.zip dist/ node_modules/ -x "dist/*.map"
+          cd lambdas/torrent-scraper && zip -rq ../../torrent-scraper.zip dist/index.js
       - name: Deploy
         run: |
           aws lambda update-function-code \
@@ -194,20 +181,11 @@ jobs:
         working-directory: lambdas/filter-generator
         run: |
           npm ci
+          npm run typecheck
           npm run build
       - name: Package
         run: |
-          mkdir -p filter-generator-pkg/dist
-          cp -r lambdas/filter-generator/dist/* filter-generator-pkg/dist/
-          cp lambdas/filter-generator/package.json lambdas/filter-generator/package-lock.json filter-generator-pkg/
-          # Remove filter-engine from package.json (local file: dep not in lock file)
-          node -e "const p=require('./filter-generator-pkg/package.json'); delete p.dependencies['filter-engine']; require('fs').writeFileSync('./filter-generator-pkg/package.json', JSON.stringify(p,null,2))"
-          cd filter-generator-pkg && npm install --omit=dev --ignore-scripts
-          # Copy filter-engine into node_modules
-          mkdir -p node_modules/filter-engine
-          cp -r ../packages/filter-engine/dist/* node_modules/filter-engine/
-          cp ../packages/filter-engine/package.json node_modules/filter-engine/
-          zip -rq ../filter-generator.zip dist/ node_modules/ -x "dist/*.map"
+          cd lambdas/filter-generator && zip -rq ../../filter-generator.zip dist/index.js
       - name: Deploy
         run: |
           aws lambda update-function-code \
@@ -236,11 +214,7 @@ jobs:
           npm run build
       - name: Package
         run: |
-          mkdir -p trigger-pkg/dist
-          cp -r lambdas/cognito-trigger/dist/* trigger-pkg/dist/
-          cp lambdas/cognito-trigger/package.json lambdas/cognito-trigger/package-lock.json trigger-pkg/
-          cd trigger-pkg && npm ci --omit=dev
-          zip -rq ../cognito-trigger.zip dist/ node_modules/ -x "dist/*.map"
+          cd lambdas/cognito-trigger && zip -rq ../../cognito-trigger.zip dist/index.js
       - name: Deploy
         run: |
           aws lambda update-function-code \
