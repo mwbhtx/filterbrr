@@ -10,14 +10,14 @@ import { FiltersModule } from './filters/filters.module';
 import { S3Module } from './s3/s3.module';
 import { DatasetsModule } from './datasets/datasets.module';
 import { PipelineModule } from './pipeline/pipeline.module';
-import { SimulationModule } from './simulation/simulation.module';
+import { FilterSimulatorModule } from './filter-simulator/simulation.module';
 import { AutobrrModule } from './autobrr/autobrr.module';
 import { SyncModule } from './sync/sync.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { DemoModule } from './demo/demo.module';
 
 @Module({
-  imports: [AuthModule, CryptoModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, SimulationModule, AutobrrModule, SyncModule, DemoModule],
+  imports: [AuthModule, CryptoModule, DynamoModule, S3Module, HealthModule, SettingsModule, FiltersModule, DatasetsModule, PipelineModule, FilterSimulatorModule, AutobrrModule, SyncModule, DemoModule],
   providers: [
     { provide: APP_GUARD, useClass: CognitoAuthGuard },
     { provide: APP_GUARD, useClass: RoleGuard },

@@ -9,7 +9,7 @@ export const ACL: Acl = {
     'PUT /api/filters/:id': true,
     'DELETE /api/filters/:id': true,
     'GET /api/datasets': true,
-    'POST /api/simulation/run': true,
+    'POST /api/filter-simulator/run': true,
     'GET /api/pipeline/jobs/:id': true,
     'POST /api/pipeline/analyze': true,
     'GET /api/auth/me': true,

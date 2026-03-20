@@ -44,7 +44,7 @@ export interface SimulationRequest {
   filter_ids?: string[];
   filters_inline?: Array<{ name: string; version: string; data: FilterData }>;
   storage_tb: number;
-  max_seed_days: number;
+  avg_seed_days: number;
   avg_ratio: number;
 }
 
@@ -121,7 +121,7 @@ export interface AnalyzeRequest {
   source: string;
   storage_tb?: number;
   dataset_path?: string;
-  seed_days?: number;
+  avg_seed_days?: number;
 }
 
 export interface JobStatus {

@@ -198,7 +198,7 @@ export default function SimulatorPage() {
         source,
         storage_tb: storageTb,
         dataset_path: selectedDataset,
-        seed_days: maxSeedDays,
+        avg_seed_days: maxSeedDays,
       });
       setGenerateJobId(job_id);
       localStorage.setItem('active-generate-job', job_id);
@@ -255,7 +255,7 @@ export default function SimulatorPage() {
           dataset_path: selectedDataset,
           filter_ids: activeFilterIds.length > 0 ? activeFilterIds : undefined,
           storage_tb: storageTb,
-          max_seed_days: maxSeedDays,
+          avg_seed_days: maxSeedDays,
           avg_ratio: avgRatio,
         }),
         minSpin,

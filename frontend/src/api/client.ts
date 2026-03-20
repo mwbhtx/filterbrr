@@ -86,7 +86,7 @@ export const api = {
       method: "DELETE",
     }),
   runSimulation: (req: SimulationRequest) =>
-    fetchJSON<SimulationResult>("/simulation/run", {
+    fetchJSON<SimulationResult>("/filter-simulator/run", {
       method: "POST",
       body: JSON.stringify(req),
     }),
