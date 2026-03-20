@@ -1,5 +1,5 @@
 {
-  "name": "filterbrr-scraper",
+  "name": "filterbrr-torrent-scraper",
   "version": "1.0.0",
   "scripts": {
     "build": "tsc",
