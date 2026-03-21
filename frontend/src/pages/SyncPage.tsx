@@ -136,7 +136,7 @@ export default function SyncPage() {
     setSyncing(true);
 
     try {
-      await api.pullFilter(remoteId);
+      await api.pullFilter(String(remoteId));
       await refreshRemote();
       await reloadLocal();
     } catch (err: unknown) {
