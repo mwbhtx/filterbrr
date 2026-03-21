@@ -729,9 +729,9 @@ export default function SimulatorPage() {
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-4" aria-hidden="true">
                 {[0, 1, 2, 3, 4].map((i) => (
                   <div key={i} className="rounded-lg border border-border/40 bg-card/50 p-4">
-                    <div className="h-3 w-24 rounded bg-gradient-to-r from-purple-500/15 to-pink-500/15 animate-pulse mb-3" />
-                    <div className="h-7 w-20 rounded bg-gradient-to-r from-purple-500/10 to-pink-500/10 animate-pulse mb-2" />
-                    <div className="h-2.5 w-32 rounded bg-gradient-to-r from-purple-500/8 to-pink-500/8 animate-pulse" />
+                    <div className="h-3 w-24 rounded bg-gradient-to-r from-white/10 to-white/5 animate-pulse mb-3" />
+                    <div className="h-7 w-20 rounded bg-gradient-to-r from-white/8 to-white/4 animate-pulse mb-2" />
+                    <div className="h-2.5 w-32 rounded bg-gradient-to-r from-white/6 to-white/3 animate-pulse" />
                   </div>
                 ))}
               </div>
@@ -739,7 +739,7 @@ export default function SimulatorPage() {
               <div className="relative rounded-lg border border-border/40 bg-card/50 p-4">
                 <div className="flex gap-2 mb-4" aria-hidden="true">
                   {["w-20", "w-16", "w-14", "w-12"].map((w, i) => (
-                    <div key={i} className={`h-3 ${w} rounded bg-gradient-to-r from-purple-500/15 to-pink-500/15 animate-pulse`} />
+                    <div key={i} className={`h-3 ${w} rounded bg-gradient-to-r from-white/10 to-white/5 animate-pulse`} />
                   ))}
                 </div>
                 <div className="h-[200px] flex items-end gap-[2px] px-4" aria-hidden="true">
@@ -753,7 +753,7 @@ export default function SimulatorPage() {
                           height: `${height}%`,
                           animationDelay: `${i * 50}ms`,
                           animationDuration: '2s',
-                          background: `linear-gradient(180deg, rgba(124,58,237,${0.12 + (height / 500)}) 0%, rgba(219,39,119,${0.08 + (height / 600)}) 100%)`,
+                          background: `linear-gradient(180deg, rgba(255,255,255,${0.08 + (height / 800)}) 0%, rgba(255,255,255,${0.03 + (height / 1200)}) 100%)`,
                         }}
                       />
                     );
