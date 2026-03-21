@@ -73,6 +73,10 @@ export default function SimulatorPage() {
   const { data: datasets = [], isLoading: datasetsLoading } = useDatasets();
   const { data: persistedFilters = [], isLoading: filtersLoading, refetch: refetchFilters } = useFilters();
 
+  // TODO: REMOVE — artificial delay for testing loading visuals
+  const [fakeDelay, setFakeDelay] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setFakeDelay(false), 3000); return () => clearTimeout(t); }, []);
+
   // Data context state — restore from localStorage
   const stored = JSON.parse(localStorage.getItem('simulator-settings') ?? '{}');
   const [selectedTracker, setSelectedTracker] = useState(stored.tracker ?? "");
@@ -267,7 +271,7 @@ export default function SimulatorPage() {
     setRunning(true);
     setGenerateJobId(null);
     localStorage.removeItem('active-generate-job');
-    const minSpin = new Promise(r => setTimeout(r, 1000));
+    const minSpin = new Promise(r => setTimeout(r, 3000)); // TODO: revert to 1000
     try {
       const activeFilterIds = trackerFilters
         .filter(f => enabledFilterIds.has(f._id))
@@ -397,20 +401,9 @@ export default function SimulatorPage() {
     setSelectedFilterId((prev) => (prev === id ? null : id));
   };
 
-  const formatFilterSummary = (f: Filter) => {
-    const parts: string[] = [];
-    if (f.data.delay > 0) parts.push(`${f.data.delay}s delay`);
-    if (f.data.max_downloads) {
-      const unit = f.data.max_downloads_unit === "HOUR" ? "h" : "d";
-      parts.push(`${f.data.max_downloads}/${unit}`);
-    }
-    if (f.data.resolutions.length) parts.push(f.data.resolutions.join(", "));
-    if (f.data.freeleech) parts.push("FL");
-    return parts.join(" · ") || "No constraints set";
-  };
-
   const r = simResult ?? EMPTY_RESULT;
   const hasResults = simResult !== null;
+  const initializing = datasetsLoading || filtersLoading || fakeDelay; // TODO: remove fakeDelay
 
   return (
     <div className="h-[calc(100vh-4rem)] overflow-y-auto -mx-6 -my-4">
@@ -418,10 +411,10 @@ export default function SimulatorPage() {
 
         {/* ── Toolbar: Dataset + Seedbox Config ── */}
         <div className="border-b border-border pb-4">
-          {datasetsLoading ? (
+          {initializing ? (
             <div className="flex items-center gap-2 py-1.5">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
-              <span className="text-sm text-muted-foreground">Loading datasets…</span>
+              <span className="text-xs text-muted-foreground">Loading tracker data…</span>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -505,6 +498,13 @@ export default function SimulatorPage() {
 
         {/* ── Filters Row ── */}
         <div>
+          {initializing ? (
+            <div className="flex items-center gap-2 py-1.5">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
+              <span className="text-xs text-muted-foreground">Loading autobrr filters…</span>
+            </div>
+          ) : (
+          <>
           <div className="flex items-center gap-2 mb-2 h-8">
             <Button
               onClick={handleGenerate}
@@ -550,12 +550,6 @@ export default function SimulatorPage() {
             <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} onCancel={() => { setGenerateJobId(null); setGenerating(false); localStorage.removeItem('active-generate-job'); }} />
           </div>
 
-          {filtersLoading && trackerFilters.length === 0 ? (
-            <div className="flex items-center justify-center py-6 gap-2">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary" />
-              <p className="text-xs text-muted-foreground">Loading filters…</p>
-            </div>
-          ) : (
             <div className="grid grid-cols-3 gap-3 mt-2">
               {[0, 1, 2].map((idx) => {
                 const filter = trackerFilters[idx];
@@ -578,7 +572,7 @@ export default function SimulatorPage() {
                   <div
                     key={filter._id}
                     onClick={() => handleToggleFilter(filter._id)}
-                    className={`rounded-lg border p-3 cursor-pointer transition-all ${
+                    className={`rounded-lg border p-3 cursor-pointer transition-all flex flex-col ${
                       isSelected
                         ? "border-primary bg-primary/5 ring-1 ring-primary/30"
                         : isEnabled
@@ -586,13 +580,15 @@ export default function SimulatorPage() {
                           : "border-border/50 bg-card/50 opacity-60 hover:opacity-80"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {filterIsDirty && <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0" title="Unsaved changes" />}
-                        {filter._source === "temp" && <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent shrink-0" />}
-                        <h3 className="text-sm font-semibold text-foreground truncate">{filter.name}</h3>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                    {/* Name (wraps instead of truncating) */}
+                    <div className="flex items-start gap-1.5 mb-2">
+                      {filterIsDirty && <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0 mt-1.5" title="Unsaved changes" />}
+                      {filter._source === "temp" && <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent shrink-0 mt-1.5" />}
+                      <h3 className="text-sm font-semibold text-foreground break-words">{filter.name}</h3>
+                    </div>
+                    {/* Action buttons + toggle */}
+                    <div className="flex items-end justify-between gap-2 mt-auto">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleFilterSave(filter); }}
                           disabled={!filterIsDirty}
@@ -628,38 +624,36 @@ export default function SimulatorPage() {
                             </button>
                           </>
                         )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEnabledFilterIds(prev => {
-                              const next = new Set(prev);
-                              if (next.has(filter._id)) next.delete(filter._id);
-                              else next.add(filter._id);
-                              return next;
-                            });
-                          }}
-                          className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border transition-colors ${
-                            isEnabled
-                              ? "bg-pink-600 border-pink-600"
-                              : "bg-muted border-border"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform mt-px ${
-                              isEnabled ? "translate-x-4" : "translate-x-0.5"
-                            }`}
-                          />
-                        </button>
+                        <ChevronDown className={`size-3 text-muted-foreground/40 shrink-0 transition-transform ${isSelected ? "rotate-180" : ""}`} />
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-[11px] text-muted-foreground truncate">{formatFilterSummary(filter)}</p>
-                      <ChevronDown className={`size-3 text-muted-foreground/40 shrink-0 ml-2 transition-transform ${isSelected ? "rotate-180" : ""}`} />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEnabledFilterIds(prev => {
+                            const next = new Set(prev);
+                            if (next.has(filter._id)) next.delete(filter._id);
+                            else next.add(filter._id);
+                            return next;
+                          });
+                        }}
+                        className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border transition-colors self-end ${
+                          isEnabled
+                            ? "bg-pink-600 border-pink-600"
+                            : "bg-muted border-border"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform mt-px ${
+                            isEnabled ? "translate-x-4" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
                     </div>
                   </div>
                 );
               })}
             </div>
+          </>
           )}
         </div>
 
@@ -703,24 +697,86 @@ export default function SimulatorPage() {
           <div className="flex items-center gap-3 mb-4">
             <Button
               onClick={handleRunSimulation}
-              disabled={running || !selectedDataset || enabledFilterIds.size === 0}
+              disabled={initializing || running || !selectedDataset || enabledFilterIds.size === 0}
               size="sm"
               className="shrink-0 btn-glow"
             >
-              {running ? "Running..." : "Run Simulation"}
+              Run Simulation
             </Button>
-            {!running && enabledFilterIds.size === 0 && trackerFilters.length > 0 && (
+            {running && (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
+                <span className="text-xs text-muted-foreground">Running simulation…</span>
+              </div>
+            )}
+            {!running && !initializing && enabledFilterIds.size === 0 && trackerFilters.length > 0 && (
               <span className="text-xs text-muted-foreground">Enable at least one filter</span>
             )}
-            {!running && trackerFilters.length === 0 && (
+            {!running && !initializing && trackerFilters.length === 0 && (
               <span className="text-xs text-muted-foreground">Generate or create filters first</span>
             )}
           </div>
 
-          {running ? (
-            <div className="flex items-center justify-center py-12 gap-3">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary" />
-              <span className="text-sm text-muted-foreground">Running simulation…</span>
+          {(running || initializing) ? (
+            /* Skeleton dashboard — shown while simulation is in progress */
+            <div className="space-y-4 select-none" aria-hidden="true">
+              {/* Skeleton metrics */}
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div key={i} className="rounded-lg border border-border/40 bg-card/50 p-4">
+                    <div className="h-3 w-24 rounded bg-gradient-to-r from-white/10 to-white/5 animate-pulse mb-3" />
+                    <div className="h-7 w-20 rounded bg-gradient-to-r from-white/8 to-white/4 animate-pulse mb-2" />
+                    <div className="h-2.5 w-32 rounded bg-gradient-to-r from-white/6 to-white/3 animate-pulse" />
+                  </div>
+                ))}
+              </div>
+              {/* Skeleton grabbed/skipped lists */}
+              <div className="space-y-3">
+                {[0, 1].map((i) => (
+                  <div key={i} className="rounded-lg border border-border/40 bg-card/50 p-4">
+                    <div className="h-4 w-32 rounded bg-gradient-to-r from-white/10 to-white/5 animate-pulse mb-3" />
+                    <div className="space-y-2">
+                      {[0, 1, 2].map((j) => (
+                        <div key={j} className="h-3 rounded bg-gradient-to-r from-white/6 to-white/3 animate-pulse" style={{ width: `${70 - j * 15}%`, animationDelay: `${(i * 3 + j) * 80}ms` }} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Skeleton filter breakdown */}
+              <div className="rounded-lg border border-border/40 bg-card/50 p-4">
+                <div className="h-4 w-36 rounded bg-gradient-to-r from-white/10 to-white/5 animate-pulse mb-3" />
+                <div className="space-y-2">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="h-3 rounded bg-gradient-to-r from-white/6 to-white/3 animate-pulse" style={{ width: `${90 - i * 10}%`, animationDelay: `${i * 100}ms` }} />
+                  ))}
+                </div>
+              </div>
+              {/* Skeleton chart */}
+              <div className="rounded-lg border border-border/40 bg-card/50 p-4">
+                <div className="flex gap-2 mb-4">
+                  {["w-20", "w-16", "w-14", "w-12"].map((w, i) => (
+                    <div key={i} className={`h-3 ${w} rounded bg-gradient-to-r from-white/10 to-white/5 animate-pulse`} />
+                  ))}
+                </div>
+                <div className="h-[200px] flex items-end gap-[2px] px-4">
+                  {Array.from({ length: 40 }, (_, i) => {
+                    const height = 20 + Math.sin(i * 0.4) * 15 + Math.cos(i * 0.7) * 10;
+                    return (
+                      <div
+                        key={i}
+                        className="flex-1 rounded-t animate-pulse"
+                        style={{
+                          height: `${height}%`,
+                          animationDelay: `${i * 50}ms`,
+                          animationDuration: '2s',
+                          background: `linear-gradient(180deg, rgba(255,255,255,${0.08 + (height / 800)}) 0%, rgba(255,255,255,${0.03 + (height / 1200)}) 100%)`,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           ) : !hasResults ? (
             /* Skeleton preview — ghost of what results will look like */
