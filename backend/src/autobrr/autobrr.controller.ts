@@ -20,6 +20,16 @@ export class AutobrrController {
     return this.autobrr.testConnection(dto.autobrr_url, dto.autobrr_api_key);
   }
 
+  @Post('push')
+  pushAll(@Req() req: any) {
+    return this.sync.pushAll(req.user.userId);
+  }
+
+  @Post('pull')
+  pullAll(@Req() req: any) {
+    return this.sync.pullAll(req.user.userId);
+  }
+
   @Post('push/:filterId')
   pushFilter(@Req() req: any, @Param('filterId') filterId: string) {
     return this.sync.pushFilter(req.user.userId, filterId);

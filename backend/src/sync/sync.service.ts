@@ -67,6 +67,35 @@ export class SyncService {
     return remote;
   }
 
+  async pushAll(userId: string): Promise<{ pushed: number }> {
+    const filters = await this.filters.list(userId);
+    let pushed = 0;
+    for (const filter of filters) {
+      await this.pushFilter(userId, filter.filter_id as string);
+      pushed++;
+    }
+    return { pushed };
+  }
+
+  async pullAll(userId: string): Promise<{ pulled: number }> {
+    const [syncState, userSettings] = await Promise.all([
+      this.getSyncState(userId),
+      this.settings.get(userId),
+    ]);
+
+    const { autobrr_url, autobrr_api_key } = userSettings as { autobrr_url?: string; autobrr_api_key?: string };
+    if (!autobrr_url || !autobrr_api_key) {
+      throw new BadRequestException('autobrr not configured');
+    }
+
+    let pulled = 0;
+    for (const [, remoteId] of Object.entries(syncState)) {
+      await this.autobrr.getFilter(autobrr_url, autobrr_api_key, remoteId);
+      pulled++;
+    }
+    return { pulled };
+  }
+
   async pullFilter(userId: string, filterId: string): Promise<Record<string, unknown>> {
     const [userSettings, syncState] = await Promise.all([
       this.settings.get(userId),
