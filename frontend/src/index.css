@@ -70,24 +70,7 @@ html, body {
   background-color: var(--background);
 }
 
-/* Prevent password managers (LastPass, etc.) from shifting layout */
-div[data-lastpass-root],
-div[data-lastpass-icon-root],
-div[id^="LastPass"],
-[data-lastpass-infield],
-iframe[id^="lastpass"] {
-  display: none !important;
-  height: 0 !important;
-  width: 0 !important;
-  max-height: 0 !important;
-  max-width: 0 !important;
-  overflow: hidden !important;
-  position: fixed !important;
-  top: -9999px !important;
-  left: -9999px !important;
-  pointer-events: none !important;
-  visibility: hidden !important;
-}
+/* Prevent password managers (LastPass, etc.) from shifting layout — contained by fixed-height input wrappers */
 
 @keyframes fade-out {
   0% { opacity: 1; }

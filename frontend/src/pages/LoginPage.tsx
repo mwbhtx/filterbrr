@@ -367,13 +367,13 @@ export default function LoginPage() {
                   <div className="space-y-1">
                     <Label htmlFor="email">Email</Label>
                     <div className="relative h-8 overflow-hidden">
-                      <Input id="email" type={import.meta.env.DEV ? 'text' : 'email'} value={email} onChange={e => setEmail(e.target.value)} required={!import.meta.env.DEV} />
+                      <Input id="email" type={import.meta.env.DEV ? 'text' : 'email'} value={email} onChange={e => setEmail(e.target.value)} required={!import.meta.env.DEV} data-lpignore="false" />
                     </div>
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="password">Password</Label>
                     <div className="relative h-8 overflow-hidden">
-                      <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required={!import.meta.env.DEV} />
+                      <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required={!import.meta.env.DEV} data-lpignore="false" />
                     </div>
                     <div>
                       <Link to="/forgot-password" className="text-xs text-muted-foreground underline">Forgot password?</Link>
