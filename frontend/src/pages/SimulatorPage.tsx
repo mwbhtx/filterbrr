@@ -726,8 +726,8 @@ export default function SimulatorPage() {
             /* Skeleton preview — ghost of what results will look like */
             <div className="space-y-4 select-none">
               {/* Skeleton metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3" aria-hidden="true">
-                {[0, 1, 2].map((i) => (
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4" aria-hidden="true">
+                {[0, 1, 2, 3, 4].map((i) => (
                   <div key={i} className="rounded-lg border border-border/40 bg-card/50 p-4">
                     <div className="h-3 w-24 rounded bg-gradient-to-r from-purple-500/15 to-pink-500/15 animate-pulse mb-3" />
                     <div className="h-7 w-20 rounded bg-gradient-to-r from-purple-500/10 to-pink-500/10 animate-pulse mb-2" />
