@@ -4,4 +4,5 @@ export class CreateFilterDto {
   @IsString() @IsNotEmpty() name: string;
   @IsObject() data: Record<string, unknown>;
   @IsOptional() @IsString() source?: string;
+  @IsOptional() @IsString() tracker_type?: string;
 }

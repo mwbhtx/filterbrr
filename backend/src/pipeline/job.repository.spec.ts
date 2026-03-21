@@ -76,10 +76,10 @@ describe('JobRepository', () => {
     });
 
     it('includes result when provided', async () => {
-      await repo.updateStatus('job-1', 'completed', undefined, { key: 'test.csv' });
+      await repo.updateStatus('job-1', 'completed', undefined, { key: 'test.json' });
       const cmd = mockSend.mock.calls[0][0];
       expect(cmd.input.UpdateExpression).toContain('#r = :r');
-      expect(cmd.input.ExpressionAttributeValues[':r']).toEqual({ key: 'test.csv' });
+      expect(cmd.input.ExpressionAttributeValues[':r']).toEqual({ key: 'test.json' });
     });
 
     it('includes error when provided', async () => {

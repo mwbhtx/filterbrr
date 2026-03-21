@@ -24,6 +24,7 @@ export interface Filter {
   data: FilterData;
   _id: string;
   _source: "generated" | "saved" | "temp";
+  tracker_type?: string;
 }
 
 export interface Dataset {
@@ -122,6 +123,7 @@ export interface GenerateFiltersRequest {
   storage_tb?: number;
   dataset_path?: string;
   avg_seed_days?: number;
+  tracker_type?: string;
 }
 
 export interface JobStatus {

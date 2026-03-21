@@ -3,6 +3,19 @@ import { FiltersService } from './filters.service';
 import { CreateFilterDto } from './dto/create-filter.dto';
 import { UpdateFilterDto } from './dto/update-filter.dto';
 
+/** Map a DynamoDB item to the shape the frontend expects. */
+function toFilterResponse(item: Record<string, unknown>) {
+  const res: Record<string, unknown> = {
+    _id: item.filter_id,
+    _source: item._source ?? 'saved',
+    name: item.name,
+    version: item.version ?? '1.0',
+    data: item.data,
+  };
+  if (item.tracker_type) res.tracker_type = item.tracker_type;
+  return res;
+}
+
 @Controller('filters')
 export class FiltersController {
   constructor(private readonly filters: FiltersService) {}
@@ -10,28 +23,31 @@ export class FiltersController {
   @Get()
   async list(@Req() req: any) {
     const items = await this.filters.list(req.user.userId);
-    return items.map((item: any) => ({
-      _id: item.filter_id,
-      _source: item._source ?? 'saved',
-      name: item.name,
-      version: item.version ?? '1.0',
-      data: item.data,
-    }));
+    return items.map(toFilterResponse);
   }
 
   @Post()
-  create(@Req() req: any, @Body() dto: CreateFilterDto) {
-    return this.filters.create(req.user.userId, dto);
+  async create(@Req() req: any, @Body() dto: CreateFilterDto) {
+    const item = await this.filters.create(req.user.userId, dto);
+    return toFilterResponse(item);
   }
 
   @Get(':id')
-  get(@Req() req: any, @Param('id') id: string) {
-    return this.filters.get(req.user.userId, id);
+  async get(@Req() req: any, @Param('id') id: string) {
+    const item = await this.filters.get(req.user.userId, id);
+    return toFilterResponse(item);
   }
 
   @Put(':id')
-  update(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateFilterDto) {
-    return this.filters.update(req.user.userId, id, dto);
+  async update(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateFilterDto) {
+    const item = await this.filters.update(req.user.userId, id, dto);
+    return toFilterResponse(item);
+  }
+
+  @Post(':id/promote')
+  async promote(@Req() req: any, @Param('id') id: string) {
+    const item = await this.filters.promote(req.user.userId, id);
+    return toFilterResponse(item);
   }
 
   @Delete(':id')

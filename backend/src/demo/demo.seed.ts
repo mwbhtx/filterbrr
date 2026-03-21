@@ -14,7 +14,7 @@ const filterDefaults = {
 
 export const DEMO_FILTERS = [
   {
-    name: 'fl-freeleech-high-priority',
+    name: 'tl-freeleech-high-priority [fbrr]',
     version: '1',
     _id: 'gen-freeleech-high',
     data: {
@@ -29,7 +29,7 @@ export const DEMO_FILTERS = [
     },
   },
   {
-    name: 'fl-freeleech-medium-priority',
+    name: 'tl-freeleech-medium-priority [fbrr]',
     version: '1',
     _id: 'gen-freeleech-medium',
     data: {
@@ -44,7 +44,7 @@ export const DEMO_FILTERS = [
     },
   },
   {
-    name: 'fl-freeleech-low-priority',
+    name: 'tl-freeleech-low-priority [fbrr]',
     version: '1',
     _id: 'gen-freeleech-low',
     data: {

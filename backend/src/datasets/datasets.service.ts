@@ -38,15 +38,11 @@ export class DatasetsService {
     const items = await Promise.all((result.Contents ?? []).map(async (obj) => {
       const filename = obj.Key?.split('/').pop() ?? '';
 
-      // New format: {category}_{YYYY-MM-DD_HHmm}.json
-      const jsonMatch = filename.match(/^([^_]+)_(\d{4}-\d{2}-\d{2}_\d{4})\.json$/);
-      // Legacy format: torrents_data_{category}_{YYYY-MM-DD_HHmm}.csv
-      const csvMatch = filename.match(/^torrents_data_([^_]+)_(\d{4}-\d{2}-\d{2}_\d{4})\.csv$/);
-
-      const match = jsonMatch ?? csvMatch;
-      const category = match?.[1] ?? null;
-      const scraped_at = match?.[2]?.replace('_', 'T').replace(/(\d{2})(\d{2})$/, '$1:$2') ?? null;
-      const isJson = !!jsonMatch;
+      // Format: {category}_{YYYY-MM-DD_HHmm}.json
+      const match = filename.match(/^([^_]+)_(\d{4}-\d{2}-\d{2}_\d{4})\.json$/);
+      if (!match) return null; // skip non-JSON files
+      const category = match[1];
+      const scraped_at = match[2].replace('_', 'T').replace(/(\d{2})(\d{2})$/, '$1:$2');
 
       let torrent_count: number | null = null;
       let min_date: string | null = null;
@@ -56,40 +52,14 @@ export class DatasetsService {
       try {
         const dataObj = await this.s3.client.send(new GetObjectCommand({ Bucket: this.s3.bucket, Key: obj.Key! }));
         const text = await (dataObj.Body as { transformToString: () => Promise<string> }).transformToString();
-
-        if (isJson) {
-          const parsed = JSON.parse(text);
-          // New format: { meta: {...}, torrents: [...] } or legacy: [...]
-          const torrents: Array<{ date?: string }> = Array.isArray(parsed) ? parsed : (parsed.torrents ?? []);
-          const meta = Array.isArray(parsed) ? null : parsed.meta;
-          torrent_count = meta?.torrentCount ?? torrents.length;
-          scrape_duration_sec = meta?.durationSec ?? null;
-          const dates = torrents.map(t => t.date).filter(Boolean).sort() as string[];
-          min_date = dates[0] ?? null;
-          max_date = dates[dates.length - 1] ?? null;
-        } else {
-          // Legacy CSV parsing
-          const lines = text.trim().split('\n');
-          torrent_count = Math.max(0, lines.length - 1);
-          const splitCsv = (line: string) => {
-            const fields: string[] = [];
-            let cur = '', inQuote = false;
-            for (const ch of line) {
-              if (ch === '"') { inQuote = !inQuote; }
-              else if (ch === ',' && !inQuote) { fields.push(cur); cur = ''; }
-              else { cur += ch; }
-            }
-            fields.push(cur);
-            return fields;
-          };
-          const headers = splitCsv(lines[0] ?? '');
-          const dateCol = headers.indexOf('date');
-          if (dateCol >= 0) {
-            const dates = lines.slice(1).map(l => splitCsv(l)[dateCol]).filter(Boolean).sort();
-            min_date = dates[0] ?? null;
-            max_date = dates[dates.length - 1] ?? null;
-          }
-        }
+        const parsed = JSON.parse(text);
+        const torrents: Array<{ date?: string }> = Array.isArray(parsed) ? parsed : (parsed.torrents ?? []);
+        const meta = Array.isArray(parsed) ? null : parsed.meta;
+        torrent_count = meta?.torrentCount ?? torrents.length;
+        scrape_duration_sec = meta?.durationSec ?? null;
+        const dates = torrents.map(t => t.date).filter(Boolean).sort() as string[];
+        min_date = dates[0] ?? null;
+        max_date = dates[dates.length - 1] ?? null;
       } catch { /* leave nulls if read fails */ }
 
       return {
@@ -106,11 +76,11 @@ export class DatasetsService {
         scrape_duration_sec,
       };
     }));
-    return items.sort((a, b) => {
-      const aTime = (a.scraped_at as string | null) ?? '';
-      const bTime = (b.scraped_at as string | null) ?? '';
+    return items.filter(Boolean).sort((a, b) => {
+      const aTime = (a!.scraped_at as string | null) ?? '';
+      const bTime = (b!.scraped_at as string | null) ?? '';
       return bTime.localeCompare(aTime);
-    });
+    }) as Record<string, unknown>[];
   }
 
   async delete(userId: string, filename: string): Promise<void> {

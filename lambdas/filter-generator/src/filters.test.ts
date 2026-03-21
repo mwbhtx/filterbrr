@@ -122,9 +122,14 @@ describe('generateFilter', () => {
       expect(filter.data.except_release_groups).toBe('');
     });
 
-    it('generates correct filter name', () => {
+    it('generates correct filter name without tracker', () => {
       const filter = generateFilter('High', 0, baseTiers, baseRateLimits, 'freeleech', baseAnalyses);
-      expect(filter.name).toBe('fl-freeleech-high-priority');
+      expect(filter.name).toBe('fl-freeleech-high-priority [fbrr]');
+    });
+
+    it('uses tracker prefix in filter name', () => {
+      const filter = generateFilter('High', 0, baseTiers, baseRateLimits, 'freeleech', baseAnalyses, 'TorrentLeech');
+      expect(filter.name).toBe('tl-freeleech-high-priority [fbrr]');
     });
 
     it('sets freeleech true for freeleech source', () => {

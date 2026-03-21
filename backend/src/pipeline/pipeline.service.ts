@@ -50,10 +50,11 @@ export class PipelineService {
     const storageTb = (dto['storage_tb'] as number | undefined) ?? 4;
     const seedDays = (dto['avg_seed_days'] as number | undefined) ?? 30;
     const datasetKey = dto['dataset_path'] as string | undefined;
+    const trackerType = dto['tracker_type'] as string | undefined;
 
     if (!datasetKey) throw new Error('dataset_path is required for analysis');
 
-    const payload: Record<string, unknown> = { userId, datasetKey, storageTb, seedDays, source };
+    const payload: Record<string, unknown> = { userId, datasetKey, storageTb, seedDays, source, ...(trackerType && { trackerType }) };
     const command = `generate-filters ${source} storageTb=${storageTb} seedDays=${seedDays}`;
     return this.createAndInvoke(userId, command, 'filterbrr-filter-generator', payload);
   }

@@ -48,6 +48,13 @@ export class FiltersService {
     return updated;
   }
 
+  async promote(userId: string, filterId: string): Promise<Record<string, unknown>> {
+    const existing = await this.get(userId, filterId);
+    const updated = { ...existing, _source: 'saved', updated_at: new Date().toISOString() };
+    await this.dynamo.client.send(new PutCommand({ TableName: TABLE, Item: updated }));
+    return updated;
+  }
+
   async delete(userId: string, filterId: string): Promise<void> {
     await this.get(userId, filterId);
     await this.dynamo.client.send(

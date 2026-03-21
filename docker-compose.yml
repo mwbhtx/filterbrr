@@ -4,7 +4,7 @@ services:
     container_name: filterbrr-dynamodb
     user: root
     ports:
-      - '8000:8000'
+      - '8001:8000'
     command: '-jar DynamoDBLocal.jar -sharedDb -dbPath /data'
     volumes:
       - dynamodb-data:/data
@@ -13,7 +13,7 @@ services:
     image: localstack/localstack@sha256:cea732cdcc0982900b6b0c5c4fca6b90b54959708b2830366d5e11e98e71f6ee
     container_name: filterbrr-localstack
     ports:
-      - '4566:4566'
+      - '4567:4566'
     environment:
       - SERVICES=s3
       - DEFAULT_REGION=us-east-1

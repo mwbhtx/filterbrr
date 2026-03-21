@@ -1,19 +1,18 @@
 import { useState, useEffect } from "react";
 import { api } from "../api/client";
 import { useDatasets } from "../hooks/useDatasets";
-import { useFilters, useDeleteFilter } from "../hooks/useFilters";
-import type { SimulationResult, AnalysisResults, Filter, Dataset, AutobrrConnectionStatus } from "../types";
+import { useFilters } from "../hooks/useFilters";
+import type { SimulationResult, AnalysisResults, Filter, Dataset } from "../types";
 import MetricsBar from "../components/MetricsBar";
 import FilterBreakdownTable from "../components/FilterBreakdown";
 import { UtilizationChart, DailyGrabsChart, GBFlowChart, UploadChart } from "../components/TimeSeriesChart";
 import { GrabbedList, SkippedList } from "../components/TorrentList";
-import FilterList from "../components/FilterList";
 import FilterForm from "../components/FilterForm";
 import JobRunner from "../components/JobRunner";
 import { useIsDemo } from "../auth/useIsDemo";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, ChevronDown } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useToast } from "@/components/Toast";
 import { filterDataFromAutobrr } from "../types/autobrr";
@@ -33,8 +32,6 @@ function HintIcon({ tip }: { tip: string }) {
 
 const selectCls =
   "w-full rounded bg-muted border border-border px-3 py-1.5 text-sm text-foreground disabled:opacity-50";
-
-const genTempId = () => `temp_${Math.random().toString(36).slice(2, 10)}`;
 
 const EMPTY_RESULT: SimulationResult = {
   total_seen: 0,
@@ -75,10 +72,10 @@ export default function SimulatorPage() {
   const isDemo = useIsDemo();
   const { data: datasets = [], isLoading: datasetsLoading } = useDatasets();
   const { data: persistedFilters = [], isLoading: filtersLoading, refetch: refetchFilters } = useFilters();
-  const deleteFilterMutation = useDeleteFilter();
 
   // Data context state — restore from localStorage
   const stored = JSON.parse(localStorage.getItem('simulator-settings') ?? '{}');
+  const [selectedTracker, setSelectedTracker] = useState(stored.tracker ?? "");
   const [selectedDataset, setSelectedDataset] = useState(stored.dataset ?? "");
   const [storageTb, setStorageTb] = useState(stored.storageTb ?? 4);
   const [maxSeedDays, setMaxSeedDays] = useState(stored.maxSeedDays ?? 10);
@@ -87,12 +84,57 @@ export default function SimulatorPage() {
   // Persist settings to localStorage on change
   useEffect(() => {
     localStorage.setItem('simulator-settings', JSON.stringify({
+      tracker: selectedTracker,
       dataset: selectedDataset,
       storageTb,
       maxSeedDays,
       avgRatio,
     }));
-  }, [selectedDataset, storageTb, maxSeedDays, avgRatio]);
+  }, [selectedTracker, selectedDataset, storageTb, maxSeedDays, avgRatio]);
+
+  // Derive unique tracker types from datasets
+  const trackerTypes = [...new Set(datasets.map(d => d.tracker_type).filter(Boolean))].sort();
+
+  // Auto-select tracker if none selected or current no longer valid
+  useEffect(() => {
+    if (trackerTypes.length === 0) return;
+    if (!selectedTracker || !trackerTypes.includes(selectedTracker)) {
+      setSelectedTracker(trackerTypes[0]);
+    }
+  }, [trackerTypes.join(",")]);
+
+  // All datasets sorted by scraped_at desc, filtered by selected tracker
+  const sortedDatasets = [...datasets]
+    .filter(d => d.tracker_type === selectedTracker)
+    .sort((a, b) => {
+      if (a.scraped_at && b.scraped_at) return b.scraped_at.localeCompare(a.scraped_at);
+      if (a.scraped_at) return -1;
+      if (b.scraped_at) return 1;
+      return 0;
+    });
+
+  // Auto-select dataset when tracker changes or datasets load
+  useEffect(() => {
+    const current = sortedDatasets.find(d => d.path === selectedDataset);
+    if (!current) {
+      const first = sortedDatasets[0];
+      if (first) setSelectedDataset(first.path);
+      else if (selectedDataset) setSelectedDataset("");
+    }
+  }, [selectedTracker, datasets]);
+
+  // Reset simulation results when tracker or dataset changes
+  const handleTrackerChange = (tracker: string) => {
+    setSelectedTracker(tracker);
+    setSimResult(null);
+    localStorage.removeItem('simulator-last-result');
+  };
+
+  const handleDatasetChange = (dataset: string) => {
+    setSelectedDataset(dataset);
+    setSimResult(null);
+    localStorage.removeItem('simulator-last-result');
+  };
 
   // Simulation state
   const [simResult, setSimResult] = useState<SimulationResult | null>(() => {
@@ -102,7 +144,6 @@ export default function SimulatorPage() {
   });
   const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
   const [running, setRunning] = useState(false);
-  const [simError, setSimError] = useState<string | null>(null);
 
   // Persist simulation result to localStorage on change
   useEffect(() => {
@@ -123,11 +164,8 @@ export default function SimulatorPage() {
   const [selectedFilterId, setSelectedFilterId] = useState<string | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [pullingId, setPullingId] = useState<string | null>(null);
-  const [filterError, setFilterError] = useState<string | null>(null);
-  const [syncError, setSyncError] = useState<string | null>(null);
+  const [activeChart, setActiveChart] = useState<"utilization" | "grabs" | "flow" | "upload">("utilization");
   const { toast } = useToast();
-  const [connectionStatus, setConnectionStatus] = useState<AutobrrConnectionStatus | null>(null);
-  const [checkingConnection, setCheckingConnection] = useState(false);
 
   // Combine persistent + temp filters
   const allFilters: Filter[] = [
@@ -137,6 +175,11 @@ export default function SimulatorPage() {
     ...tempFilters,
   ];
   const dirtyIds = new Set(dirtyMap.keys());
+
+  // Filter by selected tracker — show filters that match tracker or have no tracker_type (backwards compat)
+  const trackerFilters = allFilters.filter(
+    f => !f.tracker_type || f.tracker_type === selectedTracker
+  );
 
   // Track which filters are enabled for simulation (restore from localStorage)
   const [enabledFilterIds, setEnabledFilterIds] = useState<Set<string>>(() => {
@@ -149,48 +192,27 @@ export default function SimulatorPage() {
   // Keep enabledFilterIds in sync — mirror each filter's data.enabled field for new filters
   useEffect(() => {
     setEnabledFilterIds(prev => {
-      const currentIds = new Set(allFilters.map(f => f._id));
+      const currentIds = new Set(trackerFilters.map(f => f._id));
       const next = new Set<string>();
-      for (const f of allFilters) {
+      for (const f of trackerFilters) {
         if (prev.has(f._id)) {
-          // Already tracked — keep user's toggle choice
           next.add(f._id);
         } else if (f.data.enabled) {
-          // New filter — mirror its enabled state
           next.add(f._id);
         }
       }
-      // Remove IDs that no longer exist
       for (const id of prev) {
         if (!currentIds.has(id)) next.delete(id);
       }
       return next;
     });
-  }, [allFilters.map(f => f._id).join(",")]);
+  }, [trackerFilters.map(f => f._id).join(",")]);
 
   // Persist enabled filter IDs to localStorage
   useEffect(() => {
     localStorage.setItem('simulator-enabled-filters', JSON.stringify([...enabledFilterIds]));
   }, [enabledFilterIds]);
-  const selectedFilter = allFilters.find((f) => f._id === selectedFilterId) ?? null;
-
-  // All datasets sorted by scraped_at desc
-  const sortedDatasets = [...datasets].sort((a, b) => {
-    if (a.scraped_at && b.scraped_at) return b.scraped_at.localeCompare(a.scraped_at);
-    if (a.scraped_at) return -1;
-    if (b.scraped_at) return 1;
-    return 0;
-  });
-
-  // Auto-select dataset: if stored dataset no longer exists, pick first available
-  useEffect(() => {
-    const current = datasets.find(d => d.path === selectedDataset);
-    if (!current) {
-      const first = sortedDatasets[0];
-      if (first) setSelectedDataset(first.path);
-      else if (selectedDataset) setSelectedDataset("");
-    }
-  }, [datasets]);
+  const selectedFilter = trackerFilters.find((f) => f._id === selectedFilterId) ?? null;
 
   // Generate filters
   const selectedDs = datasets.find(d => d.path === selectedDataset);
@@ -204,6 +226,7 @@ export default function SimulatorPage() {
         storage_tb: storageTb,
         dataset_path: selectedDataset,
         avg_seed_days: maxSeedDays,
+        tracker_type: selectedTracker || undefined,
       });
       setGenerateJobId(job_id);
       localStorage.setItem('active-generate-job', job_id);
@@ -216,7 +239,6 @@ export default function SimulatorPage() {
     setGenerating(false);
     localStorage.removeItem('active-generate-job');
 
-    // Snapshot what filters looked like before re-generate (including unsaved edits)
     const beforeMap = new Map<string, Filter>();
     for (const f of allFilters) {
       beforeMap.set(f._id, f);
@@ -228,15 +250,11 @@ export default function SimulatorPage() {
     }
     if (!freshFilters) return;
 
-    // For re-generated filters (same gen-* ID already existed), mark as dirty
-    // so the user must explicitly save. This preserves unsaved edits.
     const newDirty = new Map(dirtyMap);
     for (const gen of freshFilters) {
       if (!gen._id.startsWith('gen-')) continue;
       const before = beforeMap.get(gen._id);
       if (before) {
-        // Filter existed before — use the new generated data as a dirty change
-        // but keep the filter's identity (id, name, source)
         newDirty.set(gen._id, { ...before, data: gen.data });
       }
     }
@@ -247,12 +265,11 @@ export default function SimulatorPage() {
   const handleRunSimulation = async () => {
     if (!selectedDataset) return;
     setRunning(true);
-    setSimError(null);
     setGenerateJobId(null);
     localStorage.removeItem('active-generate-job');
     const minSpin = new Promise(r => setTimeout(r, 1000));
     try {
-      const activeFilterIds = allFilters
+      const activeFilterIds = trackerFilters
         .filter(f => enabledFilterIds.has(f._id))
         .map(f => f._id);
       const [result] = await Promise.all([
@@ -267,45 +284,13 @@ export default function SimulatorPage() {
       ]);
       setSimResult(result);
     } catch (err: unknown) {
-      setSimError(err instanceof Error ? err.message : "Simulation failed");
+      toast(err instanceof Error ? err.message : "Simulation failed", "error");
     } finally {
       setRunning(false);
     }
   };
 
-  // Filter handlers
-  const handleCreateNew = () => {
-    const newFilter: Filter = {
-      _id: genTempId(),
-      _source: "temp",
-      name: "New Filter",
-      version: "1",
-      data: {
-        enabled: true,
-        min_size: "",
-        max_size: "",
-        delay: 0,
-        priority: 0,
-        max_downloads: 0,
-        max_downloads_unit: "DAY",
-        except_releases: "",
-        announce_types: [],
-        freeleech: false,
-        resolutions: [],
-        sources: [],
-        match_categories: "",
-        is_auto_updated: false,
-        release_profile_duplicate: null,
-        match_release_groups: "",
-        except_release_groups: "",
-      },
-    };
-    setTempFilters((prev) => [...prev, newFilter]);
-    setSelectedFilterId(newFilter._id);
-  };
-
   const handleFilterSave = async (filter: Filter) => {
-    setFilterError(null);
     try {
       if (filter._source === "temp") {
         const { _id, _source, ...body } = filter;
@@ -333,47 +318,10 @@ export default function SimulatorPage() {
         await refetchFilters();
       }
     } catch (err: unknown) {
-      setFilterError(err instanceof Error ? err.message : "Save failed");
+      toast(err instanceof Error ? err.message : "Save failed", "error");
     }
   };
 
-  const handleFilterDelete = async () => {
-    if (!selectedFilter) return;
-    setFilterError(null);
-    try {
-      if (selectedFilter._source === "temp") {
-        setTempFilters((prev) => prev.filter((f) => f._id !== selectedFilter._id));
-        setSelectedFilterId(null);
-      } else {
-        await deleteFilterMutation.mutateAsync(selectedFilter._id);
-        setDirtyMap((prev) => { const next = new Map(prev); next.delete(selectedFilter._id); return next; });
-        setSelectedFilterId(null);
-      }
-    } catch (err: unknown) {
-      setFilterError(err instanceof Error ? err.message : "Delete failed");
-    }
-  };
-
-  const handleDeleteTemp = (id: string) => {
-    setTempFilters((prev) => prev.filter((f) => f._id !== id));
-    if (selectedFilterId === id) setSelectedFilterId(null);
-  };
-
-  const handleClearTemp = () => {
-    setTempFilters([]);
-    if (selectedFilter?._source === "temp") setSelectedFilterId(null);
-  };
-
-  const handleSaveAllTemp = async () => {
-    setFilterError(null);
-    try {
-      await api.saveAllTempFilters();
-      setTempFilters([]);
-      await refetchFilters();
-    } catch (err: unknown) {
-      setFilterError(err instanceof Error ? err.message : "Save all failed");
-    }
-  };
 
   const handleFilterChange = (updated: Filter) => {
     if (updated._source === "temp") {
@@ -390,23 +338,36 @@ export default function SimulatorPage() {
 
   const handlePush = async (filterId: string) => {
     setSyncingId(filterId);
-    setSyncError(null);
     try { await api.pushFilter(filterId); toast("Filter pushed to autobrr"); }
-    catch (err: unknown) { const msg = err instanceof Error ? err.message : "Push failed"; setSyncError(msg); toast(msg, "error"); }
+    catch (err: unknown) { const msg = err instanceof Error ? err.message : "Push failed"; toast(msg, "error"); }
     finally { setSyncingId(null); }
   };
 
   const handlePushAll = async () => {
     setSyncingId("all");
-    setSyncError(null);
     try { await api.pushAll(); toast("All filters pushed to autobrr"); }
-    catch (err: unknown) { const msg = err instanceof Error ? err.message : "Push all failed"; setSyncError(msg); toast(msg, "error"); }
+    catch (err: unknown) { const msg = err instanceof Error ? err.message : "Push all failed"; toast(msg, "error"); }
     finally { setSyncingId(null); }
+  };
+
+  const handleSaveAll = async () => {
+    for (const [, filter] of dirtyMap) {
+      try {
+        const { _id, _source, ...body } = filter;
+        void _source;
+        await api.updateFilter(_id, body);
+      } catch (err: unknown) {
+        toast(err instanceof Error ? err.message : `Save failed for ${filter.name}`, "error");
+        return;
+      }
+    }
+    setDirtyMap(new Map());
+    await refetchFilters();
+    toast("All filters saved");
   };
 
   const handlePull = async (filterId: string) => {
     setPullingId(filterId);
-    setFilterError(null);
     try {
       const remote = await api.pullFilter(filterId);
       const local = allFilters.find((f) => f._id === filterId);
@@ -419,9 +380,7 @@ export default function SimulatorPage() {
       setDirtyMap((prev) => new Map(prev).set(filterId, pulled));
       toast("Filter pulled from autobrr — review and save");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Pull failed";
-      setSyncError(msg);
-      toast(msg, "error");
+      toast(err instanceof Error ? err.message : "Pull failed", "error");
     } finally {
       setPullingId(null);
     }
@@ -429,165 +388,124 @@ export default function SimulatorPage() {
 
   const handlePullAll = async () => {
     setSyncingId("all");
-    setSyncError(null);
     try { await api.pullAll(); await refetchFilters(); toast("All filters pulled from autobrr"); }
-    catch (err: unknown) { const msg = err instanceof Error ? err.message : "Pull all failed"; setSyncError(msg); toast(msg, "error"); }
+    catch (err: unknown) { const msg = err instanceof Error ? err.message : "Pull all failed"; toast(msg, "error"); }
     finally { setSyncingId(null); }
   };
 
-  const handleCheckConnection = async () => {
-    setCheckingConnection(true);
-    try {
-      const status = await api.getAutobrrStatus();
-      setConnectionStatus(status);
-    } catch {
-      setConnectionStatus({ connected: false, error: "Autobrr not configured" });
-    } finally {
-      setCheckingConnection(false);
-    }
+  const handleToggleFilter = (id: string) => {
+    setSelectedFilterId((prev) => (prev === id ? null : id));
   };
 
-  const isDirty = selectedFilter ? dirtyIds.has(selectedFilter._id) : false;
+  const formatFilterSummary = (f: Filter) => {
+    const parts: string[] = [];
+    if (f.data.delay > 0) parts.push(`${f.data.delay}s delay`);
+    if (f.data.max_downloads) {
+      const unit = f.data.max_downloads_unit === "HOUR" ? "h" : "d";
+      parts.push(`${f.data.max_downloads}/${unit}`);
+    }
+    if (f.data.resolutions.length) parts.push(f.data.resolutions.join(", "));
+    if (f.data.freeleech) parts.push("FL");
+    return parts.join(" · ") || "No constraints set";
+  };
 
-  const [mobileTab, setMobileTab] = useState<"filters" | "detail" | "simulation">("simulation");
+  const r = simResult ?? EMPTY_RESULT;
+  const hasResults = simResult !== null;
 
-  const filterListContent = (
-    <FilterList
-      filters={allFilters}
-      selectedId={selectedFilterId}
-      onSelect={(f) => { setSelectedFilterId(f._id); setMobileTab("detail"); }}
-      onCreateNew={() => { handleCreateNew(); setMobileTab("detail"); }}
-      loading={filtersLoading}
-      onClearTemp={handleClearTemp}
-      onSaveAllTemp={handleSaveAllTemp}
-      onDeleteFilter={handleDeleteTemp}
-      dirtyIds={dirtyIds}
-      {...(!isDemo && {
-        syncingId,
-        pullingId,
-        onPush: handlePush,
-        onPull: handlePull,
-        onPushAll: handlePushAll,
-        onPullAll: handlePullAll,
-        onCheckConnection: handleCheckConnection,
-        connectionStatus,
-        checkingConnection,
-      })}
-    />
-  );
+  return (
+    <div className="h-[calc(100vh-4rem)] overflow-y-auto -mx-6 -my-4">
+      <div className="px-4 md:px-6 py-4 space-y-4">
 
-  const filterDetailContent = (
-    <>
-      {selectedFilter ? (
-        <>
-          {filterError && (
-            <div className="mx-3 mt-3 px-3 py-2 rounded bg-destructive/20 border border-destructive/50 text-destructive text-sm flex items-center justify-between">
-              <span>{filterError}</span>
-              <button onClick={() => setFilterError(null)} className="ml-2 text-destructive hover:text-destructive">✕</button>
-            </div>
-          )}
-          <FilterForm
-            filter={selectedFilter}
-            analysisResults={analysisResults}
-            readOnly={false}
-            onSave={handleFilterSave}
-            onDelete={selectedFilter._source !== "generated" ? handleFilterDelete : undefined}
-            onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
-            onChange={handleFilterChange}
-            onPush={isDemo ? undefined : handlePush}
-            pushing={syncingId === selectedFilter._id}
-            onPull={isDemo ? undefined : () => handlePull(selectedFilter._id)}
-            pulling={pullingId === selectedFilter._id}
-            onCancel={handleFilterCancel}
-            isDirty={isDirty}
-            syncError={syncError}
-            onDismissSyncError={() => setSyncError(null)}
-          />
-        </>
-      ) : (
-        <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-          Select a filter
-        </div>
-      )}
-    </>
-  );
-
-  const simulationContent = (
-    <div className="overflow-y-auto px-4 md:px-6 py-4 space-y-4 flex-1">
-      {/* Section 1: Dataset Selection */}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Select Dataset<HintIcon tip="Choose a scraped torrent dataset to analyze and simulate against" /></CardTitle></CardHeader>
-        <CardContent className="pt-0">
+        {/* ── Toolbar: Dataset + Seedbox Config ── */}
+        <div className="border-b border-border pb-4">
           {datasetsLoading ? (
             <div className="flex items-center gap-2 py-1.5">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
               <span className="text-sm text-muted-foreground">Loading datasets…</span>
             </div>
           ) : (
-            <select
-              value={selectedDataset}
-              onChange={(e) => setSelectedDataset(e.target.value)}
-              disabled={sortedDatasets.length === 0}
-              className={selectCls}
-            >
-              {sortedDatasets.length === 0 && (
-                <option key="__empty" value="">No datasets — run a scrape first</option>
-              )}
-              {sortedDatasets.map((ds) => (
-                <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
-              ))}
-            </select>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Tracker</label>
+                <select
+                  value={selectedTracker}
+                  onChange={(e) => handleTrackerChange(e.target.value)}
+                  disabled={trackerTypes.length === 0}
+                  className={selectCls}
+                >
+                  {trackerTypes.length === 0 && (
+                    <option value="">No trackers</option>
+                  )}
+                  {trackerTypes.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Dataset</label>
+                <select
+                  value={selectedDataset}
+                  onChange={(e) => handleDatasetChange(e.target.value)}
+                  disabled={sortedDatasets.length === 0}
+                  className={selectCls}
+                >
+                  {sortedDatasets.length === 0 && (
+                    <option value="">No datasets</option>
+                  )}
+                  {sortedDatasets.map((ds) => (
+                    <option key={ds.path} value={ds.path}>{datasetLabel(ds)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                  Storage (TB)
+                  <HintIcon tip="Total disk space available for storing downloaded torrents" />
+                </label>
+                <input
+                  type="number"
+                  value={storageTb}
+                  onChange={(e) => setStorageTb(Math.max(0.5, Number(e.target.value)))}
+                  min={0.5}
+                  step={0.5}
+                  className={selectCls}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                  Seed Days
+                  <HintIcon tip="Average number of days each torrent is seeded before removal" />
+                </label>
+                <input
+                  type="number"
+                  value={maxSeedDays}
+                  onChange={(e) => setMaxSeedDays(Number(e.target.value))}
+                  min={1}
+                  className={selectCls}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                  Avg Ratio
+                  <HintIcon tip="Average upload-to-download ratio achieved per torrent" />
+                </label>
+                <input
+                  type="number"
+                  value={avgRatio}
+                  onChange={(e) => setAvgRatio(Math.min(10, Math.max(0.2, Number(e.target.value))))}
+                  min={0.2}
+                  max={10}
+                  step={0.1}
+                  className={selectCls}
+                />
+              </div>
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Section 2: Seedbox Config */}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Seedbox Config<HintIcon tip="Your seedbox hardware settings — used by both filter generation and simulation" /></CardTitle></CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">Storage (TB)<HintIcon tip="Total disk space available for storing downloaded torrents" /></label>
-              <input
-                type="number"
-                value={storageTb}
-                onChange={(e) => setStorageTb(Math.max(0.5, Number(e.target.value)))}
-                min={0.5}
-                step={0.5}
-                className={selectCls}
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">Avg Seed Days<HintIcon tip="Average number of days each torrent is seeded before removal" /></label>
-              <input
-                type="number"
-                value={maxSeedDays}
-                onChange={(e) => setMaxSeedDays(Number(e.target.value))}
-                min={1}
-                className={selectCls}
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">Avg Ratio<HintIcon tip="Average upload-to-download ratio achieved per torrent" /></label>
-              <input
-                type="number"
-                value={avgRatio}
-                onChange={(e) => setAvgRatio(Math.min(10, Math.max(0.2, Number(e.target.value))))}
-                min={0.2}
-                max={10}
-                step={0.1}
-                className={selectCls}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Section 3: Generate Filters */}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Generate Filters<HintIcon tip="Analyze the dataset and auto-generate optimized filters based on your seedbox config" /></CardTitle></CardHeader>
-        <CardContent className="pt-0 space-y-3">
-          <div className="flex items-center gap-3 flex-wrap">
+        {/* ── Filters Row ── */}
+        <div>
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <Button
               onClick={handleGenerate}
               disabled={generating || !selectedDataset}
@@ -596,157 +514,310 @@ export default function SimulatorPage() {
             >
               {generating ? "Generating..." : "Generate Filters"}
             </Button>
+            {trackerFilters.length > 0 && (
+              <>
+                <div className="w-px h-5 bg-border mx-1" />
+                <button
+                  onClick={handlePushAll}
+                  disabled={isDemo || syncingId != null}
+                  className="text-xs font-medium px-2.5 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground disabled:opacity-30 transition-colors"
+                >
+                  {syncingId === "all" ? "..." : "Push All"}
+                </button>
+                <button
+                  onClick={handlePullAll}
+                  disabled={isDemo || syncingId != null}
+                  className="text-xs font-medium px-2.5 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground disabled:opacity-30 transition-colors"
+                >
+                  {syncingId === "all" ? "..." : "Pull All"}
+                </button>
+                <button
+                  onClick={handleSaveAll}
+                  disabled={dirtyIds.size === 0}
+                  className="text-xs font-medium px-2.5 py-1 rounded bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-30"
+                >
+                  Save All
+                </button>
+                <button
+                  onClick={() => setDirtyMap(new Map())}
+                  disabled={dirtyIds.size === 0}
+                  className="text-xs font-medium px-2.5 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground transition-colors disabled:opacity-30"
+                >
+                  Reset All
+                </button>
+              </>
+            )}
             <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Section 4: Simulation */}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Simulation<HintIcon tip="Back-test your filters against the dataset to see projected grabs, disk usage, and upload" /></CardTitle></CardHeader>
-        <CardContent className="pt-0 space-y-3">
-          {allFilters.length > 0 ? (
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1.5">
-                Filters<HintIcon tip="Toggle which filters are included in the simulation" />
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {allFilters.map(f => {
-                  const active = enabledFilterIds.has(f._id);
+          {filtersLoading && trackerFilters.length === 0 ? (
+            <div className="flex items-center justify-center py-6 gap-2">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary" />
+              <p className="text-xs text-muted-foreground">Loading filters…</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-3 mt-2">
+              {[0, 1, 2].map((idx) => {
+                const filter = trackerFilters[idx];
+                if (!filter) {
                   return (
-                    <button
-                      key={f._id}
-                      onClick={() => setEnabledFilterIds(prev => {
-                        const next = new Set(prev);
-                        if (next.has(f._id)) next.delete(f._id);
-                        else next.add(f._id);
-                        return next;
-                      })}
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
-                        active
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-muted text-muted-foreground border-border opacity-60'
-                      }`}
+                    <div
+                      key={`empty-${idx}`}
+                      className="rounded-lg border border-dashed border-border/40 bg-muted/20 p-3 flex items-center justify-center min-h-[72px]"
                     >
-                      {f.name}
-                    </button>
+                      <span className="text-xs text-muted-foreground/30">—</span>
+                    </div>
                   );
-                })}
+                }
+
+                const isSelected = filter._id === selectedFilterId;
+                const isEnabled = enabledFilterIds.has(filter._id);
+                const filterIsDirty = dirtyIds.has(filter._id);
+
+                return (
+                  <div
+                    key={filter._id}
+                    onClick={() => handleToggleFilter(filter._id)}
+                    className={`rounded-lg border p-3 cursor-pointer transition-all ${
+                      isSelected
+                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                        : isEnabled
+                          ? "border-border bg-card hover:border-muted-foreground/30"
+                          : "border-border/50 bg-card/50 opacity-60 hover:opacity-80"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {filterIsDirty && <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0" title="Unsaved changes" />}
+                        {filter._source === "temp" && <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent shrink-0" />}
+                        <h3 className="text-sm font-semibold text-foreground truncate">{filter.name}</h3>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleFilterSave(filter); }}
+                          disabled={!filterIsDirty}
+                          className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-30"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDirtyMap(prev => { const next = new Map(prev); next.delete(filter._id); return next; });
+                          }}
+                          disabled={!filterIsDirty}
+                          className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground transition-colors disabled:opacity-30"
+                        >
+                          Reset
+                        </button>
+                        {filter._source !== "temp" && (
+                          <>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handlePush(filter._id); }}
+                              disabled={isDemo || syncingId != null || filterIsDirty}
+                              className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground transition-colors disabled:opacity-30"
+                            >
+                              Push
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handlePull(filter._id); }}
+                              disabled={isDemo || pullingId != null}
+                              className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground transition-colors disabled:opacity-30"
+                            >
+                              Pull
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEnabledFilterIds(prev => {
+                              const next = new Set(prev);
+                              if (next.has(filter._id)) next.delete(filter._id);
+                              else next.add(filter._id);
+                              return next;
+                            });
+                          }}
+                          className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border transition-colors ${
+                            isEnabled
+                              ? "bg-pink-600 border-pink-600"
+                              : "bg-muted border-border"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform mt-px ${
+                              isEnabled ? "translate-x-4" : "translate-x-0.5"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] text-muted-foreground truncate">{formatFilterSummary(filter)}</p>
+                      <ChevronDown className={`size-3 text-muted-foreground/40 shrink-0 ml-2 transition-transform ${isSelected ? "rotate-180" : ""}`} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── Expanded Filter Settings ── */}
+        {selectedFilter && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">{selectedFilter.name} — Settings</CardTitle>
+                <button
+                  onClick={() => setSelectedFilterId(null)}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted"
+                >
+                  <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <FilterForm
+                filter={selectedFilter}
+                analysisResults={analysisResults}
+                readOnly={false}
+                onSave={handleFilterSave}
+                onPromote={selectedFilter._source === "temp" ? () => handleFilterSave(selectedFilter) : undefined}
+                onChange={handleFilterChange}
+                onPush={isDemo ? undefined : handlePush}
+                pushing={syncingId === selectedFilter._id || syncingId === "all"}
+                onPull={isDemo ? undefined : () => handlePull(selectedFilter._id)}
+                pulling={pullingId === selectedFilter._id}
+                onCancel={handleFilterCancel}
+                isDirty={dirtyIds.has(selectedFilter._id)}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Simulation ── */}
+        <div className="border-t border-border pt-4">
+          <div className="flex items-center gap-3 mb-4">
+            <Button
+              onClick={handleRunSimulation}
+              disabled={running || !selectedDataset || enabledFilterIds.size === 0}
+              size="sm"
+              className="shrink-0 btn-glow"
+            >
+              {running ? "Running..." : "Run Simulation"}
+            </Button>
+            {!running && enabledFilterIds.size === 0 && trackerFilters.length > 0 && (
+              <span className="text-xs text-muted-foreground">Enable at least one filter</span>
+            )}
+            {!running && trackerFilters.length === 0 && (
+              <span className="text-xs text-muted-foreground">Generate or create filters first</span>
+            )}
+          </div>
+
+          {running ? (
+            <div className="flex items-center justify-center py-12 gap-3">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary" />
+              <span className="text-sm text-muted-foreground">Running simulation…</span>
+            </div>
+          ) : !hasResults ? (
+            /* Skeleton preview — ghost of what results will look like */
+            <div className="space-y-4 select-none">
+              {/* Skeleton metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3" aria-hidden="true">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="rounded-lg border border-border/40 bg-card/50 p-4">
+                    <div className="h-3 w-24 rounded bg-gradient-to-r from-purple-500/15 to-pink-500/15 animate-pulse mb-3" />
+                    <div className="h-7 w-20 rounded bg-gradient-to-r from-purple-500/10 to-pink-500/10 animate-pulse mb-2" />
+                    <div className="h-2.5 w-32 rounded bg-gradient-to-r from-purple-500/8 to-pink-500/8 animate-pulse" />
+                  </div>
+                ))}
+              </div>
+              {/* Skeleton chart with centered overlay */}
+              <div className="relative rounded-lg border border-border/40 bg-card/50 p-4">
+                <div className="flex gap-2 mb-4" aria-hidden="true">
+                  {["w-20", "w-16", "w-14", "w-12"].map((w, i) => (
+                    <div key={i} className={`h-3 ${w} rounded bg-gradient-to-r from-purple-500/15 to-pink-500/15 animate-pulse`} />
+                  ))}
+                </div>
+                <div className="h-[200px] flex items-end gap-[2px] px-4" aria-hidden="true">
+                  {Array.from({ length: 40 }, (_, i) => {
+                    const height = 20 + Math.sin(i * 0.4) * 15 + Math.cos(i * 0.7) * 10;
+                    return (
+                      <div
+                        key={i}
+                        className="flex-1 rounded-t animate-pulse"
+                        style={{
+                          height: `${height}%`,
+                          animationDelay: `${i * 50}ms`,
+                          animationDuration: '2s',
+                          background: `linear-gradient(180deg, rgba(124,58,237,${0.12 + (height / 500)}) 0%, rgba(219,39,119,${0.08 + (height / 600)}) 100%)`,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                {/* Centered overlay within chart card */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-3">
+                  <Button
+                    onClick={handleRunSimulation}
+                    disabled={running || !selectedDataset || enabledFilterIds.size === 0}
+                    size="sm"
+                    className="btn-glow"
+                  >
+                    Run Simulation
+                  </Button>
+                  <p className="text-sm text-muted-foreground/60">Run a simulation to see results</p>
+                </div>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No filters yet. Generate filters above or create one manually to run a simulation.</p>
-          )}
-          <div className="flex items-center gap-3 flex-wrap pt-3 border-t border-border">
-            <Button onClick={handleRunSimulation} disabled={running || !selectedDataset || enabledFilterIds.size === 0} size="sm" className="shrink-0 btn-glow">
-              {running ? "Running..." : "Run Simulation"}
-            </Button>
-            {!running && enabledFilterIds.size === 0 && allFilters.length > 0 && (
-              <span className="text-sm text-muted-foreground">Enable at least one filter to simulate</span>
-            )}
-            {simError && <span className="text-sm text-destructive shrink-0">{simError}</span>}
-          </div>
-        </CardContent>
-      </Card>
-
-      {(() => {
-        const r = simResult ?? EMPTY_RESULT;
-        return (
-          <>
-            <MetricsBar result={r} loading={running} />
-            {running ? (
+            <div className="space-y-4">
+              <MetricsBar result={r} loading={running} />
+              <GrabbedList torrents={r.grabbed_torrents} />
+              <SkippedList torrents={r.skipped_torrents} />
               <Card>
-                <CardContent className="flex items-center justify-center py-12">
-                  <div className="flex items-center gap-3">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary" />
-                    <span className="text-sm text-muted-foreground">Running simulation…</span>
-                  </div>
+                <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
+                <CardContent>
+                  <FilterBreakdownTable result={r} />
                 </CardContent>
               </Card>
-            ) : (
-              <>
-                <GrabbedList torrents={r.grabbed_torrents} />
-                <SkippedList torrents={r.skipped_torrents} />
-                <Card>
-                  <CardHeader><CardTitle>Filter Breakdown</CardTitle></CardHeader>
-                  <CardContent>
-                    <FilterBreakdownTable result={r} />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle>Disk Utilization</CardTitle></CardHeader>
-                  <CardContent>
-                    <UtilizationChart dailyStats={r.daily_stats} targetPct={80} />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle>Daily Grabs</CardTitle></CardHeader>
-                  <CardContent>
-                    <DailyGrabsChart dailyStats={r.daily_stats} />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle>GB Flow</CardTitle></CardHeader>
-                  <CardContent>
-                    <GBFlowChart dailyStats={r.daily_stats} />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle>Upload</CardTitle></CardHeader>
-                  <CardContent>
-                    <UploadChart dailyStats={r.daily_stats} />
-                  </CardContent>
-                </Card>
-              </>
-            )}
-          </>
-        );
-      })()}
+              <Card>
+                <CardHeader className="pb-0">
+                  <div className="flex items-center gap-1">
+                    {([
+                      { key: "utilization", label: "Disk Utilization" },
+                      { key: "grabs", label: "Daily Grabs" },
+                      { key: "flow", label: "GB Flow" },
+                      { key: "upload", label: "Upload" },
+                    ] as const).map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveChart(tab.key)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-t transition-colors ${
+                          activeChart === tab.key
+                            ? "bg-muted text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {activeChart === "utilization" && <UtilizationChart dailyStats={r.daily_stats} targetPct={80} />}
+                  {activeChart === "grabs" && <DailyGrabsChart dailyStats={r.daily_stats} />}
+                  {activeChart === "flow" && <GBFlowChart dailyStats={r.daily_stats} />}
+                  {activeChart === "upload" && <UploadChart dailyStats={r.daily_stats} />}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
-  );
-
-  return (
-    <>
-      {/* Mobile layout */}
-      <div className="flex flex-col h-[calc(100vh-4rem)] -mx-6 -my-4 md:hidden">
-        <div className="flex border-b border-border shrink-0">
-          {([
-            { key: "simulation", label: "Simulate" },
-            { key: "filters", label: "Filters" },
-            { key: "detail", label: "Detail" },
-          ] as const).map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setMobileTab(tab.key)}
-              className={`flex-1 px-3 py-2.5 text-sm font-medium transition-colors ${
-                mobileTab === tab.key
-                  ? "text-foreground border-b-2 border-primary"
-                  : "text-muted-foreground"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          {mobileTab === "filters" && filterListContent}
-          {mobileTab === "detail" && filterDetailContent}
-          {mobileTab === "simulation" && simulationContent}
-        </div>
-      </div>
-
-      {/* Desktop layout */}
-      <div className="hidden md:flex h-[calc(100vh-4rem)] overflow-hidden -mx-6 -my-4">
-        <div className="w-56 shrink-0 border-r border-border overflow-hidden">
-          {filterListContent}
-        </div>
-        <div className="w-80 shrink-0 border-r border-border overflow-y-auto">
-          {filterDetailContent}
-        </div>
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {simulationContent}
-        </div>
-      </div>
-    </>
   );
 }

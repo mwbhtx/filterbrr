@@ -1,4 +1,6 @@
 import type { SimulationResult } from "../types";
+import { HelpCircle } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface MetricsBarProps {
   result: SimulationResult;
@@ -14,11 +16,16 @@ function CardLoader() {
   );
 }
 
-function TuningHint({ text }: { text: string }) {
+function HintTooltip({ text }: { text: string }) {
   return (
-    <p className="text-xs text-primary/70 mt-2 leading-snug border-t border-border pt-2">
-      {text}
-    </p>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex ml-1 align-middle cursor-help">
+          <HelpCircle className="size-3 text-primary/50" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-56 text-center">{text}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -69,7 +76,6 @@ function missedHint(result: SimulationResult): string {
   const { skip_reasons } = result;
   const rateLimited = skip_reasons["rate_limited"] ?? 0;
   const storageFull = skip_reasons["storage_full"] ?? 0;
-  void (skip_reasons["no_match"] ?? 0);
   const total = rateLimited + storageFull;
   if (total === 0) return "No matched torrents were missed. Filters are well-tuned.";
   const topReason =
@@ -87,119 +93,127 @@ function uploadHint(result: SimulationResult): string {
 }
 
 export default function MetricsBar({ result, loading = false }: MetricsBarProps) {
+  const rateLimited = result.skip_reasons["rate_limited"] ?? 0;
+  const storageFull = result.skip_reasons["storage_full"] ?? 0;
+  const missed = rateLimited + storageFull;
+  const hasMissed = missed > 0;
+  const overCapacity = result.steady_state_avg_utilization > 100;
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-      {/* 1. Avg. Disk Utilization */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {/* 1. Disk Utilization — hero metric */}
       <div className={`rounded-lg p-4 ${
-        !loading && result.steady_state_avg_utilization > 100
+        !loading && overCapacity
           ? "bg-destructive/20 border border-destructive"
           : "bg-card border border-border"
       }`}>
-        <p className="text-sm text-muted-foreground">Avg. Disk Utilization</p>
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+          Disk Utilization
+          {!loading && <HintTooltip text={utilizationHint(result)} />}
+        </p>
         {loading ? <CardLoader /> : (
           <>
-            <p className={`text-2xl font-bold ${
-              result.steady_state_avg_utilization > 100 ? "text-destructive" : "text-foreground"
+            <p className={`text-3xl font-bold tracking-tight ${
+              overCapacity ? "text-destructive" : "text-foreground"
             }`}>
               {result.steady_state_avg_utilization.toFixed(1)}%
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {result.steady_state_avg_disk_gb.toFixed(1)} / {result.max_storage_gb.toFixed(1)} GB
             </p>
-            <TuningHint text={utilizationHint(result)} />
           </>
         )}
       </div>
 
-      {/* 2. Monthly Upload */}
+      {/* 2. Transfer — upload + download combined */}
       <div className="bg-card border border-border rounded-lg p-4">
-        <p className="text-sm text-muted-foreground">Monthly Upload</p>
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Transfer</p>
         {loading ? <CardLoader /> : (
-          <>
-            <p className="text-2xl font-bold text-foreground">
-              {(() => {
-                const monthlyGb = result.steady_state_daily_upload_gb * 30;
-                return monthlyGb >= 1024
-                  ? `${(monthlyGb / 1024).toFixed(1)} TB`
-                  : `${monthlyGb.toFixed(1)} GB`;
-              })()}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {result.steady_state_daily_upload_gb.toFixed(1)} GB/day (ratio {result.avg_ratio})
-            </p>
-            <TuningHint text={uploadHint(result)} />
-          </>
-        )}
-      </div>
-
-      {/* 3. Monthly Download */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <p className="text-sm text-muted-foreground">Monthly Download</p>
-        {loading ? <CardLoader /> : (
-          <>
-            <p className="text-2xl font-bold text-foreground">
-              {result.total_days > 0
-                ? `${((result.total_grabbed_gb / result.total_days) * 30).toFixed(1)} GB`
-                : "0 GB"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {result.total_grabbed_gb.toFixed(1)} GB over {result.total_days} days
-            </p>
-            <TuningHint text={downloadHint(result)} />
-          </>
-        )}
-      </div>
-
-      {/* 4. Grabbed */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <p className="text-sm text-muted-foreground">Grabbed</p>
-        {loading ? <CardLoader /> : (
-          <>
-            <p className="text-2xl font-bold text-foreground">
-              {result.total_grabbed.toLocaleString()} / {result.total_seen.toLocaleString()}
-            </p>
-            <p className="text-sm text-muted-foreground">{result.grab_rate_pct.toFixed(1)}% grab rate</p>
-            <TuningHint text={grabHint(result)} />
-          </>
-        )}
-      </div>
-
-      {/* 5. Missed Torrents */}
-      {(() => {
-        const rateLimited = result.skip_reasons["rate_limited"] ?? 0;
-        const storageFull = result.skip_reasons["storage_full"] ?? 0;
-        const missed = rateLimited + storageFull;
-        const hasMissed = missed > 0;
-        return (
-          <div className={`rounded-lg p-4 ${
-            !loading && hasMissed
-              ? "bg-destructive/20 border border-destructive"
-              : "bg-card border border-border"
-          }`}>
-            <p className="text-sm text-muted-foreground">Missed Torrents</p>
-            {loading ? <CardLoader /> : (
-              <>
-                <p className={`text-2xl font-bold ${
-                  hasMissed ? "text-destructive" : "text-foreground"
-                }`}>{missed.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">
-                  {storageFull > 0 && `${storageFull.toLocaleString()} storage`}
-                  {storageFull > 0 && rateLimited > 0 && " · "}
-                  {rateLimited > 0 && `${rateLimited.toLocaleString()} rate limited`}
-                  {missed === 0 && "No matched torrents missed"}
-                </p>
-                {result.blackout_days > 0 && (
-                  <p className="text-xs text-destructive/70 mt-1">
-                    {result.blackout_days} blackout day{result.blackout_days !== 1 ? "s" : ""}
-                  </p>
-                )}
-                <TuningHint text={missedHint(result)} />
-              </>
-            )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] text-muted-foreground/70 mb-0.5">
+                Upload /mo
+                <HintTooltip text={uploadHint(result)} />
+              </p>
+              <p className="text-lg font-bold text-foreground">
+                {(() => {
+                  const monthlyGb = result.steady_state_daily_upload_gb * 30;
+                  return monthlyGb >= 1024
+                    ? `${(monthlyGb / 1024).toFixed(1)} TB`
+                    : `${monthlyGb.toFixed(1)} GB`;
+                })()}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {result.steady_state_daily_upload_gb.toFixed(1)} GB/day
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-muted-foreground/70 mb-0.5">
+                Download /mo
+                <HintTooltip text={downloadHint(result)} />
+              </p>
+              <p className="text-lg font-bold text-foreground">
+                {result.total_days > 0
+                  ? (() => {
+                      const monthlyGb = (result.total_grabbed_gb / result.total_days) * 30;
+                      return monthlyGb >= 1024
+                        ? `${(monthlyGb / 1024).toFixed(1)} TB`
+                        : `${monthlyGb.toFixed(1)} GB`;
+                    })()
+                  : "0 GB"}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                ratio {result.avg_ratio}
+              </p>
+            </div>
           </div>
-        );
-      })()}
+        )}
+      </div>
 
+      {/* 3. Grab Performance — grabbed + missed combined */}
+      <div className={`rounded-lg p-4 ${
+        !loading && hasMissed
+          ? "bg-destructive/10 border border-destructive/50"
+          : "bg-card border border-border"
+      }`}>
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Grab Performance</p>
+        {loading ? <CardLoader /> : (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] text-muted-foreground/70 mb-0.5">
+                Grabbed
+                <HintTooltip text={grabHint(result)} />
+              </p>
+              <p className="text-lg font-bold text-foreground">
+                {result.total_grabbed.toLocaleString()}<span className="text-sm font-normal text-muted-foreground">/{result.total_seen.toLocaleString()}</span>
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {result.grab_rate_pct.toFixed(1)}% rate
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] text-muted-foreground/70 mb-0.5">
+                Missed
+                <HintTooltip text={missedHint(result)} />
+              </p>
+              <p className={`text-lg font-bold ${hasMissed ? "text-destructive" : "text-foreground"}`}>
+                {missed.toLocaleString()}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {storageFull > 0 && `${storageFull.toLocaleString()} storage`}
+                {storageFull > 0 && rateLimited > 0 && " · "}
+                {rateLimited > 0 && `${rateLimited.toLocaleString()} rate limited`}
+                {missed === 0 && "None missed"}
+              </p>
+              {result.blackout_days > 0 && (
+                <p className="text-[10px] text-destructive/70 mt-0.5">
+                  {result.blackout_days} blackout day{result.blackout_days !== 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -74,6 +74,7 @@ export function generateFilter(
   rateLimits: Record<string, RateLimit>,
   sourceName: string,
   _analyses: Record<string, Record<string, AttributeStats>>,
+  trackerType?: string,
 ): GeneratedFilter {
   const priority = PRIORITY_MAP[tierIndex];
   const delay = DELAY_MAP[tierIndex];
@@ -192,7 +193,10 @@ export function generateFilter(
     data.except_release_groups = lowGroups.join(',');
   }
 
-  const filterName = `fl-${sourceName}-${tierName.toLowerCase()}-priority`;
+  const prefix = trackerType
+    ? (trackerType.match(/[A-Z]/g) ?? []).join('').toLowerCase() || trackerType.slice(0, 2).toLowerCase()
+    : 'fl';
+  const filterName = `${prefix}-${sourceName}-${tierName.toLowerCase()}-priority [fbrr]`;
 
   return {
     name: filterName,

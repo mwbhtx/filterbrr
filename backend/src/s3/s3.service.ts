@@ -14,7 +14,7 @@ export class S3Service {
     this.client = new S3Client(
       isLocal
         ? {
-            endpoint: 'http://localhost:4566',
+            endpoint: process.env.S3_ENDPOINT ?? 'http://localhost:4567',
             region: 'us-east-1',
             forcePathStyle: true,
             credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? 'local', secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? 'local' },

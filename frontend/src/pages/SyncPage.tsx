@@ -3,6 +3,7 @@ import { api } from "../api/client";
 import type { Filter, AutobrrConnectionStatus, SyncFilterEntry } from "../types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/Toast";
 import {
   Table,
   TableHeader,
@@ -38,7 +39,7 @@ export default function SyncPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   const [hasFetchedRemote, setHasFetchedRemote] = useState(false);
   const statusTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -57,7 +58,7 @@ export default function SyncPage() {
   // Fetch remote sync status (only when user triggers it)
   const refreshRemote = useCallback(async () => {
     setLoading(true);
-    setError(null);
+
     try {
       const [statusResult, syncResult] = await Promise.all([
         api.getAutobrrStatus(),
@@ -71,7 +72,7 @@ export default function SyncPage() {
         showStatus({ connected: false, error: "Autobrr not configured — go to Settings" });
         setEntries([]);
       } else {
-        setError(err instanceof Error ? err.message : "Failed to load sync status");
+        toast(err instanceof Error ? err.message : "Failed to load sync status", "error");
       }
     } finally {
       setLoading(false);
@@ -106,13 +107,13 @@ export default function SyncPage() {
 
   const handlePullAll = async () => {
     setSyncing(true);
-    setError(null);
+
     try {
       await api.pullAll();
       await refreshRemote();
       await reloadLocal();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Pull failed");
+      toast(err instanceof Error ? err.message : "Pull failed", "error");
     } finally {
       setSyncing(false);
     }
@@ -120,12 +121,12 @@ export default function SyncPage() {
 
   const handlePushAll = async () => {
     setSyncing(true);
-    setError(null);
+
     try {
       await api.pushAll();
       await refreshRemote();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Push failed");
+      toast(err instanceof Error ? err.message : "Push failed", "error");
     } finally {
       setSyncing(false);
     }
@@ -133,13 +134,13 @@ export default function SyncPage() {
 
   const handlePullOne = async (remoteId: number) => {
     setSyncing(true);
-    setError(null);
+
     try {
       await api.pullFilter(remoteId);
       await refreshRemote();
       await reloadLocal();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Pull failed");
+      toast(err instanceof Error ? err.message : "Pull failed", "error");
     } finally {
       setSyncing(false);
     }
@@ -147,12 +148,12 @@ export default function SyncPage() {
 
   const handlePushOne = async (localId: string) => {
     setSyncing(true);
-    setError(null);
+
     try {
       await api.pushFilter(localId);
       await refreshRemote();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Push failed");
+      toast(err instanceof Error ? err.message : "Push failed", "error");
     } finally {
       setSyncing(false);
     }
@@ -163,15 +164,6 @@ export default function SyncPage() {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="px-4 py-2 rounded bg-destructive/20 border border-destructive text-destructive text-sm flex items-center justify-between">
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-destructive hover:text-destructive ml-2">
-            x
-          </button>
-        </div>
-      )}
-
       {/* Action bar */}
       <div className="flex items-center gap-3">
         <Button

@@ -41,7 +41,7 @@ describe('PipelineController', () => {
 
   describe('getJob', () => {
     it('returns formatted job response', async () => {
-      const job = makeJob({ progress: 'Scraping day 5 of 30', result: { key: 'test.csv' } });
+      const job = makeJob({ progress: 'Scraping day 5 of 30', result: { key: 'test.json' } });
       (mockPipeline.getJob as jest.Mock).mockResolvedValue(job);
 
       const result = await controller.getJob(mockReq(), 'job-1');
@@ -51,7 +51,7 @@ describe('PipelineController', () => {
         status: 'running',
         progress: 'Scraping day 5 of 30',
         started_at: '2026-03-18T00:00:00.000Z',
-        result: { key: 'test.csv' },
+        result: { key: 'test.json' },
         error: null,
       });
     });

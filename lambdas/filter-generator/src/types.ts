@@ -88,4 +88,5 @@ export interface GenerateFiltersEvent {
   storageTb: number;
   seedDays: number;
   source: string;
+  trackerType?: string;
 }

@@ -5,4 +5,5 @@ export class GenerateFiltersRequestDto {
   @IsOptional() @IsNumber() storage_tb?: number;
   @IsOptional() @IsString() dataset_path?: string;
   @IsOptional() @IsNumber() avg_seed_days?: number;
+  @IsOptional() @IsString() tracker_type?: string;
 }

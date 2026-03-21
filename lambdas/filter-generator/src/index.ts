@@ -182,7 +182,7 @@ export const handler: Handler<GenerateFiltersEvent> = async (event) => {
     ];
 
     const generatedFilters: GeneratedFilter[] = tierNames.map(([name, idx]) =>
-      generateFilter(name, idx, tierMap, rateLimits, event.source, analyses),
+      generateFilter(name, idx, tierMap, rateLimits, event.source, analyses, event.trackerType),
     );
 
     if (jobId && await isCancelling(jobId)) {
@@ -259,6 +259,7 @@ export const handler: Handler<GenerateFiltersEvent> = async (event) => {
           version: filter.version,
           data: filter.data,
           _source: 'generated',
+          ...(event.trackerType && { tracker_type: event.trackerType }),
           created_at: new Date().toISOString(),
         },
       }));

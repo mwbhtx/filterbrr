@@ -88,14 +88,14 @@ describe('PipelineService', () => {
   describe('startGenerateFilters', () => {
     it('returns a valid UUID job_id', async () => {
       const result = await service.startGenerateFilters('user-123', {
-        source: 'freeleech', dataset_path: 'user-123/datasets/test.csv',
+        source: 'freeleech', dataset_path: 'user-123/datasets/test.json',
       });
       expect(result.job_id).toMatch(/^[0-9a-f-]{36}$/);
     });
 
     it('creates a job with correct function_name', async () => {
       await service.startGenerateFilters('user-123', {
-        source: 'freeleech', dataset_path: 'user-123/datasets/test.csv',
+        source: 'freeleech', dataset_path: 'user-123/datasets/test.json',
       });
       const job = (mockJobRepo.create as jest.Mock).mock.calls[0][0];
       expect(job.function_name).toBe('filterbrr-filter-generator');
@@ -110,7 +110,7 @@ describe('PipelineService', () => {
 
     it('defaults storageTb to 4 and seedDays to 30', async () => {
       await service.startGenerateFilters('user-123', {
-        source: 'freeleech', dataset_path: 'test.csv',
+        source: 'freeleech', dataset_path: 'test.json',
       });
       const job = (mockJobRepo.create as jest.Mock).mock.calls[0][0];
       expect(job.payload.storageTb).toBe(4);
@@ -119,7 +119,7 @@ describe('PipelineService', () => {
 
     it('uses provided storageTb and seedDays', async () => {
       await service.startGenerateFilters('user-123', {
-        source: 'freeleech', dataset_path: 'test.csv', storage_tb: 8, avg_seed_days: 14,
+        source: 'freeleech', dataset_path: 'test.json', storage_tb: 8, avg_seed_days: 14,
       });
       const job = (mockJobRepo.create as jest.Mock).mock.calls[0][0];
       expect(job.payload.storageTb).toBe(8);
