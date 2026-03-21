@@ -70,12 +70,12 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
 export const api = {
   getFilters: () => fetchJSON<Filter[]>("/filters"),
   getFilter: (id: string) => fetchJSON<Filter>(`/filters/${id}`),
-  createFilter: (filter: Omit<Filter, "_id" | "_source">) =>
+  createFilter: (filter: Omit<Filter, "_id" | "_source" | "version">) =>
     fetchJSON<Filter>("/filters", {
       method: "POST",
       body: JSON.stringify(filter),
     }),
-  updateFilter: (id: string, filter: Omit<Filter, "_id" | "_source">) =>
+  updateFilter: (id: string, filter: Omit<Filter, "_id" | "_source" | "version">) =>
     fetchJSON<Filter>(`/filters/${id}`, {
       method: "PUT",
       body: JSON.stringify(filter),

@@ -161,7 +161,7 @@ export default function FilterForm({
 
   const toggleCls = (on: boolean) =>
     `relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 transition-colors cursor-pointer ${
-      on ? "bg-purple-600 border-purple-600" : "bg-muted border-border"
+      on ? "bg-pink-600 border-pink-600" : "bg-muted border-border"
     }`;
   const toggleDotCls = (on: boolean) =>
     `inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-5" : "translate-x-0"}`;

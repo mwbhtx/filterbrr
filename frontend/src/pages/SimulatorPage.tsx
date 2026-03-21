@@ -254,7 +254,7 @@ export default function SimulatorPage() {
     for (const gen of freshFilters) {
       if (!gen._id.startsWith('gen-')) continue;
       const before = beforeMap.get(gen._id);
-      if (before) {
+      if (before && JSON.stringify(before.data) !== JSON.stringify(gen.data)) {
         newDirty.set(gen._id, { ...before, data: gen.data });
       }
     }
@@ -293,8 +293,8 @@ export default function SimulatorPage() {
   const handleFilterSave = async (filter: Filter) => {
     try {
       if (filter._source === "temp") {
-        const { _id, _source, ...body } = filter;
-        void _source;
+        const { _id, _source, version, tracker_type, ...body } = filter;
+        void _source; void version; void tracker_type;
         if (_id.startsWith("temp_")) {
           const created = await api.createFilter(body);
           setTempFilters((prev) => prev.filter((f) => f._id !== _id));
@@ -311,8 +311,8 @@ export default function SimulatorPage() {
         await refetchFilters();
         setSelectedFilterId(filter._id);
       } else {
-        const { _id, _source, ...body } = filter;
-        void _source;
+        const { _id, _source, version, tracker_type, ...body } = filter;
+        void _source; void version; void tracker_type;
         await api.updateFilter(_id, body);
         setDirtyMap((prev) => { const next = new Map(prev); next.delete(_id); return next; });
         await refetchFilters();
@@ -353,8 +353,8 @@ export default function SimulatorPage() {
   const handleSaveAll = async () => {
     for (const [, filter] of dirtyMap) {
       try {
-        const { _id, _source, ...body } = filter;
-        void _source;
+        const { _id, _source, version, tracker_type, ...body } = filter;
+        void _source; void version; void tracker_type;
         await api.updateFilter(_id, body);
       } catch (err: unknown) {
         toast(err instanceof Error ? err.message : `Save failed for ${filter.name}`, "error");
@@ -505,7 +505,7 @@ export default function SimulatorPage() {
 
         {/* ── Filters Row ── */}
         <div>
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <div className="flex items-center gap-2 mb-2 h-8">
             <Button
               onClick={handleGenerate}
               disabled={generating || !selectedDataset}
@@ -516,38 +516,38 @@ export default function SimulatorPage() {
             </Button>
             {trackerFilters.length > 0 && (
               <>
-                <div className="w-px h-5 bg-border mx-1" />
+                <div className="w-px h-5 bg-border mx-1 shrink-0" />
                 <button
                   onClick={handlePushAll}
                   disabled={isDemo || syncingId != null}
-                  className="text-xs font-medium px-2.5 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground disabled:opacity-30 transition-colors"
+                  className="text-xs font-medium px-2.5 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground disabled:opacity-30 transition-colors shrink-0"
                 >
                   {syncingId === "all" ? "..." : "Push All"}
                 </button>
                 <button
                   onClick={handlePullAll}
                   disabled={isDemo || syncingId != null}
-                  className="text-xs font-medium px-2.5 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground disabled:opacity-30 transition-colors"
+                  className="text-xs font-medium px-2.5 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground disabled:opacity-30 transition-colors shrink-0"
                 >
                   {syncingId === "all" ? "..." : "Pull All"}
                 </button>
                 <button
                   onClick={handleSaveAll}
                   disabled={dirtyIds.size === 0}
-                  className="text-xs font-medium px-2.5 py-1 rounded bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-30"
+                  className="text-xs font-medium px-2.5 py-1 rounded bg-primary hover:bg-primary/90 text-primary-foreground transition-colors disabled:opacity-30 shrink-0"
                 >
                   Save All
                 </button>
                 <button
                   onClick={() => setDirtyMap(new Map())}
                   disabled={dirtyIds.size === 0}
-                  className="text-xs font-medium px-2.5 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground transition-colors disabled:opacity-30"
+                  className="text-xs font-medium px-2.5 py-1 rounded bg-muted hover:bg-muted/80 text-muted-foreground transition-colors disabled:opacity-30 shrink-0"
                 >
                   Reset All
                 </button>
               </>
             )}
-            <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} />
+            <JobRunner jobId={generateJobId} onComplete={handleGenerateComplete} onCancel={() => { setGenerateJobId(null); setGenerating(false); localStorage.removeItem('active-generate-job'); }} />
           </div>
 
           {filtersLoading && trackerFilters.length === 0 ? (

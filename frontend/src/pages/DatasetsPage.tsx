@@ -186,7 +186,7 @@ export default function DatasetsPage() {
               />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 h-8">
             <Button
               onClick={handleScrape}
               disabled={scrapeRunning || !username || !password}
@@ -201,6 +201,11 @@ export default function DatasetsPage() {
                 setScrapeRunning(false);
                 localStorage.removeItem('active-scrape-job');
                 refetch();
+              }}
+              onCancel={() => {
+                setScrapeJobId(null);
+                setScrapeRunning(false);
+                localStorage.removeItem('active-scrape-job');
               }}
             />
           </div>

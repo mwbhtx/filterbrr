@@ -6,6 +6,7 @@ import type { JobStatus } from "../types";
 interface JobRunnerProps {
   jobId: string | null;
   onComplete: () => void;
+  onCancel?: () => void;
 }
 
 function formatElapsed(seconds: number): string {
@@ -22,13 +23,14 @@ interface JobData {
   error?: string;
 }
 
-export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
+export default function JobRunner({ jobId, onComplete, onCancel }: JobRunnerProps) {
   const [status, setStatus] = useState<JobStatus["status"] | null>(null);
   const [progress, setProgress] = useState<string>("Starting...");
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const completedRef = useRef<string | null>(null);
   const startTimeRef = useRef<number>(0);
+  const cancellingStartRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!jobId) {
@@ -70,6 +72,16 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
           if (data.error) setError(data.error);
           if (data.started_at && !startTimeRef.current) {
             startTimeRef.current = new Date(data.started_at).getTime();
+          }
+
+          // If stuck in cancelling for >15s, force treat as cancelled
+          if (data.status === "cancelling") {
+            if (!cancellingStartRef.current) cancellingStartRef.current = Date.now();
+            if (Date.now() - cancellingStartRef.current > 15000) {
+              data.status = "cancelled";
+            }
+          } else {
+            cancellingStartRef.current = null;
           }
 
           const isTerminal = ["completed", "failed", "cancelled"].includes(data.status);
@@ -116,12 +128,13 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
     setVisible(true);
   }, [status]);
 
-  if (!status || !visible) return null;
+  if (!jobId) return null;
+  if (!status || !visible) return <div className="h-8 flex-1" />;
 
   const isTerminal = ["completed", "failed", "cancelled"].includes(status);
 
   return (
-    <div className={`bg-background border border-border rounded px-3 py-2 text-xs font-mono text-muted-foreground flex items-center gap-2 flex-1 min-w-0 transition-opacity duration-500 ${status === "completed" ? "animate-fade-out" : ""}`}>
+    <div className={`bg-background border border-border rounded px-3 py-2 text-xs font-mono text-muted-foreground flex items-center gap-2 flex-1 min-w-0 h-8 transition-opacity duration-500 ${status === "completed" ? "animate-fade-out" : ""}`}>
       {!isTerminal && !error && (
         <svg className="size-3.5 shrink-0 animate-spin text-muted-foreground" viewBox="0 0 24 24" fill="none">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -147,7 +160,7 @@ export default function JobRunner({ jobId, onComplete }: JobRunnerProps) {
             <Button
               variant="destructive"
               size="xs"
-              onClick={() => api.cancelJob(jobId!)}
+              onClick={() => { api.cancelJob(jobId!).catch(() => {}); onCancel?.(); }}
             >
               Cancel
             </Button>
